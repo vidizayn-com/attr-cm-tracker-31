@@ -63,7 +63,7 @@ const PatientRegistration = () => {
       <div className="container mx-auto p-4 sm:p-6">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-center sm:text-left">ATTR-CM Patient Registration</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center sm:text-left" style={{ color: '#29a8b6' }}>ATTR-CM Patient Registration</h1>
         </div>
 
         {/* Mobile-First Responsive Layout */}
