@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { Zap } from 'lucide-react';
 
 // Sample data for Monthly Patient Registrations
 const patientRegistrationData = [
@@ -41,25 +41,29 @@ const Dashboard = () => {
         <h1 className="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#29a8b6' }}>Dashboard</h1>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg sm:text-xl">Total Patients</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-blue-600">24</div>
-              <p className="text-gray-600 text-sm sm:text-base">Active patients in system</p>
-            </CardContent>
-          </Card>
+          <Link to="/patients">
+            <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg sm:text-xl">Total Patients</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl sm:text-3xl font-bold text-blue-600">24</div>
+                <p className="text-gray-600 text-sm sm:text-base">Active patients in system</p>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg sm:text-xl">New Patients</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-green-600">6</div>
-              <p className="text-gray-600 text-sm sm:text-base">Pending assignment</p>
-            </CardContent>
-          </Card>
+          <Link to="/patients/register">
+            <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg sm:text-xl">New Patients</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl sm:text-3xl font-bold text-green-600">6</div>
+                <p className="text-gray-600 text-sm sm:text-base">Pending assignment</p>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg sm:col-span-2 lg:col-span-1">
             <CardHeader className="pb-3">
@@ -75,7 +79,10 @@ const Dashboard = () => {
         <div className="mt-6 sm:mt-8">
           <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Quick Actions</CardTitle>
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <Zap className="w-5 h-5" style={{ color: '#29a8b6' }} />
+                Quick Actions
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -87,11 +94,11 @@ const Dashboard = () => {
                   <p className="text-blue-600 text-sm sm:text-base">Add a new patient to the system</p>
                 </Link>
                 <Link 
-                  to="/patients"
+                  to="/report-tracker"
                   className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
                 >
-                  <div className="text-lg sm:text-xl font-semibold text-green-700">View All Patients</div>
-                  <p className="text-green-600 text-sm sm:text-base">Browse and manage patient records</p>
+                  <div className="text-lg sm:text-xl font-semibold text-green-700">View Report Tracker</div>
+                  <p className="text-green-600 text-sm sm:text-base">Track and manage patient reports</p>
                 </Link>
               </div>
             </CardContent>

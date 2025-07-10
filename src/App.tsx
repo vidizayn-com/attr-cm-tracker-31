@@ -15,6 +15,7 @@ import PatientRegistration from "./pages/PatientRegistration";
 import Calendar from "./pages/Calendar";
 import Resources from "./pages/Resources";
 import ProfileEdit from "./pages/ProfileEdit";
+import ReportTracker from "./pages/ReportTracker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/profile/edit" element={<ProfileEdit />} />
+            <Route path="/report-tracker" element={<ReportTracker />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
