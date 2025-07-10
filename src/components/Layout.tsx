@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -45,17 +44,17 @@ function AppSidebar() {
   };
   
   return (
-    <Sidebar className="border-r border-gray-200 bg-[#089bab]">
+    <Sidebar className="border-r border-gray-200 bg-[#089bab] w-[200px]">
       <SidebarHeader className="p-4 border-b border-white/20">
         <div className="flex flex-col items-center space-y-2">
-          <div className="w-[200px] h-16 flex items-center justify-center">
+          <div className="w-[160px] h-12 flex items-center justify-center">
             <img 
               src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png" 
               alt="ATTR-CM Tracker Logo" 
               className="w-full h-full object-contain filter brightness-0 invert"
             />
           </div>
-          <span className="text-white font-bold text-lg text-center">ATTR-CM Tracker</span>
+          <span className="text-white font-bold text-sm text-center">ATTR-CM Tracker</span>
         </div>
       </SidebarHeader>
       
@@ -85,15 +84,15 @@ function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-white/20">
-        <div className="flex items-center space-x-3">
-          <Avatar className="w-10 h-10">
-            <AvatarFallback className="bg-white/20 text-white font-bold">
+      <SidebarFooter className="p-3 border-t border-white/20">
+        <div className="flex items-center space-x-2">
+          <Avatar className="w-8 h-8">
+            <AvatarFallback className="bg-white/20 text-white font-bold text-xs">
               MS
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <div className="text-white font-semibold text-sm">Dr. Michael Scofield</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-white font-semibold text-xs truncate">Dr. Michael Scofield</div>
             <div className="text-white/70 text-xs italic">Cardiologist</div>
           </div>
           <DropdownMenu>
