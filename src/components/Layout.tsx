@@ -8,141 +8,148 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { Home, Users, BookOpen, Calendar } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
   showNavigation?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
+const navigationItems = [
+  { title: 'Dashboard', url: '/dashboard', icon: Home },
+  { title: 'Patients', url: '/patients', icon: Users },
+  { title: 'Resources', url: '/resources', icon: BookOpen },
+  { title: 'Calendar', url: '/calendar', icon: Calendar },
+];
+
+function AppSidebar() {
   const location = useLocation();
+  
+  return (
+    <Sidebar className="border-r border-gray-200" style={{ backgroundColor: '#1a5d5d' }}>
+      <SidebarHeader className="p-4 border-b border-gray-600">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img 
+              src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png" 
+              alt="ATTR-CM Tracker Logo" 
+              className="w-full h-full object-contain filter brightness-0 invert"
+            />
+          </div>
+          <span className="text-white font-bold text-sm">ATTR-CM Tracker</span>
+        </div>
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link 
+                      to={item.url}
+                      className={`flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-colors ${
+                        location.pathname === item.url || location.pathname.includes(item.url) 
+                          ? 'text-white bg-gray-700/70 border-r-2 border-teal-400' 
+                          : ''
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
+
+const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
   const navigate = useNavigate();
 
   const handleEditProfile = () => {
     navigate('/profile/edit');
   };
 
-  // Check if we're on the patients page to apply darker header
-  const isPatientsPage = location.pathname.includes('/patients');
+  if (!showNavigation) {
+    return (
+      <div className="min-h-screen bg-white">
+        {children}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent/10 via-primary/5 to-accent/15 relative">
-      {/* Background overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-primary/10"></div>
-      
-      {showNavigation && (
-        <nav className={`relative z-10 backdrop-blur-sm border-b border-accent/20 ${
-          isPatientsPage ? 'bg-primary/20' : 'bg-accent/10'
-        }`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-14 sm:h-16">
-              {/* Logo */}
-              <div className="flex items-center space-x-2">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
-                  <img 
-                    src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png" 
-                    alt="ATTR-CM Tracker Logo" 
-                    className="w-full h-full object-contain filter brightness-0 invert"
-                  />
-                </div>
-                <span className="text-primary font-bold text-lg sm:text-xl">ATTR-CM Tracker</span>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-white">
+        <AppSidebar />
+        
+        <div className="flex-1 flex flex-col">
+          {/* Top Header */}
+          <header className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <SidebarTrigger className="lg:hidden" />
+                <h1 className="text-xl font-semibold text-gray-800">
+                  ATTR-CM Patient Management
+                </h1>
               </div>
-
-              {/* Navigation Links - Hidden on mobile, shown on tablet+ */}
-              <div className="hidden md:flex space-x-4 lg:space-x-8">
-                <Link 
-                  to="/dashboard" 
-                  className={`text-primary hover:text-accent transition-colors text-sm lg:text-base ${
-                    location.pathname === '/dashboard' ? 'text-accent font-semibold' : ''
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  to="/patients" 
-                  className={`text-primary hover:text-accent transition-colors text-sm lg:text-base ${
-                    location.pathname.includes('/patients') ? 'text-accent font-semibold' : ''
-                  }`}
-                >
-                  Patients
-                </Link>
-                <Link 
-                  to="/resources" 
-                  className={`text-primary hover:text-accent transition-colors text-sm lg:text-base ${
-                    location.pathname === '/resources' ? 'text-accent font-semibold' : ''
-                  }`}
-                >
-                  Resources
-                </Link>
-              </div>
-
+              
               {/* Doctor Profile */}
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="text-right hidden sm:block">
-                  <div className="text-primary font-semibold text-sm sm:text-base">Dr. Michael Scofield</div>
-                  <div className="text-primary/70 text-xs sm:text-sm italic">Cardiologist</div>
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <div className="text-gray-800 font-semibold text-sm">Dr. Michael Scofield</div>
+                  <div className="text-gray-600 text-xs italic">Cardiologist</div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Avatar className="w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:opacity-80 transition-opacity">
-                      <AvatarFallback className="bg-accent text-white font-bold text-sm sm:text-base">
+                    <Avatar className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity">
+                      <AvatarFallback className="bg-teal-600 text-white font-bold">
                         MS
                       </AvatarFallback>
                     </Avatar>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg">
+                  <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg">
                     <DropdownMenuItem 
-                      className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                      className="cursor-pointer hover:bg-gray-100"
                       onClick={handleEditProfile}
                     >
                       Edit Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    <DropdownMenuItem className="cursor-pointer hover:bg-gray-100">
                       Invite New Member
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
-            
-            {/* Mobile Navigation - Shown only on mobile */}
-            <div className="md:hidden pb-3">
-              <div className="flex space-x-4 overflow-x-auto">
-                <Link 
-                  to="/dashboard" 
-                  className={`text-primary hover:text-accent transition-colors text-sm whitespace-nowrap ${
-                    location.pathname === '/dashboard' ? 'text-accent font-semibold' : ''
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  to="/patients" 
-                  className={`text-primary hover:text-accent transition-colors text-sm whitespace-nowrap ${
-                    location.pathname.includes('/patients') ? 'text-accent font-semibold' : ''
-                  }`}
-                >
-                  Patients
-                </Link>
-                <Link 
-                  to="/resources" 
-                  className={`text-primary hover:text-accent transition-colors text-sm whitespace-nowrap ${
-                    location.pathname === '/resources' ? 'text-accent font-semibold' : ''
-                  }`}
-                >
-                  Resources
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
-      )}
+          </header>
 
-      {/* Main Content */}
-      <main className="relative z-10">
-        {children}
-      </main>
-    </div>
+          {/* Main Content */}
+          <main className="flex-1 bg-gray-50">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
