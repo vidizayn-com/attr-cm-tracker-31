@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,7 +121,7 @@ const PatientList = () => {
                   <p><span className="font-semibold">Age:</span> {calculateAge(patient.dateOfBirth)}</p>
                   <p><span className="font-semibold">Last Visit:</span> {patient.lastVisit}</p>
                   <p><span className="font-semibold">Next Appointment:</span> {patient.nextAppointment}</p>
-                  <p><span className="font-semibold">Assigned to:</span> {patient.assignedTo}</p>
+                  <p><span className="font-semibold">Assigned to:</span> Cardiologist - {patient.assignedTo}</p>
                 </div>
 
                 <Link to={`/patients/${patient.id}`} className="w-full">
