@@ -58,7 +58,7 @@ const Verification = () => {
                 type="text"
                 value={digit}
                 onChange={(e) => handleCodeChange(index, e.target.value)}
-                className="w-10 h-10 sm:w-12 sm:h-12 text-center text-lg sm:text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none"
+                className="w-10 h-10 sm:w-12 sm:h-12 text-center text-lg sm:text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-primary focus:outline-none"
                 maxLength={1}
               />
             ))}
@@ -66,18 +66,18 @@ const Verification = () => {
 
           {/* Timer */}
           <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 border-2 border-purple-500 rounded-full mb-2">
-              <span className="text-purple-600 font-bold text-sm sm:text-base">{formatTime(timer)}</span>
+            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 border-2 border-primary rounded-full mb-2">
+              <span className="text-primary font-bold text-sm sm:text-base">{formatTime(timer)}</span>
             </div>
             <p className="text-gray-600 text-sm sm:text-base">
-              Code expires in <span className="text-red-600 font-semibold">{formatTime(timer)}</span> minutes
+              Code expires in <span className="text-primary font-semibold">{formatTime(timer)}</span> minutes
             </p>
           </div>
 
           {/* Confirm Button */}
           <Button
             onClick={handleConfirm}
-            className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg font-semibold rounded-xl mb-4"
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base sm:text-lg font-semibold rounded-xl mb-4"
           >
             Confirm Code
           </Button>
@@ -86,7 +86,7 @@ const Verification = () => {
           <div className="text-center">
             <p className="text-gray-600 text-sm sm:text-base">
               Didn't receive the code?{' '}
-              <button className="text-purple-600 hover:underline font-semibold">
+              <button className="text-primary hover:underline font-semibold">
                 Send again
               </button>
             </p>

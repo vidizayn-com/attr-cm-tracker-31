@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Layout from '@/components/Layout';
 import { Search, Filter, Calendar, User, FileText, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ReportTracker = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const navigate = useNavigate();
 
   // Mock data for reports
   const reports = [
@@ -73,12 +75,23 @@ const ReportTracker = () => {
     return styles[priority as keyof typeof styles] || 'bg-gray-100 text-gray-800';
   };
 
+  const handleNewReport = () => {
+    navigate('/report-details');
+  };
+
+  const handleViewDetails = () => {
+    navigate('/report-details');
+  };
+
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6">
         <div className="flex justify-between items-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: '#29a8b6' }}>Report Tracker</h1>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
+          <Button 
+            onClick={handleNewReport}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+          >
             <FileText className="mr-2 h-4 w-4" />
             New Report
           </Button>
@@ -165,6 +178,7 @@ const ReportTracker = () => {
                 
                 <div className="pt-3">
                   <Button 
+                    onClick={handleViewDetails}
                     variant="outline"
                     className="w-full bg-white hover:bg-gray-50 text-gray-700 hover:text-blue-600 border border-gray-200 rounded-xl"
                   >

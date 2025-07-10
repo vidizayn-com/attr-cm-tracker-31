@@ -16,6 +16,7 @@ import Calendar from "./pages/Calendar";
 import Resources from "./pages/Resources";
 import ProfileEdit from "./pages/ProfileEdit";
 import ReportTracker from "./pages/ReportTracker";
+import ReportDetails from "./pages/ReportDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/resources" element={<Resources />} />
             <Route path="/profile/edit" element={<ProfileEdit />} />
             <Route path="/report-tracker" element={<ReportTracker />} />
+            <Route path="/report-details" element={<ReportDetails />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

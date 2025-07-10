@@ -22,7 +22,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, Users, BookOpen, Calendar, User } from 'lucide-react';
+import { Home, Users, BookOpen, FileText, User } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,7 +33,7 @@ const navigationItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
   { title: 'Patients', url: '/patients', icon: Users },
   { title: 'Resources', url: '/resources', icon: BookOpen },
-  { title: 'Calendar', url: '/calendar', icon: Calendar },
+  { title: 'Report Tracker', url: '/report-tracker', icon: FileText },
 ];
 
 function AppSidebar() {
