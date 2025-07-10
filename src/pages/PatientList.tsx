@@ -122,7 +122,7 @@ const PatientList = () => {
                   <p><span className="font-semibold">Age:</span> {calculateAge(patient.dateOfBirth)}</p>
                   <p><span className="font-semibold">Last Visit:</span> {patient.lastVisit}</p>
                   <p><span className="font-semibold">Next Appointment:</span> {patient.nextAppointment}</p>
-                  <p><span className="font-semibold">Assigned to:</span> Cardiologist - {patient.assignedTo}</p>
+                  <p><span className="font-semibold">Assigned to:</span> Cardiologist</p>
                 </div>
 
                 <Link to={`/patients/${patient.id}`} className="w-full">
