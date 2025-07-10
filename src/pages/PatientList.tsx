@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,7 +45,7 @@ const PatientList = () => {
     <Layout>
       <div className="container mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6 sm:mb-8">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: '#29a8b6' }}>Patient List</h1>
         </div>
 
@@ -105,7 +106,7 @@ const PatientList = () => {
         {/* Patient Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {patients.map((patient) => (
-            <Card key={patient.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border-none">
+            <Card key={patient.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border-none hover:shadow-2xl transition-shadow duration-300">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -116,7 +117,7 @@ const PatientList = () => {
                   </span>
                 </div>
 
-                <div className="space-y-2 text-sm sm:text-base text-gray-700">
+                <div className="space-y-2 text-sm sm:text-base text-gray-700 mb-4">
                   <p><span className="font-semibold">ID:</span> {patient.id}</p>
                   <p><span className="font-semibold">Age:</span> {calculateAge(patient.dateOfBirth)}</p>
                   <p><span className="font-semibold">Last Visit:</span> {patient.lastVisit}</p>
@@ -124,11 +125,13 @@ const PatientList = () => {
                   <p><span className="font-semibold">Assigned to:</span> {patient.assignedTo}</p>
                 </div>
 
-                <Link 
-                  to={`/patients/${patient.id}`}
-                  className="inline-flex items-center mt-4 text-gray-700 hover:text-blue-600 font-semibold text-sm sm:text-base"
-                >
-                  View Full Profile →
+                <Link to={`/patients/${patient.id}`} className="w-full">
+                  <Button 
+                    variant="outline"
+                    className="w-full bg-white hover:bg-gray-50 text-gray-700 hover:text-blue-600 border border-gray-200 rounded-xl"
+                  >
+                    View Full Profile →
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
