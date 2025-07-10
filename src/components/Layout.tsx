@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -133,18 +134,9 @@ const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col">
-          {/* Top Header */}
-          <header className="bg-card border-b border-border px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="lg:hidden" />
-              </div>
-            </div>
-          </header>
-
+        <div className="flex-1">
           {/* Main Content */}
-          <main className="flex-1 bg-background">
+          <main className="bg-background">
             {children}
           </main>
         </div>
