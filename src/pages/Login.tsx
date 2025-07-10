@@ -19,7 +19,7 @@ const Login = () => {
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full border border-red-200 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full border border-primary/20 mb-4">
               <img 
                 src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png" 
                 alt="ATTR-CM Tracker Logo" 
@@ -27,8 +27,8 @@ const Login = () => {
               />
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Login</h1>
-            <div className="inline-block bg-white rounded-full px-4 py-2 border border-red-200">
-              <span className="text-red-600 font-semibold text-sm sm:text-base">ATTR-CM Tracker</span>
+            <div className="inline-block bg-white rounded-full px-4 py-2 border border-primary/20">
+              <span className="text-primary font-semibold text-sm sm:text-base">ATTR-CM Tracker</span>
             </div>
           </div>
 
@@ -54,7 +54,7 @@ const Login = () => {
                 placeholder="(+90) --- -- -- --"
               />
             </div>
-            <p className="text-red-600 text-xs sm:text-sm mt-2 italic">
+            <p className="text-primary text-xs sm:text-sm mt-2 italic">
               Enter the phone number registered with your cardiologist
             </p>
           </div>
@@ -62,7 +62,7 @@ const Login = () => {
           {/* Send Code Button */}
           <Button
             onClick={handleSendCode}
-            className="w-full h-12 bg-red-600 hover:bg-red-700 text-white text-base sm:text-lg font-semibold rounded-xl"
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base sm:text-lg font-semibold rounded-xl"
           >
             Send Verification Code
           </Button>
