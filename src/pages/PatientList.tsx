@@ -43,14 +43,14 @@ const PatientList = () => {
 
   return (
     <Layout>
-      <div className="p-4 sm:p-6">
+      <div className="p-2 sm:p-4">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: '#29a8b6' }}>Patient List</h1>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
           <div className="relative w-full lg:w-80">
             <Input
               type="text"
@@ -104,7 +104,7 @@ const PatientList = () => {
         </div>
 
         {/* Patient Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           {patients.map((patient) => (
             <Card key={patient.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border-none hover:shadow-2xl transition-shadow duration-300">
               <CardContent className="p-4 sm:p-6">
