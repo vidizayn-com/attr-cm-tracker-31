@@ -141,7 +141,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl text-red-600">Report Period Expiring Soon</CardTitle>
+                <CardTitle className="text-lg sm:text-xl text-red-600">Medication Report Period Expiring Soon</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
