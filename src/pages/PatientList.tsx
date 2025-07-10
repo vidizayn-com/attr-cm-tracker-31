@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,7 +45,7 @@ const PatientList = () => {
       <div className="container mx-auto p-4 sm:p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold text-white">Patient List</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: '#29a8b6' }}>Patient List</h1>
         </div>
 
         {/* Controls */}
@@ -138,7 +137,7 @@ const PatientList = () => {
 
         {/* Pagination */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <span className="text-white text-sm sm:text-base">Showing 1-{patients.length} of {patients.length} patients</span>
+          <span className="text-gray-600 text-sm sm:text-base">Showing 1-{patients.length} of {patients.length} patients</span>
           <div className="flex flex-wrap gap-2 justify-center">
             <Button variant="outline" className="bg-white/90 text-gray-700 border-none rounded-xl text-sm px-3 py-1 sm:px-4 sm:py-2">
               Previous

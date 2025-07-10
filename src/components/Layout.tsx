@@ -19,9 +19,10 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, Users, BookOpen, Calendar } from 'lucide-react';
+import { Home, Users, BookOpen, Calendar, User } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -37,19 +38,24 @@ const navigationItems = [
 
 function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleEditProfile = () => {
+    navigate('/profile/edit');
+  };
   
   return (
-    <Sidebar className="border-r border-gray-200 bg-sidebar">
-      <SidebarHeader className="p-4 border-b border-sidebar-border/20">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 flex items-center justify-center">
+    <Sidebar className="border-r border-gray-200 bg-[#089bab]">
+      <SidebarHeader className="p-4 border-b border-white/20">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-[200px] h-16 flex items-center justify-center">
             <img 
               src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png" 
               alt="ATTR-CM Tracker Logo" 
               className="w-full h-full object-contain filter brightness-0 invert"
             />
           </div>
-          <span className="text-sidebar-foreground font-bold text-sm">ATTR-CM Tracker</span>
+          <span className="text-white font-bold text-lg text-center">ATTR-CM Tracker</span>
         </div>
       </SidebarHeader>
       
@@ -62,13 +68,13 @@ function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url}
-                      className={`flex items-center space-x-3 px-4 py-3 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/20 transition-colors ${
+                      className={`flex items-center space-x-3 px-4 py-3 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-lg ${
                         location.pathname === item.url || location.pathname.includes(item.url) 
-                          ? 'text-sidebar-foreground bg-sidebar-accent/30 border-r-2 border-primary' 
+                          ? 'text-white bg-white/20 border-r-2 border-white' 
                           : ''
                       }`}
                     >
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className="w-6 h-6" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -78,17 +84,43 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="p-4 border-t border-white/20">
+        <div className="flex items-center space-x-3">
+          <Avatar className="w-10 h-10">
+            <AvatarFallback className="bg-white/20 text-white font-bold">
+              MS
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <div className="text-white font-semibold text-sm">Dr. Michael Scofield</div>
+            <div className="text-white/70 text-xs italic">Cardiologist</div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-white/80 hover:text-white p-1">
+                <User className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg">
+              <DropdownMenuItem 
+                className="cursor-pointer hover:bg-muted"
+                onClick={handleEditProfile}
+              >
+                Edit Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                Invite New Member
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
-  const navigate = useNavigate();
-
-  const handleEditProfile = () => {
-    navigate('/profile/edit');
-  };
-
   if (!showNavigation) {
     return (
       <div className="min-h-screen bg-background">
@@ -108,37 +140,6 @@ const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <SidebarTrigger className="lg:hidden" />
-                <h1 className="text-xl font-semibold text-primary">
-                  ATTR-CM Patient Management
-                </h1>
-              </div>
-              
-              {/* Doctor Profile */}
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
-                  <div className="text-primary font-semibold text-sm">Dr. Michael Scofield</div>
-                  <div className="text-muted-foreground text-xs italic">Cardiologist</div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Avatar className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity">
-                      <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                        MS
-                      </AvatarFallback>
-                    </Avatar>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg">
-                    <DropdownMenuItem 
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={handleEditProfile}
-                    >
-                      Edit Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                      Invite New Member
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
           </header>
