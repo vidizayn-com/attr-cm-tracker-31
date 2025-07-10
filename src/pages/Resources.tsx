@@ -118,7 +118,7 @@ const Resources = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold text-white mb-8">Resources</h1>
+        <h1 className="text-4xl font-bold mb-8" style={{ color: '#29a8b6' }}>Resources</h1>
         
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8">
           <div className="mb-8">
