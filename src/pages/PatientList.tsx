@@ -97,7 +97,7 @@ const PatientList = () => {
 
             <Link to="/patients/register" className="w-full sm:w-auto">
               <Button className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 w-full sm:w-auto">
-                <span className="mr-2">⊕</span> Add patient
+                <span className="mr-2">⊕</span> Add Patient
               </Button>
             </Link>
           </div>
