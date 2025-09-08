@@ -187,7 +187,10 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
               <span className="mr-2">👤</span> Assign patient
             </Button>
           </Link>
-          <Button className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 h-12">
+          <Button 
+            onClick={() => window.open('https://ofisimheryerde.sharepoint.com/:b:/r/sites/vidizaynpm/Shared%20Documents/VidiDocs/Projects/ATTR-CM%20Tracker/ATTR_CM_Patient_Report_Final_Example.pdf?csf=1&web=1&e=nsF3sZ', '_blank')}
+            className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 h-12"
+          >
             <span className="mr-2">📋</span> Report
           </Button>
           <Button 
