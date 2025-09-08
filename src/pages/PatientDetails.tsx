@@ -10,6 +10,7 @@ import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { usePatients } from '@/contexts/PatientContext';
+import { Copy } from 'lucide-react';
 
 const PatientDetails = () => {
   const { id } = useParams();
@@ -54,6 +55,69 @@ const PatientDetails = () => {
       status,
       cancellationReason
     });
+  };
+
+  // Generate diagnosis summary based on patient data
+  const generateDiagnosisSummary = () => {
+    const clinicalFindings = [];
+    const redFlags = [];
+    
+    // Check clinical findings
+    if (patientData.clinicalFindings.lvh12) clinicalFindings.push(`LVH >12mm (${patientData.clinicalFindings.lvh12Value}mm)`);
+    if (patientData.clinicalFindings.ntProBnp) clinicalFindings.push(`Elevated NT-proBNP (${patientData.clinicalFindings.ntProBnpValue} pg/mL)`);
+    if (patientData.clinicalFindings.ef40) clinicalFindings.push(`Preserved EF (${patientData.clinicalFindings.ef40Value}%)`);
+    if (patientData.clinicalFindings.gfr30) clinicalFindings.push(`GFR >30 (${patientData.clinicalFindings.gfr30Value} ml/min/1.73m²)`);
+    if (patientData.clinicalFindings.age65) clinicalFindings.push(`Age ≥65 years (${patientData.clinicalFindings.age65Value} years)`);
+    
+    // Check red flag symptoms
+    if (patientData.redFlagSymptoms.ecgHypovoltage) redFlags.push('ECG hypovoltage');
+    if (patientData.redFlagSymptoms.pericardialEffusion) redFlags.push('pericardial effusion');
+    if (patientData.redFlagSymptoms.biatrialDilation) redFlags.push('biatrial dilation');
+    if (patientData.redFlagSymptoms.thickeningInteratrialSeptum) redFlags.push('thickening of interatrial septum and valves');
+    if (patientData.redFlagSymptoms.fiveFiveFiveFinding) redFlags.push('5-5-5 finding');
+    if (patientData.redFlagSymptoms.diastolicDysfunction) redFlags.push('diastolic dysfunction with increased LV filling pressure');
+    if (patientData.redFlagSymptoms.intoleranceHeartFailure) redFlags.push('intolerance to standard heart failure treatment');
+    if (patientData.redFlagSymptoms.spontaneousResolutionHypertension) redFlags.push('spontaneous resolution of hypertension');
+    if (patientData.redFlagSymptoms.taviAorticStenosis) redFlags.push('TAVI/aortic stenosis');
+    if (patientData.redFlagSymptoms.other && patientData.redFlagSymptoms.otherValue) redFlags.push(patientData.redFlagSymptoms.otherValue);
+
+    const summary = `PATIENT DIAGNOSIS SUMMARY
+
+Patient: ${patientData.firstName} ${patientData.lastName}
+ID: ${patientData.id}
+Status: ${status}
+
+CLINICAL PRESENTATION:
+Based on comprehensive evaluation, this ${patientData.clinicalFindings.age65Value || 'adult'}-year-old ${patientData.gender.toLowerCase()} patient presents with clinical findings suggestive of cardiac amyloidosis evaluation.
+
+SIGNIFICANT CLINICAL FINDINGS:
+${clinicalFindings.length > 0 ? clinicalFindings.map(finding => `• ${finding}`).join('\n') : '• No significant clinical findings documented'}
+
+RED FLAG SYMPTOMS:
+${redFlags.length > 0 ? redFlags.map(flag => `• ${flag}`).join('\n') : '• No red flag symptoms documented'}
+
+ASSESSMENT:
+The constellation of clinical findings ${clinicalFindings.length > 0 ? 'including ' + clinicalFindings.slice(0, 2).join(' and ') : ''} ${redFlags.length > 0 ? 'along with red flag symptoms such as ' + redFlags.slice(0, 2).join(' and ') : ''} ${clinicalFindings.length > 0 || redFlags.length > 0 ? 'warrants further evaluation for cardiac amyloidosis' : 'requires continued monitoring and evaluation'}.
+
+RECOMMENDATIONS:
+• Continue comprehensive cardiac evaluation
+• Consider advanced imaging studies if indicated
+• Multidisciplinary consultation as appropriate
+• Regular follow-up monitoring
+• Patient and family education regarding condition
+
+Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`;
+
+    return summary;
+  };
+
+  const handleCopyDiagnosis = async () => {
+    try {
+      await navigator.clipboard.writeText(generateDiagnosisSummary());
+      toast.success('Diagnosis summary copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to copy diagnosis summary');
+    }
   };
 
   if (!patientData) {
@@ -470,6 +534,38 @@ const PatientDetails = () => {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+
+        {/* Diagnosis Summary */}
+        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl">🩺</span>
+                <span>AI Generated Diagnosis Summary</span>
+              </div>
+              <Button
+                onClick={handleCopyDiagnosis}
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2 hover:bg-[#29a8b6] hover:text-white transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                <span>Copy</span>
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                {generateDiagnosisSummary()}
+              </pre>
+            </div>
+            <div className="mt-4 text-xs text-gray-500 italic">
+              * This summary is automatically generated based on patient data and clinical findings. 
+              Please review and validate all information before clinical use.
+            </div>
           </CardContent>
         </Card>
       </div>
