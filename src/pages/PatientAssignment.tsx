@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { SpecialistType, Hospital } from '@/types/patient';
+import { SpecialistType, Hospital, Specialist } from '@/types/patient';
 
 const PatientAssignment = () => {
   const { id } = useParams();
@@ -55,6 +55,89 @@ const PatientAssignment = () => {
       address: '789 Park Blvd, Northside'
     }
   ];
+
+  const specialists: Specialist[] = [
+    // City General Hospital - Hematology
+    {
+      id: '1',
+      name: 'Dr. Sarah Johnson',
+      type: 'hematology',
+      hospitalId: '1'
+    },
+    {
+      id: '2',
+      name: 'Dr. Michael Chen',
+      type: 'hematology',
+      hospitalId: '1'
+    },
+    // City General Hospital - Nuclear Medicine
+    {
+      id: '3',
+      name: 'Dr. Emily Rodriguez',
+      type: 'nuclear',
+      hospitalId: '1'
+    },
+    // University Medical Center - Hematology
+    {
+      id: '4',
+      name: 'Dr. David Thompson',
+      type: 'hematology',
+      hospitalId: '2'
+    },
+    {
+      id: '5',
+      name: 'Dr. Lisa Wang',
+      type: 'hematology',
+      hospitalId: '2'
+    },
+    // University Medical Center - Nuclear Medicine
+    {
+      id: '6',
+      name: 'Dr. Robert Davis',
+      type: 'nuclear',
+      hospitalId: '2'
+    },
+    {
+      id: '7',
+      name: 'Dr. Anna Kowalski',
+      type: 'nuclear',
+      hospitalId: '2'
+    },
+    // University Medical Center - Genetic
+    {
+      id: '8',
+      name: 'Dr. James Wilson',
+      type: 'genetic',
+      hospitalId: '2'
+    },
+    // Memorial Healthcare - Genetic
+    {
+      id: '9',
+      name: 'Dr. Maria Garcia',
+      type: 'genetic',
+      hospitalId: '3'
+    },
+    {
+      id: '10',
+      name: 'Dr. Thomas Brown',
+      type: 'genetic',
+      hospitalId: '3'
+    },
+    // Memorial Healthcare - Nuclear Medicine
+    {
+      id: '11',
+      name: 'Dr. Jennifer Lee',
+      type: 'nuclear',
+      hospitalId: '3'
+    }
+  ];
+
+  // Filter specialists based on selected hospital and specialist type
+  const filteredSpecialists = specialists.filter(specialist => 
+    specialist.hospitalId === selectedHospital && 
+    specialist.type === selectedSpecialistType &&
+    specialist.name.toLowerCase().includes(searchSpecialist.toLowerCase())
+  );
 
   const handleSubmit = () => {
     // Handle assignment submission
@@ -186,10 +269,29 @@ const PatientAssignment = () => {
               )}
 
               {selectedSpecialistType && selectedHospital && (
-                <div className="space-y-3">
-                  <div className="text-center text-gray-600 py-4">
-                    Available specialists will be listed here
-                  </div>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {filteredSpecialists.length > 0 ? (
+                    filteredSpecialists.map((specialist) => (
+                      <div
+                        key={specialist.id}
+                        onClick={() => setSelectedSpecialist(specialist.id)}
+                        className={`p-4 border-2 rounded-xl cursor-pointer transition-colors ${
+                          selectedSpecialist === specialist.id
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-semibold">{specialist.name}</div>
+                        <div className="text-gray-600 text-sm capitalize">
+                          {specialistTypes.find(t => t.id === specialist.type)?.name}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-4">
+                      No specialists found for the selected criteria
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -220,7 +322,7 @@ const PatientAssignment = () => {
           <Button
             onClick={handleSubmit}
             className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-8 h-12"
-            disabled={!selectedSpecialistType || !selectedHospital}
+            disabled={!selectedSpecialistType || !selectedHospital || !selectedSpecialist}
           >
             Submit
           </Button>
