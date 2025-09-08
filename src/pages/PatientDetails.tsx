@@ -546,7 +546,7 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">🩺</span>
-                <span>AI Generated Diagnosis Summary</span>
+                <span>Diagnosis Summary</span>
               </div>
               <Button
                 onClick={handleCopyDiagnosis}
