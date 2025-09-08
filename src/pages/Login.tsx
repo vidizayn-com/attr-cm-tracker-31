@@ -2,11 +2,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('(+90) 559 230 98 61');
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const navigate = useNavigate();
 
   const handleSendCode = () => {
@@ -57,6 +59,24 @@ const Login = () => {
             <p className="text-primary text-xs sm:text-sm mt-2 italic">
               Enter the phone number registered with your cardiologist
             </p>
+          </div>
+
+          {/* Authorization Checkbox */}
+          <div className="mb-6">
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="authorization"
+                checked={isAuthorized}
+                onCheckedChange={(checked) => setIsAuthorized(checked as boolean)}
+                className="mt-1"
+              />
+              <label
+                htmlFor="authorization"
+                className="text-sm text-gray-700 leading-5 cursor-pointer"
+              >
+                I hereby authorize the association to fully access and share my information
+              </label>
+            </div>
           </div>
 
           {/* Send Code Button */}
