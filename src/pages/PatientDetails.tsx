@@ -966,8 +966,8 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                 <div className={`w-6 h-6 rounded-md flex items-center justify-center ${patientData.redFlagSymptoms.other ? 'bg-blue-600' : 'bg-gray-300'}`}>
                   {patientData.redFlagSymptoms.other && <span className="text-white text-sm">✓</span>}
                 </div>
-                <span>Other</span>
-                <Input value={patientData.redFlagSymptoms.otherValue} placeholder="" className="flex-1" readOnly />
+                <span>Other / Doctor's Comment</span>
+                <Textarea value={patientData.redFlagSymptoms.otherValue} placeholder="" className="flex-1 min-h-20" readOnly />
               </div>
             </CardContent>
           </Card>

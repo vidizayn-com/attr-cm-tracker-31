@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -569,17 +570,17 @@ const PatientRegistration = () => {
                     })}
                     className="w-5 h-5 flex-shrink-0 mt-1"
                   />
-                  <span className="text-sm sm:text-base">Other</span>
+                  <span className="text-sm sm:text-base">Other / Doctor's Comment</span>
                 </div>
                 <div className="ml-8">
-                  <Input
+                  <Textarea
                     value={formData.redFlagSymptoms.otherValue}
                     onChange={(e) => setFormData({
                       ...formData,
                       redFlagSymptoms: {...formData.redFlagSymptoms, otherValue: e.target.value}
                     })}
-                    placeholder="Specify other symptom"
-                    className="h-8 sm:h-10"
+                    placeholder="Enter additional symptoms or doctor's comments"
+                    className="min-h-20"
                   />
                 </div>
               </div>
