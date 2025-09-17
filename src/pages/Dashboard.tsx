@@ -116,10 +116,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl">Monthly Patient Registrations</CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={chartConfig} className="h-64">
-                  <BarChart data={patientRegistrationData}>
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                <ChartContainer config={chartConfig} className="h-48 sm:h-56 lg:h-64 min-h-0">
+                  <BarChart data={patientRegistrationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis 
+                      dataKey="month" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      width={30}
+                    />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="count" fill="#3b82f6" radius={4} />
                   </BarChart>
@@ -132,10 +142,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl">Monthly Report Creations</CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={chartConfig} className="h-64">
-                  <BarChart data={reportCreationData}>
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                <ChartContainer config={chartConfig} className="h-48 sm:h-56 lg:h-64 min-h-0">
+                  <BarChart data={reportCreationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis 
+                      dataKey="month" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      width={30}
+                    />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="count" fill="#10b981" radius={4} />
                   </BarChart>
