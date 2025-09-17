@@ -862,10 +862,10 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                   <span className="font-semibold">NT-proBNP &gt;600 (or) BNP &gt;150</span>
                   <button 
                     onClick={() => setShowNtProBnpChart(true)}
-                    className="ml-auto p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                    className="ml-auto px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                     title="View NT-proBNP trend"
                   >
-                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                    <TrendingUp className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -901,10 +901,10 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                   <span className="font-semibold">GFR &gt; 30 ml/min/1.72 m²</span>
                   <button 
                     onClick={() => setShowGfrChart(true)}
-                    className="ml-auto p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                    className="ml-auto px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                     title="View GFR trend"
                   >
-                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                    <TrendingUp className="w-4 h-4" />
                   </button>
                   {patientData.clinicalFindings.gfr30 && <span className="text-blue-600 text-sm">Meets criteria</span>}
                 </div>
