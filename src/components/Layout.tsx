@@ -33,7 +33,7 @@ interface LayoutProps {
 const navigationItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
   { title: 'Patients', url: '/patients', icon: Users },
-  { title: 'Patients Awaiting Assignment', url: '/patients/pool', icon: UserCheck },
+  { title: 'Patient Pool', url: '/patients/pool', icon: UserCheck },
   { title: 'Resources', url: '/resources', icon: BookOpen },
   { title: 'Report Tracker', url: '/report-tracker', icon: FileText },
 ];
