@@ -89,8 +89,8 @@ const PatientPool = () => {
       `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesHospital = hospitalFilter === '' || patient.hospital === hospitalFilter;
-    const matchesSpecialty = specialtyFilter === '' || patient.expectedSpecialty === specialtyFilter;
+    const matchesHospital = hospitalFilter === '' || hospitalFilter === 'all' || patient.hospital === hospitalFilter;
+    const matchesSpecialty = specialtyFilter === '' || specialtyFilter === 'all' || patient.expectedSpecialty === specialtyFilter;
     
     return matchesSearch && matchesHospital && matchesSpecialty;
   });
@@ -163,7 +163,7 @@ const PatientPool = () => {
                   <SelectValue placeholder="All Hospitals" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="">All Hospitals</SelectItem>
+                  <SelectItem value="all">All Hospitals</SelectItem>
                   {hospitals.map((hospital) => (
                     <SelectItem key={hospital} value={hospital}>
                       {hospital}
@@ -178,7 +178,7 @@ const PatientPool = () => {
                   <SelectValue placeholder="All Specialties" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="">All Specialties</SelectItem>
+                  <SelectItem value="all">All Specialties</SelectItem>
                   {specialties.map((specialty) => (
                     <SelectItem key={specialty} value={specialty}>
                       {specialty}
@@ -192,8 +192,8 @@ const PatientPool = () => {
                 variant="outline" 
                 onClick={() => {
                   setSearchTerm('');
-                  setHospitalFilter('');
-                  setSpecialtyFilter('');
+                  setHospitalFilter('all');
+                  setSpecialtyFilter('all');
                 }}
                 className="w-full"
               >
