@@ -26,6 +26,13 @@ const PatientDetails = () => {
   const [status, setStatus] = useState<'New' | 'Diagnosis' | 'Follow-up' | 'Cancelled'>('New');
   const [cancellationReason, setCancellationReason] = useState('');
   const [showHistoricalRecords, setShowHistoricalRecords] = useState(false);
+  const [historicalFilter, setHistoricalFilter] = useState({
+    doctor: '',
+    testName: '',
+    dateFrom: '',
+    dateTo: ''
+  });
+  const [sortConfig, setSortConfig] = useState<{key: string, direction: 'asc' | 'desc'} | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -113,95 +120,136 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
     return summary;
   };
 
-  // Generate historical clinical records based on patient data
+  // Generate comprehensive historical clinical records
   const generateHistoricalRecords = () => {
-    const records = [];
-    
-    // LVH records
-    if (patientData.clinicalFindings.lvh12) {
-      records.push({
-        date: '2024-12-10',
-        doctor: 'Dr. Sarah Johnson',
-        testName: 'Echocardiogram - LVH',
-        result: patientData.clinicalFindings.lvh12Value,
-        unit: 'mm'
-      });
-      records.push({
-        date: '2024-11-15',
-        doctor: 'Dr. Michael Chen',
-        testName: 'Echocardiogram - LVH Follow-up',
-        result: (parseFloat(patientData.clinicalFindings.lvh12Value) - 0.5).toString(),
-        unit: 'mm'
-      });
+    const allRecords = [
+      // LVH Echocardiogram records
+      { date: '2024-12-10', doctor: 'Dr. Sarah Johnson', testName: 'Echocardiogram - LVH', result: '14.2', unit: 'mm' },
+      { date: '2024-11-15', doctor: 'Dr. Michael Chen', testName: 'Echocardiogram - LVH', result: '13.8', unit: 'mm' },
+      { date: '2024-10-20', doctor: 'Dr. Sarah Johnson', testName: 'Echocardiogram - LVH', result: '13.5', unit: 'mm' },
+      { date: '2024-09-25', doctor: 'Dr. Robert Kim', testName: 'Echocardiogram - LVH', result: '13.1', unit: 'mm' },
+      
+      // NT-proBNP records
+      { date: '2024-12-08', doctor: 'Dr. Emily Rodriguez', testName: 'NT-proBNP', result: '850', unit: 'pg/mL' },
+      { date: '2024-11-12', doctor: 'Dr. Ahmed Hassan', testName: 'NT-proBNP', result: '780', unit: 'pg/mL' },
+      { date: '2024-10-18', doctor: 'Dr. Emily Rodriguez', testName: 'NT-proBNP', result: '720', unit: 'pg/mL' },
+      { date: '2024-09-22', doctor: 'Dr. Lisa Wang', testName: 'NT-proBNP', result: '680', unit: 'pg/mL' },
+      { date: '2024-08-28', doctor: 'Dr. Ahmed Hassan', testName: 'NT-proBNP', result: '650', unit: 'pg/mL' },
+      
+      // BNP records
+      { date: '2024-11-25', doctor: 'Dr. Lisa Wang', testName: 'BNP', result: '180', unit: 'pg/mL' },
+      { date: '2024-10-30', doctor: 'Dr. David Thompson', testName: 'BNP', result: '165', unit: 'pg/mL' },
+      { date: '2024-09-15', doctor: 'Dr. Lisa Wang', testName: 'BNP', result: '155', unit: 'pg/mL' },
+      
+      // Ejection Fraction records
+      { date: '2024-12-05', doctor: 'Dr. Robert Kim', testName: 'Ejection Fraction', result: '42', unit: '%' },
+      { date: '2024-11-10', doctor: 'Dr. Maria Santos', testName: 'Ejection Fraction', result: '44', unit: '%' },
+      { date: '2024-10-12', doctor: 'Dr. Robert Kim', testName: 'Ejection Fraction', result: '45', unit: '%' },
+      { date: '2024-09-08', doctor: 'Dr. Maria Santos', testName: 'Ejection Fraction', result: '46', unit: '%' },
+      
+      // GFR records
+      { date: '2024-12-01', doctor: 'Dr. David Thompson', testName: 'GFR', result: '65', unit: 'ml/min/1.73m²' },
+      { date: '2024-11-05', doctor: 'Dr. Jennifer Lee', testName: 'GFR', result: '68', unit: 'ml/min/1.73m²' },
+      { date: '2024-10-10', doctor: 'Dr. David Thompson', testName: 'GFR', result: '70', unit: 'ml/min/1.73m²' },
+      { date: '2024-09-12', doctor: 'Dr. Jennifer Lee', testName: 'GFR', result: '72', unit: 'ml/min/1.73m²' },
+      
+      // Additional comprehensive tests
+      { date: '2024-12-03', doctor: 'Dr. Anna Kowalski', testName: 'Troponin I', result: '0.8', unit: 'ng/mL' },
+      { date: '2024-11-20', doctor: 'Dr. James Wilson', testName: 'CRP', result: '8.5', unit: 'mg/L' },
+      { date: '2024-11-18', doctor: 'Dr. Anna Kowalski', testName: 'Creatinine', result: '1.2', unit: 'mg/dL' },
+      { date: '2024-11-02', doctor: 'Dr. Peter Brown', testName: 'Hemoglobin', result: '12.8', unit: 'g/dL' },
+      { date: '2024-10-28', doctor: 'Dr. James Wilson', testName: 'Total Cholesterol', result: '220', unit: 'mg/dL' },
+      { date: '2024-10-25', doctor: 'Dr. Anna Kowalski', testName: 'HDL Cholesterol', result: '45', unit: 'mg/dL' },
+      { date: '2024-10-22', doctor: 'Dr. Peter Brown', testName: 'LDL Cholesterol', result: '145', unit: 'mg/dL' },
+      { date: '2024-10-18', doctor: 'Dr. James Wilson', testName: 'Triglycerides', result: '150', unit: 'mg/dL' },
+      { date: '2024-10-15', doctor: 'Dr. Anna Kowalski', testName: 'HbA1c', result: '6.2', unit: '%' },
+      { date: '2024-10-05', doctor: 'Dr. Peter Brown', testName: 'TSH', result: '2.4', unit: 'mIU/L' },
+      { date: '2024-09-28', doctor: 'Dr. James Wilson', testName: 'Vitamin D', result: '28', unit: 'ng/mL' },
+      { date: '2024-09-20', doctor: 'Dr. Anna Kowalski', testName: 'Vitamin B12', result: '350', unit: 'pg/mL' },
+      { date: '2024-09-18', doctor: 'Dr. Peter Brown', testName: 'Folate', result: '12', unit: 'ng/mL' },
+      { date: '2024-09-10', doctor: 'Dr. James Wilson', testName: 'Uric Acid', result: '6.8', unit: 'mg/dL' },
+      { date: '2024-08-30', doctor: 'Dr. Anna Kowalski', testName: 'Albumin', result: '4.2', unit: 'g/dL' },
+    ];
+
+    return allRecords;
+  };
+
+  // Filter and sort historical records
+  const getFilteredAndSortedRecords = () => {
+    let filtered = generateHistoricalRecords();
+
+    // Apply filters
+    if (historicalFilter.doctor) {
+      filtered = filtered.filter(record => 
+        record.doctor.toLowerCase().includes(historicalFilter.doctor.toLowerCase())
+      );
     }
 
-    // NT-proBNP records
-    if (patientData.clinicalFindings.ntProBnp) {
-      records.push({
-        date: '2024-12-08',
-        doctor: 'Dr. Emily Rodriguez',
-        testName: 'NT-proBNP',
-        result: patientData.clinicalFindings.ntProBnpValue,
-        unit: 'pg/mL'
-      });
-      records.push({
-        date: '2024-10-20',
-        doctor: 'Dr. Ahmed Hassan',
-        testName: 'NT-proBNP',
-        result: (parseFloat(patientData.clinicalFindings.ntProBnpValue) - 50).toString(),
-        unit: 'pg/mL'
-      });
+    if (historicalFilter.testName) {
+      filtered = filtered.filter(record => 
+        record.testName.toLowerCase().includes(historicalFilter.testName.toLowerCase())
+      );
     }
 
-    // BNP records
-    if (patientData.clinicalFindings.bnpValue) {
-      records.push({
-        date: '2024-11-25',
-        doctor: 'Dr. Lisa Wang',
-        testName: 'BNP',
-        result: patientData.clinicalFindings.bnpValue,
-        unit: 'pg/mL'
-      });
+    if (historicalFilter.dateFrom) {
+      filtered = filtered.filter(record => 
+        new Date(record.date) >= new Date(historicalFilter.dateFrom)
+      );
     }
 
-    // EF records
-    if (patientData.clinicalFindings.ef40) {
-      records.push({
-        date: '2024-12-05',
-        doctor: 'Dr. Robert Kim',
-        testName: 'Ejection Fraction',
-        result: patientData.clinicalFindings.ef40Value,
-        unit: '%'
-      });
-      records.push({
-        date: '2024-09-30',
-        doctor: 'Dr. Maria Santos',
-        testName: 'Ejection Fraction',
-        result: (parseFloat(patientData.clinicalFindings.ef40Value) - 2).toString(),
-        unit: '%'
-      });
+    if (historicalFilter.dateTo) {
+      filtered = filtered.filter(record => 
+        new Date(record.date) <= new Date(historicalFilter.dateTo)
+      );
     }
 
-    // GFR records
-    if (patientData.clinicalFindings.gfr30) {
-      records.push({
-        date: '2024-12-01',
-        doctor: 'Dr. David Thompson',
-        testName: 'GFR',
-        result: patientData.clinicalFindings.gfr30Value,
-        unit: 'ml/min/1.73m²'
+    // Apply sorting
+    if (sortConfig) {
+      filtered.sort((a, b) => {
+        let aValue: string | number = a[sortConfig.key as keyof typeof a];
+        let bValue: string | number = b[sortConfig.key as keyof typeof b];
+
+        // Handle date sorting
+        if (sortConfig.key === 'date') {
+          aValue = new Date(aValue as string).getTime();
+          bValue = new Date(bValue as string).getTime();
+        }
+
+        // Handle numeric result sorting
+        if (sortConfig.key === 'result') {
+          aValue = parseFloat(aValue as string) || 0;
+          bValue = parseFloat(bValue as string) || 0;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
       });
-      records.push({
-        date: '2024-10-15',
-        doctor: 'Dr. Jennifer Lee',
-        testName: 'GFR',
-        result: (parseFloat(patientData.clinicalFindings.gfr30Value) + 5).toString(),
-        unit: 'ml/min/1.73m²'
-      });
+    } else {
+      // Default sort by date (newest first)
+      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
 
-    // Sort by date (newest first)
-    return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return filtered;
+  };
+
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Get unique values for filter dropdowns
+  const getUniqueValues = (key: 'doctor' | 'testName') => {
+    const allRecords = generateHistoricalRecords();
+    return [...new Set(allRecords.map(record => record[key]))].sort();
   };
 
   const handleCopyDiagnosis = async () => {
@@ -440,35 +488,129 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                       Historical Records
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-4xl">
+                  <DialogContent className="max-w-6xl max-h-[90vh]">
                     <DialogHeader>
                       <DialogTitle>Historical Clinical Records</DialogTitle>
                     </DialogHeader>
-                    <div className="max-h-96 overflow-y-auto">
+                    
+                    {/* Filters */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Doctor</label>
+                        <Select 
+                          value={historicalFilter.doctor} 
+                          onValueChange={(value) => setHistoricalFilter({...historicalFilter, doctor: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All doctors" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            <SelectItem value="">All doctors</SelectItem>
+                            {getUniqueValues('doctor').map(doctor => (
+                              <SelectItem key={doctor} value={doctor}>{doctor}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Test Name</label>
+                        <Select 
+                          value={historicalFilter.testName} 
+                          onValueChange={(value) => setHistoricalFilter({...historicalFilter, testName: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All tests" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            <SelectItem value="">All tests</SelectItem>
+                            {getUniqueValues('testName').map(testName => (
+                              <SelectItem key={testName} value={testName}>{testName}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Date From</label>
+                        <Input
+                          type="date"
+                          value={historicalFilter.dateFrom}
+                          onChange={(e) => setHistoricalFilter({...historicalFilter, dateFrom: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Date To</label>
+                        <Input
+                          type="date"
+                          value={historicalFilter.dateTo}
+                          onChange={(e) => setHistoricalFilter({...historicalFilter, dateTo: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-600">
+                        Showing {getFilteredAndSortedRecords().length} of {generateHistoricalRecords().length} records
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setHistoricalFilter({ doctor: '', testName: '', dateFrom: '', dateTo: '' });
+                          setSortConfig(null);
+                        }}
+                      >
+                        Clear Filters
+                      </Button>
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto border rounded-lg">
                       <Table>
-                        <TableHeader>
+                        <TableHeader className="sticky top-0 bg-white">
                           <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Doctor</TableHead>
-                            <TableHead>Test Name</TableHead>
-                            <TableHead>Result</TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => handleSort('date')}
+                            >
+                              Date {sortConfig?.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => handleSort('doctor')}
+                            >
+                              Doctor {sortConfig?.key === 'doctor' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => handleSort('testName')}
+                            >
+                              Test Name {sortConfig?.key === 'testName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => handleSort('result')}
+                            >
+                              Result {sortConfig?.key === 'result' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </TableHead>
                             <TableHead>Result Unit</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {generateHistoricalRecords().map((record, index) => (
-                            <TableRow key={index}>
+                          {getFilteredAndSortedRecords().map((record, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50">
                               <TableCell>{new Date(record.date).toLocaleDateString('tr-TR')}</TableCell>
                               <TableCell>{record.doctor}</TableCell>
                               <TableCell>{record.testName}</TableCell>
-                              <TableCell>{record.result}</TableCell>
+                              <TableCell className="font-mono">{record.result}</TableCell>
                               <TableCell>{record.unit}</TableCell>
                             </TableRow>
                           ))}
-                          {generateHistoricalRecords().length === 0 && (
+                          {getFilteredAndSortedRecords().length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={5} className="text-center text-gray-500">
-                                No historical records found
+                              <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                                No records found matching the current filters
                               </TableCell>
                             </TableRow>
                           )}
