@@ -67,6 +67,10 @@ const PatientDetails = () => {
       category: 'Medical History'
     }
   ]);
+  const [fileUploadData, setFileUploadData] = useState({
+    fileName: '',
+    category: 'General'
+  });
 
   useEffect(() => {
     if (id) {
@@ -289,19 +293,22 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
   // Handle file upload (mock)
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
+    if (files && fileUploadData.fileName.trim()) {
       Array.from(files).forEach(file => {
         const newFile = {
           id: Date.now() + Math.random(),
-          name: file.name,
+          name: fileUploadData.fileName || file.name,
           type: file.type.includes('image') ? 'image' : 'pdf',
           size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
           uploadDate: new Date().toISOString().split('T')[0],
-          category: 'General'
+          category: fileUploadData.category
         };
         setUploadedFiles(prev => [...prev, newFile]);
       });
+      setFileUploadData({ fileName: '', category: 'General' });
       toast.success(`${files.length} file(s) uploaded successfully!`);
+    } else if (files && !fileUploadData.fileName.trim()) {
+      toast.error('Please enter a file name before uploading.');
     }
   };
 
@@ -410,23 +417,59 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                 <DialogTitle>Patient Files</DialogTitle>
               </DialogHeader>
               
-              {/* File Upload Section */}
-              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg mb-4">
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="text-center">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-lg font-medium text-gray-600">Click to upload files</p>
-                    <p className="text-sm text-gray-500">Supports PDF, Images, Documents</p>
+              {/* File Upload Form */}
+              <div className="space-y-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">File Name</label>
+                    <Input
+                      value={fileUploadData.fileName}
+                      onChange={(e) => setFileUploadData(prev => ({ ...prev, fileName: e.target.value }))}
+                      placeholder="Enter file name"
+                      className="w-full"
+                    />
                   </div>
-                </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <Select 
+                      value={fileUploadData.category} 
+                      onValueChange={(value) => setFileUploadData(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="General">General</SelectItem>
+                        <SelectItem value="Lab Results">Lab Results</SelectItem>
+                        <SelectItem value="Imaging">Imaging</SelectItem>
+                        <SelectItem value="Medical History">Medical History</SelectItem>
+                        <SelectItem value="Photos">Photos</SelectItem>
+                        <SelectItem value="Assessment">Assessment</SelectItem>
+                        <SelectItem value="Identification">Identification</SelectItem>
+                        <SelectItem value="Reports">Reports</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {/* File Upload Section */}
+                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="text-center">
+                      <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-lg font-medium text-gray-600">Click to upload files</p>
+                      <p className="text-sm text-gray-500">Supports PDF, Images, Documents</p>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {/* Uploaded Files List */}

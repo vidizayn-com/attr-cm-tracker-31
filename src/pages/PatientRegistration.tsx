@@ -67,7 +67,11 @@ const PatientRegistration = () => {
         uploadDate: '2024-12-17',
         category: 'Identification'
       }
-    ]
+    ],
+    fileUploadData: {
+      fileName: '',
+      category: 'General'
+    }
   });
 
   const handleSubmit = () => {
@@ -82,22 +86,25 @@ const PatientRegistration = () => {
   // Handle file upload (mock)
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
+    if (files && formData.fileUploadData.fileName.trim()) {
       Array.from(files).forEach(file => {
         const newFile = {
           id: Date.now() + Math.random(),
-          name: file.name,
+          name: formData.fileUploadData.fileName || file.name,
           type: file.type.includes('image') ? 'image' : 'pdf',
           size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
           uploadDate: new Date().toISOString().split('T')[0],
-          category: 'General'
+          category: formData.fileUploadData.category
         };
         setFormData(prev => ({
           ...prev,
-          uploadedFiles: [...prev.uploadedFiles, newFile]
+          uploadedFiles: [...prev.uploadedFiles, newFile],
+          fileUploadData: { fileName: '', category: 'General' }
         }));
       });
       toast.success(`${files.length} file(s) uploaded successfully!`);
+    } else if (files && !formData.fileUploadData.fileName.trim()) {
+      toast.error('Please enter a file name before uploading.');
     }
   };
 
@@ -594,23 +601,61 @@ const PatientRegistration = () => {
                 <DialogTitle>Patient Files</DialogTitle>
               </DialogHeader>
               
-              {/* File Upload Section */}
-              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg mb-4">
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload-registration"
-                />
-                <label htmlFor="file-upload-registration" className="cursor-pointer">
-                  <div className="text-center">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-lg font-medium text-gray-600">Click to upload files</p>
-                    <p className="text-sm text-gray-500">Supports PDF, Images, Documents</p>
+              {/* File Upload Form */}
+              <div className="space-y-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">File Name</label>
+                    <Input
+                      value={formData.fileUploadData.fileName}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        fileUploadData: { ...prev.fileUploadData, fileName: e.target.value }
+                      }))}
+                      placeholder="Enter file name"
+                      className="w-full"
+                    />
                   </div>
-                </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select
+                      value={formData.fileUploadData.category}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        fileUploadData: { ...prev.fileUploadData, category: e.target.value }
+                      }))}
+                      className="w-full h-10 px-3 border border-gray-300 rounded-md"
+                    >
+                      <option value="General">General</option>
+                      <option value="Lab Results">Lab Results</option>
+                      <option value="Imaging">Imaging</option>
+                      <option value="Medical History">Medical History</option>
+                      <option value="Photos">Photos</option>
+                      <option value="Assessment">Assessment</option>
+                      <option value="Identification">Identification</option>
+                      <option value="Reports">Reports</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* File Upload Section */}
+                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload-registration"
+                  />
+                  <label htmlFor="file-upload-registration" className="cursor-pointer">
+                    <div className="text-center">
+                      <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-lg font-medium text-gray-600">Click to upload files</p>
+                      <p className="text-sm text-gray-500">Supports PDF, Images, Documents</p>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {/* Uploaded Files List */}
