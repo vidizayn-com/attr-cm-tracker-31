@@ -498,14 +498,14 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                       <div>
                         <label className="block text-sm font-medium mb-1">Doctor</label>
                         <Select 
-                          value={historicalFilter.doctor} 
-                          onValueChange={(value) => setHistoricalFilter({...historicalFilter, doctor: value})}
+                          value={historicalFilter.doctor || 'all-doctors'} 
+                          onValueChange={(value) => setHistoricalFilter({...historicalFilter, doctor: value === 'all-doctors' ? '' : value})}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="All doctors" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-50">
-                            <SelectItem value="">All doctors</SelectItem>
+                            <SelectItem value="all-doctors">All doctors</SelectItem>
                             {getUniqueValues('doctor').map(doctor => (
                               <SelectItem key={doctor} value={doctor}>{doctor}</SelectItem>
                             ))}
@@ -516,14 +516,14 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                       <div>
                         <label className="block text-sm font-medium mb-1">Test Name</label>
                         <Select 
-                          value={historicalFilter.testName} 
-                          onValueChange={(value) => setHistoricalFilter({...historicalFilter, testName: value})}
+                          value={historicalFilter.testName || 'all-tests'} 
+                          onValueChange={(value) => setHistoricalFilter({...historicalFilter, testName: value === 'all-tests' ? '' : value})}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="All tests" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-50">
-                            <SelectItem value="">All tests</SelectItem>
+                            <SelectItem value="all-tests">All tests</SelectItem>
                             {getUniqueValues('testName').map(testName => (
                               <SelectItem key={testName} value={testName}>{testName}</SelectItem>
                             ))}
