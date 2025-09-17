@@ -270,6 +270,27 @@ const PatientAssignment = () => {
 
               {selectedSpecialistType && selectedHospital && (
                 <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {/* Patient Pool Option */}
+                  <div
+                    onClick={() => setSelectedSpecialist('patient-pool')}
+                    className={`p-4 border-2 rounded-xl cursor-pointer transition-colors ${
+                      selectedSpecialist === 'patient-pool'
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="text-xl">👥</div>
+                      <div>
+                        <div className="font-semibold text-purple-600">Patient Pool</div>
+                        <div className="text-gray-600 text-sm">
+                          Assign to available specialists in this category
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Individual Specialists */}
                   {filteredSpecialists.length > 0 ? (
                     filteredSpecialists.map((specialist) => (
                       <div
@@ -289,7 +310,7 @@ const PatientAssignment = () => {
                     ))
                   ) : (
                     <div className="text-center text-gray-500 py-4">
-                      No specialists found for the selected criteria
+                      No individual specialists found for the selected criteria
                     </div>
                   )}
                 </div>
