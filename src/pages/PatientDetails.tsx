@@ -364,11 +364,7 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-1">ID</label>
-                  <Input value={patientData.id} readOnly className="bg-gray-100" />
-                </div>
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-1">Gender</label>
                   <Input value={patientData.gender} readOnly className="bg-gray-100" />

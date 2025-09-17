@@ -12,7 +12,6 @@ const PatientRegistration = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    id: '',
     gender: '',
     dateOfBirth: '',
     contactNumber: '',
@@ -98,16 +97,7 @@ const PatientRegistration = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">ID</label>
-                  <Input
-                    value={formData.id}
-                    onChange={(e) => setFormData({...formData, id: e.target.value})}
-                    placeholder="Patient ID"
-                    className="h-10 sm:h-auto"
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Gender</label>
                   <select
