@@ -4,8 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import { Upload, FileText, Image, Trash2, Eye } from 'lucide-react';
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
@@ -45,7 +49,25 @@ const PatientRegistration = () => {
       taviAorticStenosis: false,
       other: false,
       otherValue: ''
-    }
+    },
+    uploadedFiles: [
+      {
+        id: 1,
+        name: 'Initial_Assessment.pdf',
+        type: 'pdf',
+        size: '1.2 MB',
+        uploadDate: '2024-12-17',
+        category: 'Assessment'
+      },
+      {
+        id: 2,
+        name: 'Patient_ID_Copy.jpg',
+        type: 'image',
+        size: '320 KB',
+        uploadDate: '2024-12-17',
+        category: 'Identification'
+      }
+    ]
   });
 
   const handleSubmit = () => {
@@ -55,6 +77,42 @@ const PatientRegistration = () => {
 
   const handleCancel = () => {
     navigate('/patients');
+  };
+
+  // Handle file upload (mock)
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const newFile = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          type: file.type.includes('image') ? 'image' : 'pdf',
+          size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+          uploadDate: new Date().toISOString().split('T')[0],
+          category: 'General'
+        };
+        setFormData(prev => ({
+          ...prev,
+          uploadedFiles: [...prev.uploadedFiles, newFile]
+        }));
+      });
+      toast.success(`${files.length} file(s) uploaded successfully!`);
+    }
+  };
+
+  // Handle file deletion
+  const handleFileDelete = (fileId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      uploadedFiles: prev.uploadedFiles.filter(file => file.id !== fileId)
+    }));
+    toast.success('File deleted successfully!');
+  };
+
+  // Handle file view (mock)
+  const handleFileView = (fileName: string) => {
+    toast.info(`Opening ${fileName}...`);
   };
 
   return (
@@ -524,15 +582,113 @@ const PatientRegistration = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 px-4 sm:px-0">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-3 sm:order-1">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Files
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh]">
+              <DialogHeader>
+                <DialogTitle>Patient Files</DialogTitle>
+              </DialogHeader>
+              
+              {/* File Upload Section */}
+              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg mb-4">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload-registration"
+                />
+                <label htmlFor="file-upload-registration" className="cursor-pointer">
+                  <div className="text-center">
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-medium text-gray-600">Click to upload files</p>
+                    <p className="text-sm text-gray-500">Supports PDF, Images, Documents</p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Uploaded Files List */}
+              <div className="max-h-96 overflow-y-auto border rounded-lg">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-white">
+                    <TableRow>
+                      <TableHead>File Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>Upload Date</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {formData.uploadedFiles.map((file) => (
+                      <TableRow key={file.id} className="hover:bg-gray-50">
+                        <TableCell className="flex items-center space-x-2">
+                          {file.type === 'image' ? (
+                            <Image className="w-4 h-4 text-blue-500" />
+                          ) : (
+                            <FileText className="w-4 h-4 text-red-500" />
+                          )}
+                          <span>{file.name}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            file.type === 'image' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {file.type.toUpperCase()}
+                          </span>
+                        </TableCell>
+                        <TableCell>{file.size}</TableCell>
+                        <TableCell>{new Date(file.uploadDate).toLocaleDateString('tr-TR')}</TableCell>
+                        <TableCell>{file.category}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleFileView(file.name)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleFileDelete(file.id)}
+                              className="text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {formData.uploadedFiles.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                          No files uploaded yet
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button
             onClick={handleCancel}
-            className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-2 sm:order-1"
+            className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-2 sm:order-2"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-1 sm:order-2"
+            className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-1 sm:order-3"
           >
             Submit
           </Button>
