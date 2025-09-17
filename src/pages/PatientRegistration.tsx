@@ -97,7 +97,7 @@ const PatientRegistration = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Gender</label>
                   <select
@@ -111,9 +111,6 @@ const PatientRegistration = () => {
                     <option value="other">Other</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Date of Birth</label>
                   <Input
@@ -124,6 +121,9 @@ const PatientRegistration = () => {
                     className="h-10 sm:h-auto"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Contact Number</label>
                   <Input
