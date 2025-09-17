@@ -560,7 +560,7 @@ const PatientRegistration = () => {
               </div>
               
               <div className="p-2">
-                <div className="flex items-start space-x-3 mb-2">
+                <div className="flex items-start space-x-3 mb-3">
                   <input
                     type="checkbox"
                     checked={formData.redFlagSymptoms.other}
@@ -568,21 +568,21 @@ const PatientRegistration = () => {
                       ...formData,
                       redFlagSymptoms: {...formData.redFlagSymptoms, other: e.target.checked}
                     })}
-                    className="w-5 h-5 flex-shrink-0 mt-1"
+                    className="w-5 h-5 flex-shrink-0 mt-0.5"
                   />
-                  <span className="text-sm sm:text-base">Other / Doctor's Comment</span>
-                </div>
-                <div className="ml-8">
-                  <Textarea
-                    value={formData.redFlagSymptoms.otherValue}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      redFlagSymptoms: {...formData.redFlagSymptoms, otherValue: e.target.value}
-                    })}
-                    placeholder="Enter additional symptoms or doctor's comments"
-                    className="min-h-40 resize-none w-full"
-                    rows={10}
-                  />
+                  <div className="flex-1">
+                    <span className="text-sm sm:text-base">Other / Doctor's Comment</span>
+                    <Textarea
+                      value={formData.redFlagSymptoms.otherValue}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        redFlagSymptoms: {...formData.redFlagSymptoms, otherValue: e.target.value}
+                      })}
+                      placeholder="Enter additional symptoms or doctor's comments"
+                      className="mt-2 min-h-40 resize-none w-full"
+                      rows={10}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
