@@ -6,11 +6,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { usePatients } from '@/contexts/PatientContext';
-import { Copy } from 'lucide-react';
+import { Copy, History } from 'lucide-react';
 
 const PatientDetails = () => {
   const { id } = useParams();
@@ -24,6 +25,7 @@ const PatientDetails = () => {
   });
   const [status, setStatus] = useState<'New' | 'Diagnosis' | 'Follow-up' | 'Cancelled'>('New');
   const [cancellationReason, setCancellationReason] = useState('');
+  const [showHistoricalRecords, setShowHistoricalRecords] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -109,6 +111,97 @@ RECOMMENDATIONS:
 Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`;
 
     return summary;
+  };
+
+  // Generate historical clinical records based on patient data
+  const generateHistoricalRecords = () => {
+    const records = [];
+    
+    // LVH records
+    if (patientData.clinicalFindings.lvh12) {
+      records.push({
+        date: '2024-12-10',
+        doctor: 'Dr. Sarah Johnson',
+        testName: 'Echocardiogram - LVH',
+        result: patientData.clinicalFindings.lvh12Value,
+        unit: 'mm'
+      });
+      records.push({
+        date: '2024-11-15',
+        doctor: 'Dr. Michael Chen',
+        testName: 'Echocardiogram - LVH Follow-up',
+        result: (parseFloat(patientData.clinicalFindings.lvh12Value) - 0.5).toString(),
+        unit: 'mm'
+      });
+    }
+
+    // NT-proBNP records
+    if (patientData.clinicalFindings.ntProBnp) {
+      records.push({
+        date: '2024-12-08',
+        doctor: 'Dr. Emily Rodriguez',
+        testName: 'NT-proBNP',
+        result: patientData.clinicalFindings.ntProBnpValue,
+        unit: 'pg/mL'
+      });
+      records.push({
+        date: '2024-10-20',
+        doctor: 'Dr. Ahmed Hassan',
+        testName: 'NT-proBNP',
+        result: (parseFloat(patientData.clinicalFindings.ntProBnpValue) - 50).toString(),
+        unit: 'pg/mL'
+      });
+    }
+
+    // BNP records
+    if (patientData.clinicalFindings.bnpValue) {
+      records.push({
+        date: '2024-11-25',
+        doctor: 'Dr. Lisa Wang',
+        testName: 'BNP',
+        result: patientData.clinicalFindings.bnpValue,
+        unit: 'pg/mL'
+      });
+    }
+
+    // EF records
+    if (patientData.clinicalFindings.ef40) {
+      records.push({
+        date: '2024-12-05',
+        doctor: 'Dr. Robert Kim',
+        testName: 'Ejection Fraction',
+        result: patientData.clinicalFindings.ef40Value,
+        unit: '%'
+      });
+      records.push({
+        date: '2024-09-30',
+        doctor: 'Dr. Maria Santos',
+        testName: 'Ejection Fraction',
+        result: (parseFloat(patientData.clinicalFindings.ef40Value) - 2).toString(),
+        unit: '%'
+      });
+    }
+
+    // GFR records
+    if (patientData.clinicalFindings.gfr30) {
+      records.push({
+        date: '2024-12-01',
+        doctor: 'Dr. David Thompson',
+        testName: 'GFR',
+        result: patientData.clinicalFindings.gfr30Value,
+        unit: 'ml/min/1.73m²'
+      });
+      records.push({
+        date: '2024-10-15',
+        doctor: 'Dr. Jennifer Lee',
+        testName: 'GFR',
+        result: (parseFloat(patientData.clinicalFindings.gfr30Value) + 5).toString(),
+        unit: 'ml/min/1.73m²'
+      });
+    }
+
+    // Sort by date (newest first)
+    return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const handleCopyDiagnosis = async () => {
@@ -335,9 +428,55 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
           {/* Clinical Findings */}
           <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <span className="text-2xl">📋</span>
-                <span>Clinical Findings</span>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xl">📋</span>
+                  <span>Clinical Findings</span>
+                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-50">
+                      <History className="w-4 h-4 mr-2" />
+                      Historical Records
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>Historical Clinical Records</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-96 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Doctor</TableHead>
+                            <TableHead>Test Name</TableHead>
+                            <TableHead>Result</TableHead>
+                            <TableHead>Result Unit</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {generateHistoricalRecords().map((record, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{new Date(record.date).toLocaleDateString('tr-TR')}</TableCell>
+                              <TableCell>{record.doctor}</TableCell>
+                              <TableCell>{record.testName}</TableCell>
+                              <TableCell>{record.result}</TableCell>
+                              <TableCell>{record.unit}</TableCell>
+                            </TableRow>
+                          ))}
+                          {generateHistoricalRecords().length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center text-gray-500">
+                                No historical records found
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
