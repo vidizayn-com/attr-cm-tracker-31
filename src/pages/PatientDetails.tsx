@@ -893,21 +893,27 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
               </div>
 
               {/* GFR > 30 */}
-              <div className={`flex items-center space-x-3 p-3 rounded-xl ${patientData.clinicalFindings.gfr30 ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${patientData.clinicalFindings.gfr30 ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                  {patientData.clinicalFindings.gfr30 && <span className="text-white text-sm">✓</span>}
+              <div className={`p-3 rounded-xl ${patientData.clinicalFindings.gfr30 ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${patientData.clinicalFindings.gfr30 ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                    {patientData.clinicalFindings.gfr30 && <span className="text-white text-sm">✓</span>}
+                  </div>
+                  <span className="font-semibold">GFR &gt; 30 ml/min/1.72 m²</span>
+                  <button 
+                    onClick={() => setShowGfrChart(true)}
+                    className="ml-auto p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                    title="View GFR trend"
+                  >
+                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                  </button>
+                  {patientData.clinicalFindings.gfr30 && <span className="text-blue-600 text-sm">Meets criteria</span>}
                 </div>
-                <span className="font-semibold">GFR &gt; 30 ml/min/1.72 m²</span>
-                <Input value={patientData.clinicalFindings.gfr30Value} className="w-16 text-center" readOnly />
-                <span>ml/min/1.72 m²</span>
-                <button 
-                  onClick={() => setShowGfrChart(true)}
-                  className="ml-auto p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                  title="View GFR trend"
-                >
-                  <TrendingUp className="w-4 h-4 text-blue-600" />
-                </button>
-                {patientData.clinicalFindings.gfr30 && <span className="text-blue-600 text-sm">Meets criteria</span>}
+                <div className="ml-9">
+                  <div className="flex items-center space-x-2">
+                    <Input value={patientData.clinicalFindings.gfr30Value} className="w-16 text-center" readOnly />
+                    <span>ml/min/1.72 m²</span>
+                  </div>
+                </div>
               </div>
 
               {/* Age >= 65 */}

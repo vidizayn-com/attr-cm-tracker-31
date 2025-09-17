@@ -403,7 +403,7 @@ const PatientRegistration = () => {
 
               {/* GFR > 30 */}
               <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-start space-x-3 mb-2">
+                <div className="flex items-start space-x-3 mb-3">
                   <input
                     type="checkbox"
                     checked={formData.clinicalFindings.gfr30}
@@ -422,17 +422,19 @@ const PatientRegistration = () => {
                     <TrendingUp className="w-4 h-4 text-blue-600" />
                   </button>
                 </div>
-                <div className="flex items-center space-x-2 ml-8">
-                  <Input
-                    value={formData.clinicalFindings.gfr30Value}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, gfr30Value: e.target.value}
-                    })}
-                    className="w-20 text-center h-8 sm:h-10"
-                    placeholder="Value"
-                  />
-                  <span className="text-xs sm:text-sm">ml/min/1.72 m²</span>
+                <div className="ml-8">
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={formData.clinicalFindings.gfr30Value}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        clinicalFindings: {...formData.clinicalFindings, gfr30Value: e.target.value}
+                      })}
+                      className="w-20 text-center h-8 sm:h-10"
+                      placeholder="Value"
+                    />
+                    <span className="text-xs sm:text-sm">ml/min/1.72 m²</span>
+                  </div>
                 </div>
               </div>
 
