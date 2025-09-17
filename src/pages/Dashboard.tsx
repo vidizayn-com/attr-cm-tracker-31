@@ -117,22 +117,24 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-48 sm:h-56 lg:h-64 min-h-0">
-                  <BarChart data={patientRegistrationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis 
-                      dataKey="month" 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      width={30}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="count" fill="#3b82f6" radius={4} />
-                  </BarChart>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={patientRegistrationData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                      <XAxis 
+                        dataKey="month" 
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        width={25}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="count" fill="#3b82f6" radius={4} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
             </Card>
@@ -143,22 +145,24 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-48 sm:h-56 lg:h-64 min-h-0">
-                  <BarChart data={reportCreationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis 
-                      dataKey="month" 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      width={30}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="count" fill="#10b981" radius={4} />
-                  </BarChart>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={reportCreationData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                      <XAxis 
+                        dataKey="month" 
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        width={25}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="count" fill="#10b981" radius={4} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
             </Card>
