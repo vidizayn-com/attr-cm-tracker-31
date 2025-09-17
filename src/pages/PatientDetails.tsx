@@ -967,7 +967,7 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                   {patientData.redFlagSymptoms.other && <span className="text-white text-sm">✓</span>}
                 </div>
                 <span>Other / Doctor's Comment</span>
-                <Textarea value={patientData.redFlagSymptoms.otherValue} placeholder="" className="flex-1 min-h-20" readOnly />
+                <Textarea value={patientData.redFlagSymptoms.otherValue} placeholder="" className="flex-1 min-h-40 resize-none" rows={10} readOnly />
               </div>
             </CardContent>
           </Card>

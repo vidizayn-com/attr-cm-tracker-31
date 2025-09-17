@@ -580,7 +580,8 @@ const PatientRegistration = () => {
                       redFlagSymptoms: {...formData.redFlagSymptoms, otherValue: e.target.value}
                     })}
                     placeholder="Enter additional symptoms or doctor's comments"
-                    className="min-h-20"
+                    className="min-h-40 resize-none"
+                    rows={10}
                   />
                 </div>
               </div>
