@@ -12,6 +12,7 @@ import PatientList from "./pages/PatientList";
 import PatientDetails from "./pages/PatientDetails";
 import PatientAssignment from "./pages/PatientAssignment";
 import PatientRegistration from "./pages/PatientRegistration";
+import PatientPool from "./pages/PatientPool";
 import Calendar from "./pages/Calendar";
 import Resources from "./pages/Resources";
 import ProfileEdit from "./pages/ProfileEdit";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/patients" element={<PatientList />} />
             <Route path="/patients/register" element={<PatientRegistration />} />
+            <Route path="/patients/pool" element={<PatientPool />} />
             <Route path="/patients/:id" element={<PatientDetails />} />
             <Route path="/patients/:id/assign" element={<PatientAssignment />} />
             <Route path="/patients/:id/edit" element={<ProfileEdit />} />

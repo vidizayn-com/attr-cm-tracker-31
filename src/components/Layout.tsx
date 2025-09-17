@@ -126,7 +126,10 @@ function AppSidebar() {
               </div>
               
               {notifications.patientPool > 0 && (
-                <DropdownMenuItem className="cursor-pointer hover:bg-muted p-3">
+                <DropdownMenuItem 
+                  className="cursor-pointer hover:bg-muted p-3"
+                  onClick={() => navigate('/patients/pool')}
+                >
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                     <div className="flex-1">
