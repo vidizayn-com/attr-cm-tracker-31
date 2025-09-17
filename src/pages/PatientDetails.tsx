@@ -8,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useParams, Link } from 'react-router-dom';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { usePatients } from '@/contexts/PatientContext';
-import { Copy, History, Upload, FileText, Image, Trash2, Eye } from 'lucide-react';
+import { Copy, History, Upload, FileText, Image, Trash2, Eye, TrendingUp } from 'lucide-react';
 
 const PatientDetails = () => {
   const { id } = useParams();
@@ -71,6 +72,24 @@ const PatientDetails = () => {
     fileName: '',
     category: 'General'
   });
+  const [showNtProBnpChart, setShowNtProBnpChart] = useState(false);
+  const [showGfrChart, setShowGfrChart] = useState(false);
+
+  // Historical chart data
+  const ntProBnpChartData = [
+    { date: '2024-08-28', value: 650, normal: 600 },
+    { date: '2024-09-22', value: 680, normal: 600 },
+    { date: '2024-10-18', value: 720, normal: 600 },
+    { date: '2024-11-12', value: 780, normal: 600 },
+    { date: '2024-12-08', value: 850, normal: 600 }
+  ];
+
+  const gfrChartData = [
+    { date: '2024-09-12', value: 72, normal: 30 },
+    { date: '2024-10-10', value: 70, normal: 30 },
+    { date: '2024-11-05', value: 68, normal: 30 },
+    { date: '2024-12-01', value: 65, normal: 30 }
+  ];
 
   useEffect(() => {
     if (id) {
@@ -841,6 +860,13 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                     {patientData.clinicalFindings.ntProBnp && <span className="text-white text-sm">✓</span>}
                   </div>
                   <span className="font-semibold">NT-proBNP &gt;600 (or) BNP &gt;150</span>
+                  <button 
+                    onClick={() => setShowNtProBnpChart(true)}
+                    className="ml-auto p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                    title="View NT-proBNP trend"
+                  >
+                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -874,6 +900,13 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
                 <span className="font-semibold">GFR &gt; 30 ml/min/1.72 m²</span>
                 <Input value={patientData.clinicalFindings.gfr30Value} className="w-16 text-center" readOnly />
                 <span>ml/min/1.72 m²</span>
+                <button 
+                  onClick={() => setShowGfrChart(true)}
+                  className="ml-auto p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                  title="View GFR trend"
+                >
+                  <TrendingUp className="w-4 h-4 text-blue-600" />
+                </button>
                 {patientData.clinicalFindings.gfr30 && <span className="text-blue-600 text-sm">Meets criteria</span>}
               </div>
 
@@ -1055,6 +1088,114 @@ Generated on: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTim
             </div>
           </CardContent>
         </Card>
+
+        {/* NT-proBNP Chart Dialog */}
+        <Dialog open={showNtProBnpChart} onOpenChange={setShowNtProBnpChart}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <span>NT-proBNP Trend Analysis</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={ntProBnpChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `${value} pg/mL`, 
+                        name === 'value' ? 'NT-proBNP' : 'Normal Threshold'
+                      ]}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#2563eb" 
+                      strokeWidth={3}
+                      dot={{ fill: '#2563eb', strokeWidth: 2, r: 6 }}
+                      name="NT-proBNP"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="normal" 
+                      stroke="#dc2626" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="Normal Threshold (600 pg/mL)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">Trend Analysis</h4>
+                <p className="text-blue-800 text-sm">
+                  NT-proBNP levels show an upward trend over the past 4 months, increasing from 650 pg/mL to 850 pg/mL. 
+                  All values remain above the threshold of 600 pg/mL, indicating persistent elevation requiring continued monitoring.
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* GFR Chart Dialog */}
+        <Dialog open={showGfrChart} onOpenChange={setShowGfrChart}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <span>GFR Trend Analysis</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={gfrChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `${value} ml/min/1.73m²`, 
+                        name === 'value' ? 'GFR' : 'Minimum Threshold'
+                      ]}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#16a34a" 
+                      strokeWidth={3}
+                      dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
+                      name="GFR"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="normal" 
+                      stroke="#dc2626" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="Minimum Threshold (30 ml/min/1.73m²)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-green-900 mb-2">Trend Analysis</h4>
+                <p className="text-green-800 text-sm">
+                  GFR shows a gradual decline from 72 to 65 ml/min/1.73m² over 3 months. 
+                  Values remain well above the minimum threshold of 30 ml/min/1.73m², indicating acceptable kidney function.
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
