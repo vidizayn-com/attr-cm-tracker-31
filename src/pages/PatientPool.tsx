@@ -139,66 +139,72 @@ const PatientPool = () => {
         {/* Filters */}
         <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Filter className="w-5 h-5" />
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Filters</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search */}
-              <div className="relative">
+              <div className="relative sm:col-span-2 lg:col-span-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search patients..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-10 sm:h-auto"
                 />
               </div>
 
               {/* Hospital Filter */}
-              <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Hospitals" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all">All Hospitals</SelectItem>
-                  {hospitals.map((hospital) => (
-                    <SelectItem key={hospital} value={hospital}>
-                      {hospital}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="w-full">
+                <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
+                  <SelectTrigger className="h-10 sm:h-auto">
+                    <SelectValue placeholder="All Hospitals" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all">All Hospitals</SelectItem>
+                    {hospitals.map((hospital) => (
+                      <SelectItem key={hospital} value={hospital}>
+                        {hospital}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Specialty Filter */}
-              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Specialties" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all">All Specialties</SelectItem>
-                  {specialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="w-full">
+                <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                  <SelectTrigger className="h-10 sm:h-auto">
+                    <SelectValue placeholder="All Specialties" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all">All Specialties</SelectItem>
+                    {specialties.map((specialty) => (
+                      <SelectItem key={specialty} value={specialty}>
+                        {specialty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Clear Filters */}
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm('');
-                  setHospitalFilter('all');
-                  setSpecialtyFilter('all');
-                }}
-                className="w-full"
-              >
-                Clear Filters
-              </Button>
+              <div className="w-full">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setHospitalFilter('all');
+                    setSpecialtyFilter('all');
+                  }}
+                  className="w-full h-10 sm:h-auto"
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -206,65 +212,76 @@ const PatientPool = () => {
         {/* Patient Pool Table */}
         <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
           <CardHeader>
-            <CardTitle>Patients Waiting for Assignment</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Patients Waiting for Assignment</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Patient ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Age</TableHead>
-                    <TableHead>Registration Date</TableHead>
-                    <TableHead>Hospital</TableHead>
-                    <TableHead>Expected Specialty</TableHead>
-                    <TableHead>Assigned Cardiologist</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Patient ID</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Name</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Age</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden md:table-cell">Registration Date</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden lg:table-cell">Hospital</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Expected Specialty</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden xl:table-cell">Assigned Cardiologist</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Priority</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPatients.map((patient) => (
                     <TableRow key={patient.id} className="hover:bg-gray-50">
-                      <TableCell className="font-mono text-sm">{patient.id}</TableCell>
+                      <TableCell className="font-mono text-xs sm:text-sm">{patient.id}</TableCell>
                       <TableCell>
-                        <div className="font-medium">
+                        <div className="font-medium text-xs sm:text-sm">
                           {patient.firstName} {patient.lastName}
                         </div>
+                        <div className="text-xs text-gray-500 sm:hidden">
+                          Age: {patient.age} • {new Date(patient.registrationDate).toLocaleDateString('tr-TR')}
+                        </div>
+                        <div className="text-xs text-gray-500 lg:hidden xl:block xl:hidden">
+                          {patient.hospital}
+                        </div>
+                        <div className="text-xs text-gray-500 xl:hidden">
+                          {patient.assignedCardiologist}
+                        </div>
                       </TableCell>
-                      <TableCell>{patient.age}</TableCell>
-                      <TableCell>{new Date(patient.registrationDate).toLocaleDateString('tr-TR')}</TableCell>
-                      <TableCell>
-                        <div className="text-sm text-gray-600">{patient.hospital}</div>
+                      <TableCell className="hidden sm:table-cell text-xs sm:text-sm">{patient.age}</TableCell>
+                      <TableCell className="hidden md:table-cell text-xs sm:text-sm">{new Date(patient.registrationDate).toLocaleDateString('tr-TR')}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="text-xs sm:text-sm text-gray-600">{patient.hospital}</div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${getSpecialtyColor(patient.expectedSpecialty)} border`}>
+                        <Badge className={`${getSpecialtyColor(patient.expectedSpecialty)} border text-xs`}>
                           {patient.expectedSpecialty}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">{patient.assignedCardiologist}</div>
+                      <TableCell className="hidden xl:table-cell">
+                        <div className="text-xs sm:text-sm font-medium">{patient.assignedCardiologist}</div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${getPriorityColor(patient.priority)} border`}>
+                        <Badge className={`${getPriorityColor(patient.priority)} border text-xs`}>
                           {patient.priority}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
                           <Button
                             size="sm"
                             onClick={() => handleAssignToMe(patient.id, `${patient.firstName} ${patient.lastName}`)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 sm:px-3 sm:py-2"
                           >
-                            <UserCheck className="w-4 h-4 mr-1" />
-                            Assign to Me
+                            <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                            <span className="hidden sm:inline">Assign to Me</span>
+                            <span className="sm:hidden">Assign</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleViewPatient(patient.id)}
+                            className="text-xs px-2 py-1 sm:px-3 sm:py-2"
                           >
                             View
                           </Button>
@@ -277,9 +294,9 @@ const PatientPool = () => {
 
               {filteredPatients.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  <UserCheck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">No patients found</p>
-                  <p className="text-sm">Try adjusting your search criteria</p>
+                  <UserCheck className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-base sm:text-lg font-medium">No patients found</p>
+                  <p className="text-xs sm:text-sm">Try adjusting your search criteria</p>
                 </div>
               )}
             </div>

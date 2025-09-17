@@ -128,21 +128,21 @@ const Resources = () => {
             </p>
             
             {/* Search and Filter Controls */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search articles, authors, or topics..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-10 sm:h-auto"
                 />
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === 'all' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -152,7 +152,7 @@ const Resources = () => {
                 </button>
                 <button
                   onClick={() => setSelectedCategory('diagnosis')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === 'diagnosis' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -162,7 +162,7 @@ const Resources = () => {
                 </button>
                 <button
                   onClick={() => setSelectedCategory('treatment')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === 'treatment' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -172,7 +172,7 @@ const Resources = () => {
                 </button>
                 <button
                   onClick={() => setSelectedCategory('research')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === 'research' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -182,7 +182,7 @@ const Resources = () => {
                 </button>
                 <button
                   onClick={() => setSelectedCategory('guidelines')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === 'guidelines' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -195,35 +195,35 @@ const Resources = () => {
           </div>
 
           {/* Articles Grid */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
             {filteredArticles.map((article) => (
               <Card key={article.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+                <CardHeader className="pb-3 sm:pb-4">
                   <div className="flex items-start justify-between mb-2">
-                    <Badge className={getCategoryColor(article.category)}>
+                    <Badge className={`${getCategoryColor(article.category)} text-xs`}>
                       {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
                     </Badge>
-                    <span className="text-sm text-gray-500">{article.year}</span>
+                    <span className="text-xs sm:text-sm text-gray-500">{article.year}</span>
                   </div>
-                  <CardTitle className="text-lg leading-tight">
+                  <CardTitle className="text-base sm:text-lg leading-tight">
                     {article.title}
                   </CardTitle>
-                  <CardDescription className="text-sm text-gray-600">
+                  <CardDescription className="text-xs sm:text-sm text-gray-600">
                     {article.journal} • {article.authors.join(', ')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 mb-4 text-sm leading-relaxed">
+                <CardContent className="pt-0">
+                  <p className="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed">
                     {article.description}
                   </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
                     {article.tags.map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         {tag}
                       </Badge>
                     ))}
                   </div>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  <button className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium">
                     Read Article →
                   </button>
                 </CardContent>
