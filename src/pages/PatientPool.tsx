@@ -13,8 +13,8 @@ import { UserCheck, Search, Filter } from 'lucide-react';
 const PatientPool = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [hospitalFilter, setHospitalFilter] = useState('');
-  const [specialtyFilter, setSpecialtyFilter] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('all');
+  const [specialtyFilter, setSpecialtyFilter] = useState('all');
 
   // Mock data for patients waiting in pool
   const poolPatients = [
