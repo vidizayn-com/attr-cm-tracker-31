@@ -22,7 +22,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, Users, BookOpen, FileText, User, Bell } from 'lucide-react';
+import { Home, Users, BookOpen, FileText, User, Bell, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface LayoutProps {
@@ -33,6 +33,7 @@ interface LayoutProps {
 const navigationItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
   { title: 'Patients', url: '/patients', icon: Users },
+  { title: 'Patients Awaiting Assignment', url: '/patients/pool', icon: UserCheck },
   { title: 'Resources', url: '/resources', icon: BookOpen },
   { title: 'Report Tracker', url: '/report-tracker', icon: FileText },
 ];
