@@ -22,7 +22,8 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, Users, BookOpen, FileText, User } from 'lucide-react';
+import { Home, Users, BookOpen, FileText, User, Bell } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,6 +40,14 @@ const navigationItems = [
 function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Notification data - could be fetched from API
+  const notifications = {
+    patientPool: 5, // Havuzda bekleyen hasta sayısı
+    upcomingReports: 3 // Rapor tarihi yaklaşan hasta sayısı
+  };
+
+  const totalNotifications = notifications.patientPool + notifications.upcomingReports;
 
   const handleEditProfile = () => {
     navigate('/profile/edit');
@@ -96,6 +105,68 @@ function AppSidebar() {
             <div className="text-white font-semibold text-xs truncate">Dr. Michael Scofield</div>
             <div className="text-white/70 text-xs italic">Cardiologist</div>
           </div>
+          
+          {/* Notifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative text-white/80 hover:text-white p-1 mr-1">
+                <Bell className="w-4 h-4" />
+                {totalNotifications > 0 && (
+                  <Badge 
+                    className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-red-500 hover:bg-red-500 text-white border-0 rounded-full flex items-center justify-center"
+                  >
+                    {totalNotifications > 9 ? '9+' : totalNotifications}
+                  </Badge>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72 bg-card border border-border shadow-lg">
+              <div className="p-3 border-b border-border">
+                <h3 className="font-semibold text-sm">Notifications</h3>
+              </div>
+              
+              {notifications.patientPool > 0 && (
+                <DropdownMenuItem className="cursor-pointer hover:bg-muted p-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">Patients in Pool</div>
+                      <div className="text-xs text-muted-foreground">
+                        {notifications.patientPool} patients waiting for specialist assignment
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {notifications.patientPool}
+                    </Badge>
+                  </div>
+                </DropdownMenuItem>
+              )}
+              
+              {notifications.upcomingReports > 0 && (
+                <DropdownMenuItem className="cursor-pointer hover:bg-muted p-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">Upcoming Reports</div>
+                      <div className="text-xs text-muted-foreground">
+                        {notifications.upcomingReports} patients with reports due soon
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {notifications.upcomingReports}
+                    </Badge>
+                  </div>
+                </DropdownMenuItem>
+              )}
+              
+              {totalNotifications === 0 && (
+                <div className="p-6 text-center text-muted-foreground text-sm">
+                  No new notifications
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="text-white/80 hover:text-white p-1">
