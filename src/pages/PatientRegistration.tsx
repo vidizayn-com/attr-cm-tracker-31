@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +12,16 @@ import Layout from '@/components/Layout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Upload, FileText, Image, Trash2, Eye, TrendingUp } from 'lucide-react';
 
+// ✅ NEW: Strapi API helpers
+import { createPatient, createCaregiver, linkCaregiverToPatient } from '@/lib/patientApi';
+
 const PatientRegistration = () => {
   const navigate = useNavigate();
   const [showNtProBnpChart, setShowNtProBnpChart] = useState(false);
   const [showGfrChart, setShowGfrChart] = useState(false);
+
+  // ✅ NEW: prevent double submit
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Historical chart data for demonstration
   const ntProBnpChartData = [
@@ -33,6 +38,7 @@ const PatientRegistration = () => {
     { date: '2024-11-05', value: 68, normal: 30 },
     { date: '2024-12-01', value: 65, normal: 30 }
   ];
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -94,10 +100,87 @@ const PatientRegistration = () => {
     }
   });
 
-  const handleSubmit = () => {
-    console.log('Patient registration submitted:', formData);
-    navigate('/patients');
-  };
+  // ✅ UPDATED: Submit now writes to Strapi
+ const handleSubmit = async () => {
+  if (isSubmitting) return;
+
+  // Basic front-end checks (çok hafif doğrulama)
+  if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.contactNumber.trim()) {
+    toast.error("Please fill First Name, Last Name, and Contact Number.");
+    return;
+  }
+
+  // Caregiver checked ise temel info isteyelim (MVP)
+  if (formData.caregiverPermission) {
+    if (!formData.caregiverPhone.trim()) {
+      toast.error("Please fill Caregiver Phone.");
+      return;
+    }
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    // 1) Patient create
+    const createdPatient: any = await createPatient({
+  firstName: formData.firstName.trim(),
+  lastName: formData.lastName.trim(),
+
+  gender: formData.gender
+    ? formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1)
+    : undefined,
+
+  dateOfBirth: formData.dateOfBirth || undefined,
+
+  // UI alanın: contactNumber
+  contactNumber: formData.contactNumber.trim(),
+
+  // Strapi’de required "phone" varsa bunu da dolduralım
+  phone: formData.contactNumber.trim(),
+
+  email: formData.email?.trim() || undefined,
+
+  allowCaregiver: formData.caregiverPermission,
+
+  // Strapi alanın "statu"
+  statu: "New",
+
+  clinicalFindings: formData.clinicalFindings,
+  redFlagSymptoms: formData.redFlagSymptoms,
+});
+
+
+const patientDocumentId = createdPatient?.documentId;
+if (!patientDocumentId) {
+  throw new Error("Patient could not be created (no documentId returned).");
+}
+
+   // 2) Caregiver create + link (permission true ise)
+if (formData.caregiverPermission) {
+  const createdRelative: any = await createCaregiver({
+    fullName: formData.caregiverName?.trim() || undefined,
+    phone: formData.caregiverPhone.trim(),
+    email: formData.caregiverEmail?.trim() || undefined,
+    relationToPatient: "Caregiver",
+  });
+
+  const relativeId = createdRelative?.id;
+
+  if (relativeId) {
+    await linkCaregiverToPatient(patientDocumentId, [relativeId]);
+  }
+}
+
+    toast.success("Patient registered successfully!");
+    navigate("/patients");
+  } catch (e: any) {
+    console.error(e);
+    toast.error(e?.message || "Patient registration failed.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const handleCancel = () => {
     navigate('/patients');
@@ -166,7 +249,7 @@ const PatientRegistration = () => {
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">First Name</label>
                   <Input
                     value={formData.firstName}
-                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     placeholder="First Name"
                     className="h-10 sm:h-auto"
                   />
@@ -175,19 +258,19 @@ const PatientRegistration = () => {
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Last Name</label>
                   <Input
                     value={formData.lastName}
-                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     placeholder="Last Name"
                     className="h-10 sm:h-auto"
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Gender</label>
                   <select
                     value={formData.gender}
-                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full h-10 px-3 border border-gray-300 rounded-md text-sm sm:text-base"
                   >
                     <option value="">Select gender</option>
@@ -201,7 +284,7 @@ const PatientRegistration = () => {
                   <Input
                     type="date"
                     value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                     placeholder="mm/dd/yyyy"
                     className="h-10 sm:h-auto"
                   />
@@ -213,7 +296,7 @@ const PatientRegistration = () => {
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Contact Number</label>
                   <Input
                     value={formData.contactNumber}
-                    onChange={(e) => setFormData({...formData, contactNumber: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
                     placeholder="(+90) --- -- -- --"
                     className="h-10 sm:h-auto"
                   />
@@ -225,7 +308,7 @@ const PatientRegistration = () => {
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="Enter email address"
                   className="h-10 sm:h-auto"
                 />
@@ -237,7 +320,7 @@ const PatientRegistration = () => {
                   <Checkbox
                     id="caregiverPermission"
                     checked={formData.caregiverPermission}
-                    onCheckedChange={(checked) => setFormData({...formData, caregiverPermission: checked as boolean})}
+                    onCheckedChange={(checked) => setFormData({ ...formData, caregiverPermission: checked as boolean })}
                     className="mt-1"
                   />
                   <label htmlFor="caregiverPermission" className="text-gray-700 font-semibold text-sm sm:text-base leading-relaxed">
@@ -252,7 +335,7 @@ const PatientRegistration = () => {
                       <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Name</label>
                       <Input
                         value={formData.caregiverName}
-                        onChange={(e) => setFormData({...formData, caregiverName: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, caregiverName: e.target.value })}
                         placeholder="Enter caregiver name"
                         className="h-10 sm:h-auto"
                       />
@@ -262,7 +345,7 @@ const PatientRegistration = () => {
                       <Input
                         type="email"
                         value={formData.caregiverEmail}
-                        onChange={(e) => setFormData({...formData, caregiverEmail: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, caregiverEmail: e.target.value })}
                         placeholder="Enter caregiver email"
                         className="h-10 sm:h-auto"
                       />
@@ -272,7 +355,7 @@ const PatientRegistration = () => {
                       <Input
                         type="tel"
                         value={formData.caregiverPhone}
-                        onChange={(e) => setFormData({...formData, caregiverPhone: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, caregiverPhone: e.target.value })}
                         placeholder="Enter caregiver phone"
                         className="h-10 sm:h-auto"
                       />
@@ -300,7 +383,7 @@ const PatientRegistration = () => {
                     checked={formData.clinicalFindings.lvh12}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, lvh12: e.target.checked}
+                      clinicalFindings: { ...formData.clinicalFindings, lvh12: e.target.checked }
                     })}
                     className="w-5 h-5 flex-shrink-0"
                   />
@@ -311,7 +394,7 @@ const PatientRegistration = () => {
                     value={formData.clinicalFindings.lvh12Value}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, lvh12Value: e.target.value}
+                      clinicalFindings: { ...formData.clinicalFindings, lvh12Value: e.target.value }
                     })}
                     className="w-20 text-center h-8 sm:h-10"
                     placeholder="Value"
@@ -328,15 +411,16 @@ const PatientRegistration = () => {
                     checked={formData.clinicalFindings.ntProBnp}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, ntProBnp: e.target.checked}
+                      clinicalFindings: { ...formData.clinicalFindings, ntProBnp: e.target.checked }
                     })}
                     className="w-5 h-5 flex-shrink-0 mt-1"
                   />
                   <span className="font-semibold text-sm sm:text-base leading-tight">NT-proBNP &gt;600 (or) BNP &gt;150</span>
-                  <button 
+                  <button
                     onClick={() => setShowNtProBnpChart(true)}
                     className="ml-auto px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                     title="View NT-proBNP trend"
+                    type="button"
                   >
                     <TrendingUp className="w-4 h-4" />
                   </button>
@@ -348,7 +432,7 @@ const PatientRegistration = () => {
                         value={formData.clinicalFindings.ntProBnpValue}
                         onChange={(e) => setFormData({
                           ...formData,
-                          clinicalFindings: {...formData.clinicalFindings, ntProBnpValue: e.target.value}
+                          clinicalFindings: { ...formData.clinicalFindings, ntProBnpValue: e.target.value }
                         })}
                         className="w-20 text-center h-8 sm:h-10"
                         placeholder="Value"
@@ -362,7 +446,7 @@ const PatientRegistration = () => {
                         value={formData.clinicalFindings.bnpValue}
                         onChange={(e) => setFormData({
                           ...formData,
-                          clinicalFindings: {...formData.clinicalFindings, bnpValue: e.target.value}
+                          clinicalFindings: { ...formData.clinicalFindings, bnpValue: e.target.value }
                         })}
                         className="w-20 text-center h-8 sm:h-10"
                         placeholder="Value"
@@ -381,7 +465,7 @@ const PatientRegistration = () => {
                     checked={formData.clinicalFindings.ef40}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, ef40: e.target.checked}
+                      clinicalFindings: { ...formData.clinicalFindings, ef40: e.target.checked }
                     })}
                     className="w-5 h-5 flex-shrink-0"
                   />
@@ -392,7 +476,7 @@ const PatientRegistration = () => {
                     value={formData.clinicalFindings.ef40Value}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, ef40Value: e.target.value}
+                      clinicalFindings: { ...formData.clinicalFindings, ef40Value: e.target.value }
                     })}
                     className="w-20 text-center h-8 sm:h-10"
                     placeholder="Value"
@@ -409,15 +493,16 @@ const PatientRegistration = () => {
                     checked={formData.clinicalFindings.gfr30}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, gfr30: e.target.checked}
+                      clinicalFindings: { ...formData.clinicalFindings, gfr30: e.target.checked }
                     })}
                     className="w-5 h-5 flex-shrink-0 mt-1"
                   />
                   <span className="font-semibold text-sm sm:text-base leading-tight">GFR &gt; 30 ml/min/1.72 m²</span>
-                  <button 
+                  <button
                     onClick={() => setShowGfrChart(true)}
                     className="ml-auto px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                     title="View GFR trend"
+                    type="button"
                   >
                     <TrendingUp className="w-4 h-4" />
                   </button>
@@ -428,7 +513,7 @@ const PatientRegistration = () => {
                       value={formData.clinicalFindings.gfr30Value}
                       onChange={(e) => setFormData({
                         ...formData,
-                        clinicalFindings: {...formData.clinicalFindings, gfr30Value: e.target.value}
+                        clinicalFindings: { ...formData.clinicalFindings, gfr30Value: e.target.value }
                       })}
                       className="w-20 text-center h-8 sm:h-10"
                       placeholder="Value"
@@ -446,7 +531,7 @@ const PatientRegistration = () => {
                     checked={formData.clinicalFindings.age65}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, age65: e.target.checked}
+                      clinicalFindings: { ...formData.clinicalFindings, age65: e.target.checked }
                     })}
                     className="w-5 h-5 flex-shrink-0"
                   />
@@ -457,7 +542,7 @@ const PatientRegistration = () => {
                     value={formData.clinicalFindings.age65Value}
                     onChange={(e) => setFormData({
                       ...formData,
-                      clinicalFindings: {...formData.clinicalFindings, age65Value: e.target.value}
+                      clinicalFindings: { ...formData.clinicalFindings, age65Value: e.target.value }
                     })}
                     className="w-20 text-center h-8 sm:h-10"
                     placeholder="Value"
@@ -483,117 +568,117 @@ const PatientRegistration = () => {
                   checked={formData.redFlagSymptoms.ecgHypovoltage}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, ecgHypovoltage: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, ecgHypovoltage: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">ECG Hypovoltage</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.pericardialEffusion}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, pericardialEffusion: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, pericardialEffusion: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">Pericardial Effusion</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.biatrialDilation}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, biatrialDilation: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, biatrialDilation: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">Biatrial Dilation</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.thickeningInteratrialSeptum}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, thickeningInteratrialSeptum: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, thickeningInteratrialSeptum: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">Thickening of the Interatrial Septum and Valves</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.fiveFiveFiveFinding}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, fiveFiveFiveFinding: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, fiveFiveFiveFinding: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">5-5-5 Finding</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.diastolicDysfunction}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, diastolicDysfunction: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, diastolicDysfunction: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">Diastolic Dysfunction with Increased Left Ventricular Filling Pressure</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.intoleranceHeartFailure}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, intoleranceHeartFailure: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, intoleranceHeartFailure: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">Intolerance to Standard Heart Failure Treatment</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.spontaneousResolutionHypertension}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, spontaneousResolutionHypertension: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, spontaneousResolutionHypertension: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">Spontaneous Resolution of Hypertension</span>
               </div>
-              
+
               <div className="flex items-start space-x-3 p-2">
                 <input
                   type="checkbox"
                   checked={formData.redFlagSymptoms.taviAorticStenosis}
                   onChange={(e) => setFormData({
                     ...formData,
-                    redFlagSymptoms: {...formData.redFlagSymptoms, taviAorticStenosis: e.target.checked}
+                    redFlagSymptoms: { ...formData.redFlagSymptoms, taviAorticStenosis: e.target.checked }
                   })}
                   className="w-5 h-5 flex-shrink-0 mt-1"
                 />
                 <span className="text-sm sm:text-base leading-relaxed">TAVI / Aortic Stenosis</span>
               </div>
-              
+
               <div className="p-2">
                 <div className="flex items-start space-x-3 mb-3">
                   <input
@@ -601,7 +686,7 @@ const PatientRegistration = () => {
                     checked={formData.redFlagSymptoms.other}
                     onChange={(e) => setFormData({
                       ...formData,
-                      redFlagSymptoms: {...formData.redFlagSymptoms, other: e.target.checked}
+                      redFlagSymptoms: { ...formData.redFlagSymptoms, other: e.target.checked }
                     })}
                     className="w-5 h-5 flex-shrink-0 mt-0.5"
                   />
@@ -611,7 +696,7 @@ const PatientRegistration = () => {
                       value={formData.redFlagSymptoms.otherValue}
                       onChange={(e) => setFormData({
                         ...formData,
-                        redFlagSymptoms: {...formData.redFlagSymptoms, otherValue: e.target.value}
+                        redFlagSymptoms: { ...formData.redFlagSymptoms, otherValue: e.target.value }
                       })}
                       placeholder="Enter additional symptoms or doctor's comments"
                       className="mt-2 min-h-40 resize-none w-full"
@@ -637,7 +722,7 @@ const PatientRegistration = () => {
               <DialogHeader>
                 <DialogTitle>Patient Files</DialogTitle>
               </DialogHeader>
-              
+
               {/* File Upload Form */}
               <div className="space-y-4 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,8 +730,8 @@ const PatientRegistration = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">File Name</label>
                     <Input
                       value={formData.fileUploadData.fileName}
-                      onChange={(e) => setFormData(prev => ({ 
-                        ...prev, 
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
                         fileUploadData: { ...prev.fileUploadData, fileName: e.target.value }
                       }))}
                       placeholder="Enter file name"
@@ -657,8 +742,8 @@ const PatientRegistration = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                     <select
                       value={formData.fileUploadData.category}
-                      onChange={(e) => setFormData(prev => ({ 
-                        ...prev, 
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
                         fileUploadData: { ...prev.fileUploadData, category: e.target.value }
                       }))}
                       className="w-full h-10 px-3 border border-gray-300 rounded-md"
@@ -674,7 +759,7 @@ const PatientRegistration = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 {/* File Upload Section */}
                 <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
                   <input
@@ -720,9 +805,8 @@ const PatientRegistration = () => {
                           <span>{file.name}</span>
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            file.type === 'image' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${file.type === 'image' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                            }`}>
                             {file.type.toUpperCase()}
                           </span>
                         </TableCell>
@@ -762,17 +846,21 @@ const PatientRegistration = () => {
               </div>
             </DialogContent>
           </Dialog>
+
           <Button
             onClick={handleCancel}
             className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-2 sm:order-2"
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
+
           <Button
             onClick={handleSubmit}
             className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 sm:px-8 h-12 w-full sm:w-auto order-1 sm:order-3"
+            disabled={isSubmitting}
           >
-            Submit
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
 
@@ -792,25 +880,25 @@ const PatientRegistration = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value, name) => [
-                        `${value} pg/mL`, 
+                        `${value} pg/mL`,
                         name === 'value' ? 'NT-proBNP' : 'Normal Threshold'
                       ]}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#2563eb" 
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#2563eb"
                       strokeWidth={3}
                       dot={{ fill: '#2563eb', strokeWidth: 2, r: 6 }}
                       name="NT-proBNP"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="normal" 
-                      stroke="#dc2626" 
+                    <Line
+                      type="monotone"
+                      dataKey="normal"
+                      stroke="#dc2626"
                       strokeWidth={2}
                       strokeDasharray="5 5"
                       dot={false}
@@ -822,7 +910,7 @@ const PatientRegistration = () => {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-2">Trend Analysis</h4>
                 <p className="text-blue-800 text-sm">
-                  NT-proBNP levels show an upward trend over the past 4 months, increasing from 650 pg/mL to 850 pg/mL. 
+                  NT-proBNP levels show an upward trend over the past 4 months, increasing from 650 pg/mL to 850 pg/mL.
                   All values remain above the threshold of 600 pg/mL, indicating persistent elevation requiring continued monitoring.
                 </p>
               </div>
@@ -846,25 +934,25 @@ const PatientRegistration = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value, name) => [
-                        `${value} ml/min/1.73m²`, 
+                        `${value} ml/min/1.73m²`,
                         name === 'value' ? 'GFR' : 'Minimum Threshold'
                       ]}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#16a34a" 
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#16a34a"
                       strokeWidth={3}
                       dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
                       name="GFR"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="normal" 
-                      stroke="#dc2626" 
+                    <Line
+                      type="monotone"
+                      dataKey="normal"
+                      stroke="#dc2626"
                       strokeWidth={2}
                       strokeDasharray="5 5"
                       dot={false}
@@ -876,7 +964,7 @@ const PatientRegistration = () => {
               <div className="bg-green-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-green-900 mb-2">Trend Analysis</h4>
                 <p className="text-green-800 text-sm">
-                  GFR shows a gradual decline from 72 to 65 ml/min/1.73m² over 3 months. 
+                  GFR shows a gradual decline from 72 to 65 ml/min/1.73m² over 3 months.
                   Values remain well above the minimum threshold of 30 ml/min/1.73m², indicating acceptable kidney function.
                 </p>
               </div>

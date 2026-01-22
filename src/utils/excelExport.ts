@@ -1,138 +1,102 @@
+type AnyRecord = Record<string, any>;
 
-import * as XLSX from 'xlsx';
-import { Patient } from '@/types/patient';
-
-interface MaskedPatientData {
-  PatientCode: string;
-  Age: number;
-  Gender: string;
-  LastVisitDate: string;
-  NextAppointmentDate: string;
-  AssignedSpecialist: string;
-  Status: string;
-  CancellationReason: string;
-  CaregiverAllowed: string;
-  // Clinical Findings
-  LVH12: string;
-  LVH12Value: string;
-  NTProBNP: string;
-  NTProBNPValue: string;
-  BNPValue: string;
-  EF40: string;
-  EF40Value: string;
-  GFR30: string;
-  GFR30Value: string;
-  Age65Plus: string;
-  Age65Value: string;
-  // Red Flag Symptoms
-  ECGHypovoltage: string;
-  PericardialEffusion: string;
-  BiatrialDilation: string;
-  ThickeningInteratrialSeptum: string;
-  FiveFiveFiveFinding: string;
-  DiastolicDysfunction: string;
-  IntoleranceHeartFailure: string;
-  SpontaneousResolutionHypertension: string;
-  TAVIAorticStenosis: string;
-  OtherSymptoms: string;
-  OtherSymptomsValue: string;
-  // Physician Data Count
-  PhysicianRecords: number;
+function safe(v: any) {
+  if (v === undefined || v === null) return "";
+  return String(v).trim();
 }
 
-const generatePatientCode = (index: number): string => {
-  return `PAT-${String(index + 1).padStart(3, '0')}`;
-};
+function cleanMultiline(v: any) {
+  return safe(v).replace(/\r?\n/g, " ");
+}
 
-const calculateAge = (dateOfBirth: string): number => {
+function calcAge(dateOfBirth?: string | null) {
+  if (!dateOfBirth) return "";
+  const birth = new Date(dateOfBirth);
+  if (Number.isNaN(birth.getTime())) return "";
   const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
 
-const booleanToString = (value: boolean): string => {
-  return value ? 'Yes' : 'No';
-};
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return String(age);
+}
 
-const maskPatientData = (patients: Patient[]): MaskedPatientData[] => {
-  return patients.map((patient, index) => ({
-    PatientCode: generatePatientCode(index),
-    Age: calculateAge(patient.dateOfBirth),
-    Gender: patient.gender,
-    LastVisitDate: patient.lastVisit,
-    NextAppointmentDate: patient.nextAppointment,
-    AssignedSpecialist: patient.assignedTo,
-    Status: patient.status,
-    CancellationReason: patient.cancellationReason || '',
-    CaregiverAllowed: booleanToString(patient.allowCaregiver),
-    // Clinical Findings
-    LVH12: booleanToString(patient.clinicalFindings.lvh12),
-    LVH12Value: patient.clinicalFindings.lvh12Value,
-    NTProBNP: booleanToString(patient.clinicalFindings.ntProBnp),
-    NTProBNPValue: patient.clinicalFindings.ntProBnpValue,
-    BNPValue: patient.clinicalFindings.bnpValue,
-    EF40: booleanToString(patient.clinicalFindings.ef40),
-    EF40Value: patient.clinicalFindings.ef40Value,
-    GFR30: booleanToString(patient.clinicalFindings.gfr30),
-    GFR30Value: patient.clinicalFindings.gfr30Value,
-    Age65Plus: booleanToString(patient.clinicalFindings.age65),
-    Age65Value: patient.clinicalFindings.age65Value,
-    // Red Flag Symptoms
-    ECGHypovoltage: booleanToString(patient.redFlagSymptoms.ecgHypovoltage),
-    PericardialEffusion: booleanToString(patient.redFlagSymptoms.pericardialEffusion),
-    BiatrialDilation: booleanToString(patient.redFlagSymptoms.biatrialDilation),
-    ThickeningInteratrialSeptum: booleanToString(patient.redFlagSymptoms.thickeningInteratrialSeptum),
-    FiveFiveFiveFinding: booleanToString(patient.redFlagSymptoms.fiveFiveFiveFinding),
-    DiastolicDysfunction: booleanToString(patient.redFlagSymptoms.diastolicDysfunction),
-    IntoleranceHeartFailure: booleanToString(patient.redFlagSymptoms.intoleranceHeartFailure),
-    SpontaneousResolutionHypertension: booleanToString(patient.redFlagSymptoms.spontaneousResolutionHypertension),
-    TAVIAorticStenosis: booleanToString(patient.redFlagSymptoms.taviAorticStenosis),
-    OtherSymptoms: booleanToString(patient.redFlagSymptoms.other),
-    OtherSymptomsValue: patient.redFlagSymptoms.otherValue,
-    // Physician Data Count
-    PhysicianRecords: patient.physicianData.length
-  }));
-};
+function toCsv(rows: AnyRecord[]) {
+  if (!rows.length) return "";
 
-export const exportPatientsToExcel = (patients: Patient[]): void => {
-  // Mask patient data
-  const maskedData = maskPatientData(patients);
-  
-  // Create workbook and worksheet
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(maskedData);
-  
-  // Set column widths for better readability
-  const columnWidths = [
-    { wch: 12 }, // PatientCode
-    { wch: 8 },  // Age
-    { wch: 10 }, // Gender
-    { wch: 15 }, // LastVisitDate
-    { wch: 18 }, // NextAppointmentDate
-    { wch: 20 }, // AssignedSpecialist
-    { wch: 12 }, // Status
-    { wch: 20 }, // CancellationReason
-    { wch: 15 }, // CaregiverAllowed
-    // Clinical findings columns
-    { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 },
-    { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
-    // Red flag symptoms columns
-    { wch: 15 }, { wch: 18 }, { wch: 16 }, { wch: 25 }, { wch: 18 },
-    { wch: 18 }, { wch: 20 }, { wch: 30 }, { wch: 16 }, { wch: 14 }, { wch: 18 },
-    // Physician records
-    { wch: 16 }
+  const headers = Object.keys(rows[0]);
+  const escapeCell = (val: any) => {
+    const s = safe(val);
+    // CSV escaping
+    if (s.includes('"') || s.includes(",") || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  };
+
+  const lines = [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => escapeCell(r[h])).join(",")),
   ];
-  
-  worksheet['!cols'] = columnWidths;
-  
-  // Add worksheet to workbook
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Masked Patient Data');
-  
-  // Generate and download the file
-  XLSX.writeFile(workbook, 'Masked_Patient_Report.xlsx');
-};
+  return lines.join("\n");
+}
+
+function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Strapi Patient modeline uygun Excel export
+ * - xlsx varsa .xlsx
+ * - yoksa csv fallback
+ */
+export async function exportPatientsToExcel(patients: any[]) {
+  const rows = (patients ?? []).map((p) => ({
+    ID: p?.id ?? "",
+    "Document ID": safe(p?.documentId),
+    "Full Name": `${safe(p?.firstName)} ${safe(p?.lastName)}`.trim() || `Patient #${p?.id ?? ""}`,
+    Status: safe(p?.statu) || safe(p?.status), // statu = Strapi, status = eski dummy
+    Gender: safe(p?.gender),
+    "Date of Birth": safe(p?.dateOfBirth),
+    Age: calcAge(p?.dateOfBirth),
+    Phone: safe(p?.contactNumber) || safe(p?.phone),
+    Email: safe(p?.email),
+    "KVKK Consent Status": safe(p?.kvkkConsentStatus),
+    "KVKK Consent At": safe(p?.kvkkConsentAt),
+    "Clinical Status": cleanMultiline(p?.clinicalStatus),
+    "Created At": safe(p?.createdAt),
+    "Updated At": safe(p?.updatedAt),
+    "Published At": safe(p?.publishedAt),
+  }));
+
+  if (!rows.length) {
+    // boşsa yine de bir dosya indir (kafa karışmasın)
+    const blob = new Blob(["No data"], { type: "text/plain;charset=utf-8" });
+    downloadBlob("patients-empty.txt", blob);
+    return;
+  }
+
+  // 1) .xlsx dene
+  try {
+    const xlsx = await import("xlsx");
+    const ws = xlsx.utils.json_to_sheet(rows);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, "Patients");
+
+    // Tarayıcıda writeFile çalışır
+    xlsx.writeFile(wb, `patients_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    return;
+  } catch (e) {
+    // 2) CSV fallback
+    const csv = toCsv(rows);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    downloadBlob(`patients_${new Date().toISOString().slice(0, 10)}.csv`, blob);
+  }
+}
