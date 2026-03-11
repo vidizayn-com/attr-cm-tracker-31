@@ -33,8 +33,8 @@ type CreateCaregiverInput = {
 };
 
 export async function createPatient(input: CreatePatientInput) {
-  // UI -> Strapi mapping:
-  // status -> statu (Strapi alan adı)
+  // Use the custom doctor endpoint that automatically sets
+  // primary_cardiologist and registered_by from the JWT token
   const payload: any = {
     firstName: input.firstName,
     lastName: input.lastName,
@@ -54,25 +54,19 @@ export async function createPatient(input: CreatePatientInput) {
 
     clinicalFindings: input.clinicalFindings ?? null,
     redFlagSymptoms: input.redFlagSymptoms ?? null,
-
-    // relations (Strapi v5 outputunda array gördük, o yüzden id göndermek yeterli)
-    institution: input.institution ? [input.institution] : [],
-    assigned_cardiologists: input.assignedCardiologistId
-      ? [input.assignedCardiologistId]
-      : [],
   };
 
-  // Strapi create format
-  return await strapiPost("/api/patients", { data: payload });
+  // Custom endpoint: JWT token → doctor identified → primary_cardiologist & registered_by set automatically
+  return await strapiPost("/api/auth/doctor/register-patient", { data: payload });
 }
 
 export async function createCaregiver(input: CreateCaregiverInput) {
   const payload: any = {
-  fullName: input.fullName ?? null,
-  phone: input.phone,
-  email: input.email ?? null,
-  relationToPatient: input.relationToPatient ?? null,
-};
+    fullName: input.fullName ?? null,
+    phone: input.phone,
+    email: input.email ?? null,
+    relationToPatient: input.relationToPatient ?? null,
+  };
 
 
   return await strapiPost("/api/patient-relatives", { data: payload });

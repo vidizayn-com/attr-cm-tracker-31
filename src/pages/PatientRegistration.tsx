@@ -101,85 +101,93 @@ const PatientRegistration = () => {
   });
 
   // ✅ UPDATED: Submit now writes to Strapi
- const handleSubmit = async () => {
-  if (isSubmitting) return;
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
 
-  // Basic front-end checks (çok hafif doğrulama)
-  if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.contactNumber.trim()) {
-    toast.error("Please fill First Name, Last Name, and Contact Number.");
-    return;
-  }
-
-  // Caregiver checked ise temel info isteyelim (MVP)
-  if (formData.caregiverPermission) {
-    if (!formData.caregiverPhone.trim()) {
-      toast.error("Please fill Caregiver Phone.");
+    // Basic front-end checks (çok hafif doğrulama)
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.contactNumber.trim()) {
+      toast.error("Please fill First Name, Last Name, and Contact Number.");
       return;
     }
-  }
 
-  setIsSubmitting(true);
+    // Caregiver checked ise temel info isteyelim (MVP)
+    if (formData.caregiverPermission) {
+      if (!formData.caregiverPhone.trim()) {
+        toast.error("Please fill Caregiver Phone.");
+        return;
+      }
+    }
 
-  try {
-    // 1) Patient create
-    const createdPatient: any = await createPatient({
-  firstName: formData.firstName.trim(),
-  lastName: formData.lastName.trim(),
+    // Primary Cardiologist check: JWT token must be present (doctor must be logged in)
+    // Backend automatically sets the logged-in doctor as primary_cardiologist
+    const doctorToken = localStorage.getItem("doctor_token");
+    if (!doctorToken) {
+      toast.error("Primary Cardiologist is required. Please log in as a doctor first.");
+      return;
+    }
 
-  gender: formData.gender
-    ? formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1)
-    : undefined,
+    setIsSubmitting(true);
 
-  dateOfBirth: formData.dateOfBirth || undefined,
+    try {
+      // 1) Patient create
+      const createdPatient: any = await createPatient({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
 
-  // UI alanın: contactNumber
-  contactNumber: formData.contactNumber.trim(),
+        gender: formData.gender
+          ? formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1)
+          : undefined,
 
-  // Strapi’de required "phone" varsa bunu da dolduralım
-  phone: formData.contactNumber.trim(),
+        dateOfBirth: formData.dateOfBirth || undefined,
 
-  email: formData.email?.trim() || undefined,
+        // UI alanın: contactNumber
+        contactNumber: formData.contactNumber.trim(),
 
-  allowCaregiver: formData.caregiverPermission,
+        // Strapi’de required "phone" varsa bunu da dolduralım
+        phone: formData.contactNumber.trim(),
 
-  // Strapi alanın "statu"
-  statu: "New",
+        email: formData.email?.trim() || undefined,
 
-  clinicalFindings: formData.clinicalFindings,
-  redFlagSymptoms: formData.redFlagSymptoms,
-});
+        allowCaregiver: formData.caregiverPermission,
+
+        // Strapi alanın "statu"
+        statu: "New",
+
+        clinicalFindings: formData.clinicalFindings,
+        redFlagSymptoms: formData.redFlagSymptoms,
+      });
 
 
-const patientDocumentId = createdPatient?.documentId;
-if (!patientDocumentId) {
-  throw new Error("Patient could not be created (no documentId returned).");
-}
+      const patientDocumentId = createdPatient?.documentId;
+      if (!patientDocumentId) {
+        throw new Error("Patient could not be created (no documentId returned).");
+      }
 
-   // 2) Caregiver create + link (permission true ise)
-if (formData.caregiverPermission) {
-  const createdRelative: any = await createCaregiver({
-    fullName: formData.caregiverName?.trim() || undefined,
-    phone: formData.caregiverPhone.trim(),
-    email: formData.caregiverEmail?.trim() || undefined,
-    relationToPatient: "Caregiver",
-  });
+      // 2) Caregiver create + link (permission true ise)
+      if (formData.caregiverPermission) {
+        const createdRelative: any = await createCaregiver({
+          fullName: formData.caregiverName?.trim() || undefined,
+          phone: formData.caregiverPhone.trim(),
+          email: formData.caregiverEmail?.trim() || undefined,
+          relationToPatient: "Caregiver",
+        });
 
-  const relativeId = createdRelative?.id;
+        const relativeId = createdRelative?.id;
 
-  if (relativeId) {
-    await linkCaregiverToPatient(patientDocumentId, [relativeId]);
-  }
-}
+        if (relativeId) {
+          await linkCaregiverToPatient(patientDocumentId, [relativeId]);
+        }
+      }
 
-    toast.success("Patient registered successfully!");
-    navigate("/patients");
-  } catch (e: any) {
-    console.error(e);
-    toast.error(e?.message || "Patient registration failed.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      toast.success("Patient registered successfully!");
+      navigate("/patients");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || "Patient registration failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   const handleCancel = () => {

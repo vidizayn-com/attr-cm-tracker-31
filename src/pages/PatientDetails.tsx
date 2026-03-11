@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useUser } from "@/contexts/UserContext";
 
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 import { toast } from "sonner";
-import { Copy, TrendingUp, Upload } from "lucide-react";
+import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft } from "lucide-react";
+
+import CombinedExaminations from "@/components/CombinedExaminations";
 
 import {
   LineChart,
@@ -36,6 +40,7 @@ import {
   createMeasurement,
   type Patient as StrapiPatient,
 } from "@/lib/strapi";
+import { strapiGet, strapiPut } from "@/lib/strapiClient";
 
 type ClinicalFindings = {
   lvh12: boolean;
@@ -110,6 +115,16 @@ type UIModel = StrapiPatient & {
 
 type ClinicalRow = { date: string; test: string; value: string };
 
+type HistoryEntry = {
+  id: number;
+  date: string;
+  type: string;
+  value: number;
+  unit: string;
+  notes: string | null;
+  createdAt: string | null;
+};
+
 // küçük yardımcı: input string -> number
 function parseNum(v: any): number | null {
   const s = String(v ?? "").trim().replace(",", ".");
@@ -118,8 +133,16 @@ function parseNum(v: any): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+type DoctorOption = {
+  id: number;
+  documentId: string;
+  fullName: string;
+  specialty: string;
+};
+
 export default function PatientDetails() {
   const { id } = useParams();
+  const { currentUser } = useUser();
 
   const [patient, setPatient] = useState<UIModel | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -134,38 +157,85 @@ export default function PatientDetails() {
 
   // Historical table state
   const [clinicalRows, setClinicalRows] = useState<ClinicalRow[]>([]);
+  const [filterTest, setFilterTest] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Primary Cardiologist editing state
+  const [allDoctors, setAllDoctors] = useState<DoctorOption[]>([]);
+  const [selectedCardiologistDocId, setSelectedCardiologistDocId] = useState<string>("");
+
+  // Patient detail extras
+  const [institutionName, setInstitutionName] = useState<string | null>(null);
+  const [historyRows, setHistoryRows] = useState<HistoryEntry[]>([]);
+  const [reportDate, setReportDate] = useState<string | null>(null);
+
+  // Filtered rows calculation
+  const filteredClinicalRows = useMemo(() => {
+    let rows = [...clinicalRows];
+
+    // Filter by test type
+    if (filterTest !== "all") {
+      rows = rows.filter((r) => r.test === filterTest);
+    }
+
+    // Sort by date
+    rows.sort((a, b) => {
+      if (sortOrder === "asc") return a.date.localeCompare(b.date);
+      return b.date.localeCompare(a.date);
+    });
+
+    return rows;
+  }, [clinicalRows, filterTest, sortOrder]);
 
   // ---------------- Measurements loader (tek kaynak) ----------------
+  // ---------------- Measurements loader (tek kaynak) ----------------
   const loadMeasurements = async (p: UIModel) => {
-    const [gfrRows, ntRows] = await Promise.all([
-      fetchMeasurementsByPatient(p.id, "GFR"),
-      fetchMeasurementsByPatient(p.id, "NT_PRO_BNP"),
-    ]);
+    // Tüm ölçümleri çek
+    const allMeasurements = await fetchMeasurementsByPatient(p.id);
 
-    setGfrChartData(
-      (gfrRows ?? []).map((r: any) => ({
+    // Chartlar için filtrele
+    const gfrData = allMeasurements
+      .filter((m) => m.type === "GFR")
+      .map((r) => ({ date: r.measurementDate, value: r.value }));
+
+    const ntData = allMeasurements
+      .filter((m) => m.type === "NT_PRO_BNP")
+      .map((r) => ({ date: r.measurementDate, value: r.value }));
+
+    setGfrChartData(gfrData);
+    setNtProBnpChartData(ntData);
+
+    // Tablo için hepsi
+    const rows: ClinicalRow[] = allMeasurements.map((r) => {
+      let testName = r.type as string;
+      if (r.type === "NT_PRO_BNP") testName = "NT-proBNP";
+      if (r.type === "GFR") testName = "GFR";
+      // Diğerleri oldugu gibi (BNP, EF, LVH vs)
+
+      return {
         date: r.measurementDate,
-        value: r.value,
-      }))
-    );
+        test: testName,
+        value: `${r.value} ${r.unit ?? ""}`.trim(),
+      };
+    });
 
-    setNtProBnpChartData(
-      (ntRows ?? []).map((r: any) => ({
-        date: r.measurementDate,
-        value: r.value,
-      }))
-    );
-
-    const rows: ClinicalRow[] = [];
-
-    for (const r of ntRows ?? []) rows.push({ date: r.measurementDate, test: "NT-proBNP", value: String(r.value) });
-    for (const r of gfrRows ?? []) rows.push({ date: r.measurementDate, test: "GFR", value: String(r.value) });
-
-    // İstersen newest-first yapmak için tersine çevirebiliriz, şimdilik old->new
+    // Old -> New sıralama
     rows.sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : a.test.localeCompare(b.test)));
 
     setClinicalRows(rows);
   };
+
+  // ---------------- Fetch all cardiologists for dropdown ----------------
+  useEffect(() => {
+    (async () => {
+      try {
+        const doctors = await strapiGet<DoctorOption[]>("/api/auth/doctor/all-doctors?specialty=Cardiology");
+        setAllDoctors(Array.isArray(doctors) ? doctors : []);
+      } catch (e) {
+        console.warn("Failed to load doctors for dropdown:", e);
+      }
+    })();
+  }, []);
 
   // ---------------- Fetch patient ----------------
   useEffect(() => {
@@ -190,8 +260,24 @@ export default function PatientDetails() {
         setDraft(JSON.parse(JSON.stringify(merged)));
         setIsEditing(false);
 
+        // Set the currently selected cardiologist
+        const currentCardioDocId = (p as any).primary_cardiologist?.documentId || "";
+        setSelectedCardiologistDocId(currentCardioDocId);
+
         // Hasta gelir gelmez measurements çek
         await loadMeasurements(merged);
+
+        // Fetch extra detail (institution + history)
+        try {
+          const detailData = await strapiGet<any>(`/api/auth/doctor/patient-detail?patientDocumentId=${merged.documentId}`);
+          if (detailData) {
+            setInstitutionName(detailData.institutionName || null);
+            setHistoryRows(detailData.history || []);
+            setReportDate(detailData.reportDate || null);
+          }
+        } catch (e) {
+          console.warn('Failed to load patient detail extras:', e);
+        }
       } catch (e: any) {
         toast.error(e?.message || "Patient fetch failed");
         console.error(e);
@@ -237,12 +323,17 @@ export default function PatientDetails() {
   const startEdit = () => {
     if (!patient) return;
     setDraft(JSON.parse(JSON.stringify(patient)));
+    // Reset selected cardiologist to current value
+    const currentDocId = (patient as any).primary_cardiologist?.documentId || "";
+    setSelectedCardiologistDocId(currentDocId);
     setIsEditing(true);
   };
 
   const cancelEdit = () => {
     if (!patient) return;
     setDraft(JSON.parse(JSON.stringify(patient)));
+    const currentDocId = (patient as any).primary_cardiologist?.documentId || "";
+    setSelectedCardiologistDocId(currentDocId);
     setIsEditing(false);
   };
 
@@ -260,12 +351,17 @@ export default function PatientDetails() {
       const gd = (draft.gender ?? "").trim();
       const em = (draft.email ?? "").trim();
       const cn = (draft.contactNumber ?? "").trim();
+      const lv = ((draft as any).lastVisit ?? "").toString().trim();
+      const na = ((draft as any).nextAppointment ?? "").toString().trim();
 
       if (!fn) requiredMissing.push("First Name");
       if (!ln) requiredMissing.push("Last Name");
       if (!gd) requiredMissing.push("Gender");
       if (!em) requiredMissing.push("Email");
       if (!cn) requiredMissing.push("Contact Number");
+      if (!selectedCardiologistDocId) requiredMissing.push("Primary Cardiologist");
+      if (!lv) requiredMissing.push("Last Visit");
+      if (!na) requiredMissing.push("Next Appointment");
 
       if (requiredMissing.length) {
         toast.error(`Lütfen zorunlu alanları doldurun: ${requiredMissing.join(", ")}`);
@@ -291,8 +387,16 @@ export default function PatientDetails() {
         allowCaregiver: Boolean(draft.allowCaregiver),
         clinicalStatus: draft.clinicalStatus || undefined,
 
+        kvkkConsentStatus: (draft as any).kvkkConsentStatus || undefined,
+        kvkkConsentAt: (draft as any).kvkkConsentAt || undefined,
+
         statu: draft.statu ?? "New",
         cancellationReason: draft.statu === "Cancelled" ? (draft.cancellationReason ?? "") : undefined,
+
+        lastVisit: (draft as any).lastVisit || undefined,
+        nextAppointment: (draft as any).nextAppointment || undefined,
+
+        reportDeadline: (draft as any).reportDeadline || undefined,
 
         clinicalFindings: (draft as any).clinicalFindings ?? defaultClinicalFindings,
         redFlagSymptoms: (draft as any).redFlagSymptoms ?? defaultRedFlags,
@@ -302,41 +406,71 @@ export default function PatientDetails() {
       const updated = await updatePatientByAnyId(String(id), payload);
       if (!updated) throw new Error("Save failed (no response).");
 
-      // 2) Measurement auto-log (GFR + NT-proBNP değiştiyse)
+      // 2) Measurement auto-log (Changes detected -> Save to Measurement table)
       try {
         const today = new Date().toISOString().slice(0, 10);
 
-        const prevGfr = parseNum((patient as any)?.clinicalFindings?.gfr30Value);
-        const nextGfr = parseNum((draft as any)?.clinicalFindings?.gfr30Value);
+        const checkAndCreate = async (
+          prevValStr: any,
+          nextValStr: any,
+          type: "NT_PRO_BNP" | "GFR" | "BNP" | "EF" | "LVH",
+          unit: string
+        ) => {
+          const prev = parseNum(prevValStr);
+          const next = parseNum(nextValStr);
 
-        if (nextGfr !== null && nextGfr !== prevGfr) {
-          await createMeasurement({
-            patientId: patient.id,
-            measurementDate: today,
-            type: "GFR",
-            value: nextGfr,
-            unit: "ml/min/1.73 m²",
-          });
-        }
+          console.log(`Checking ${type}: prev=${prev} (${prevValStr}), next=${next} (${nextValStr})`);
 
-        const prevNt = parseNum((patient as any)?.clinicalFindings?.ntProBnpValue);
-        const nextNt = parseNum((draft as any)?.clinicalFindings?.ntProBnpValue);
+          if (next !== null && next !== prev) {
+            console.log(`>> Creating measurement for ${type}:`, next);
+            // Strapi 5 prefers documentId for relations if available
+            const targetId = patient.documentId || patient.id;
 
-        if (nextNt !== null && nextNt !== prevNt) {
-          await createMeasurement({
-            patientId: patient.id,
-            measurementDate: today,
-            type: "NT_PRO_BNP",
-            value: nextNt,
-            unit: "pg/mL",
-          });
-        }
+            await createMeasurement({
+              patientId: targetId,
+              measurementDate: today,
+              type,
+              value: next,
+              unit,
+              doctorId: currentUser?.documentId || undefined,
+            });
+          }
+        };
+
+        const oldCF = (patient as any)?.clinicalFindings || {};
+        const newCF = (draft as any)?.clinicalFindings || {};
+
+        // GFR
+        await checkAndCreate(oldCF.gfr30Value, newCF.gfr30Value, "GFR", "ml/min/1.73 m²");
+        // NT-proBNP
+        await checkAndCreate(oldCF.ntProBnpValue, newCF.ntProBnpValue, "NT_PRO_BNP", "pg/mL");
+        // BNP
+        await checkAndCreate(oldCF.bnpValue, newCF.bnpValue, "BNP", "pg/mL");
+        // EF
+        await checkAndCreate(oldCF.ef40Value, newCF.ef40Value, "EF", "%");
+        // LVH
+        await checkAndCreate(oldCF.lvh12Value, newCF.lvh12Value, "LVH", "mm");
+
       } catch (e: any) {
         console.warn("Measurement create skipped:", e);
         toast.error(e?.message || "Measurement kaydı oluşturulamadı (permission/publish kontrol).");
       }
 
-      // 3) Refetch patient (populate)
+      // 3) Update primary cardiologist if changed
+      const oldCardioDocId = (patient as any).primary_cardiologist?.documentId || "";
+      if (selectedCardiologistDocId && selectedCardiologistDocId !== oldCardioDocId) {
+        try {
+          await strapiPut("/api/auth/doctor/update-primary-cardiologist", {
+            patientDocumentId: patient.documentId || String(patient.id),
+            doctorDocumentId: selectedCardiologistDocId,
+          });
+        } catch (e: any) {
+          console.warn("Primary cardiologist update failed:", e);
+          toast.error(e?.message || "Primary Cardiologist güncellenemedi.");
+        }
+      }
+
+      // 4) Refetch patient (populate)
       const refreshed = await fetchPatientByAnyId(String(id));
       if (!refreshed) throw new Error("Save ok but refetch failed.");
 
@@ -348,9 +482,10 @@ export default function PatientDetails() {
 
       setPatient(merged);
       setDraft(JSON.parse(JSON.stringify(merged)));
+      setSelectedCardiologistDocId((refreshed as any).primary_cardiologist?.documentId || "");
       setIsEditing(false);
 
-      // 4) Measurements refresh (grafik + historical table anında güncellenir)
+      // 5) Measurements refresh (grafik + historical table anında güncellenir)
       await loadMeasurements(merged);
 
       toast.success("Saved!");
@@ -412,11 +547,25 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
   };
 
   if (!patient || !draft) {
-    return (
-      <Layout>
-        <div className="p-6 text-white">Loading...</div>
-      </Layout>
-    );
+    if (!patient || !draft) {
+      // If we have an error, show it instead of loading
+      // We don't have explicit error state variable exposed here easily unless we add it, 
+      // but the component above creates one in useEffect but doesn't store it in a way we check here.
+      // Let's assume if it takes too long it's weird, but for now just "Loading..."
+      // Ideally we should use the 'error' state if we had one.
+
+      // Check if we hit a permission/fetch error
+      // Since we don't have 'error' state in this scope (it was local to useEffect but lost),
+      // let's add a global error state for this component.
+      return (
+        <Layout>
+          <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+            <div className="text-lg font-semibold mb-2">Loading Patient Details...</div>
+            <div className="text-sm">If this takes too long, please check your connection or previous errors.</div>
+          </div>
+        </Layout>
+      );
+    }
   }
 
   const cf: ClinicalFindings = (draft as any).clinicalFindings ?? defaultClinicalFindings;
@@ -435,58 +584,51 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 items-center">
-            <Link to={`/patients/${patient.id}/assign`} className={uiDisabledClass(otherButtonsDisabled)}>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 h-11">👤 Assign patient</Button>
+          <div className="flex flex-wrap gap-2.5 items-center">
+            <Link to={`/patients/${patient.documentId || patient.id}/assign`} className={uiDisabledClass(otherButtonsDisabled)}>
+              <Button className="bg-[hsl(184,58%,44%)] hover:bg-[hsl(184,58%,38%)] text-white rounded-xl px-5 h-10 shadow-sm transition-all">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Assign Patient
+              </Button>
             </Link>
 
             <Button
-              className={`bg-green-600 hover:bg-green-700 text-white rounded-xl px-5 h-11 ${uiDisabledClass(
+              className={`bg-[hsl(184,94%,34%)] hover:bg-[hsl(184,94%,28%)] text-white rounded-xl px-5 h-10 shadow-sm transition-all ${uiDisabledClass(
                 otherButtonsDisabled
               )}`}
               onClick={() => window.open("#", "_blank")}
             >
-              📋 Report
+              <FileBarChart className="w-4 h-4 mr-2" />
+              Report
             </Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  className={`bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 h-11 ${uiDisabledClass(
-                    otherButtonsDisabled
-                  )}`}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Files
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>Patient Files</DialogTitle>
-                </DialogHeader>
-                <div className="text-slate-600 text-sm">
-                  Şimdilik popup hazır. Sonraki adımda Strapi “upload/files + relation” bağlayacağız.
-                </div>
-              </DialogContent>
-            </Dialog>
 
             {!isEditing ? (
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-5 h-11" onClick={startEdit}>
-                ✏️ Edit
+              <Button
+                className="bg-[hsl(184,58%,44%)] hover:bg-[hsl(184,58%,38%)] text-white rounded-xl px-5 h-10 shadow-sm transition-all"
+                onClick={startEdit}
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit
               </Button>
             ) : (
               <>
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-5 h-11" onClick={save}>
-                  💾 Save
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-5 h-10 shadow-sm transition-all"
+                  onClick={save}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
                 </Button>
-                <Button variant="outline" className="rounded-xl px-5 h-11" onClick={cancelEdit}>
+                <Button variant="outline" className="rounded-xl px-5 h-10 border-slate-300 hover:bg-slate-50" onClick={cancelEdit}>
                   Cancel
                 </Button>
               </>
             )}
 
             <Link to="/patients">
-              <Button variant="outline" className="rounded-xl px-5 h-11">
+              <Button variant="outline" className="rounded-xl px-5 h-10 border-slate-300 hover:bg-slate-50">
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
             </Link>
@@ -557,6 +699,27 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Last Visit <span className="text-red-500">*</span></div>
+                  <Input
+                    type="date"
+                    value={safeText((draft as any).lastVisit)}
+                    disabled={!isEditing}
+                    onChange={(e) => setDraft({ ...draft, lastVisit: e.target.value } as any)}
+                  />
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Next Appointment <span className="text-red-500">*</span></div>
+                  <Input
+                    type="date"
+                    value={safeText((draft as any).nextAppointment)}
+                    disabled={!isEditing}
+                    onChange={(e) => setDraft({ ...draft, nextAppointment: e.target.value || null } as any)}
+                  />
+                </div>
+              </div>
+
               <div>
                 <div className="text-xs text-slate-500 mb-1">Email</div>
                 <Input
@@ -587,11 +750,29 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs text-slate-500 mb-1">KVKK Consent Status</div>
-                  <Input value={safeText((draft as any).kvkkConsentStatus)} disabled />
+                  <Select
+                    value={safeText((draft as any).kvkkConsentStatus) || "pending"}
+                    onValueChange={(v) => setDraft({ ...draft, kvkkConsentStatus: v } as any)}
+                    disabled={!isEditing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 mb-1">KVKK Consent At</div>
-                  <Input value={safeText((draft as any).kvkkConsentAt)} disabled />
+                  <Input
+                    type="date"
+                    value={safeText((draft as any).kvkkConsentAt)}
+                    disabled={!isEditing}
+                    onChange={(e) => setDraft({ ...draft, kvkkConsentAt: e.target.value || null } as any)}
+                  />
                 </div>
               </div>
 
@@ -608,6 +789,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   <SelectContent className="bg-white">
                     <SelectItem value="New">New</SelectItem>
                     <SelectItem value="Diagnosis">Diagnosis</SelectItem>
+                    <SelectItem value="Specialist_Review">Specialist Review</SelectItem>
                     <SelectItem value="Follow-up">Follow-up</SelectItem>
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
@@ -624,6 +806,94 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   />
                 </div>
               )}
+
+              {/* Report Date - shown for Follow-up patients */}
+              {safeText((draft as any).statu) === "Follow-up" && reportDate && (
+                <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl">
+                  <div className="text-xs text-teal-600 font-medium mb-1 flex items-center gap-1">
+                    <FileBarChart className="w-3.5 h-3.5" />
+                    Report Date
+                  </div>
+                  <div className="text-sm font-semibold text-teal-800">
+                    {new Date(reportDate).toLocaleDateString('tr-TR', {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Report Deadline - editable */}
+              {(safeText((draft as any).statu) === "Follow-up" || safeText((draft as any).statu) === "Diagnosis") && (
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
+                  <Input
+                    type="date"
+                    value={safeText((draft as any).reportDeadline)}
+                    disabled={!isEditing}
+                    onChange={(e) => setDraft({ ...draft, reportDeadline: e.target.value || null } as any)}
+                  />
+                </div>
+              )}
+
+              {/* Institution */}
+              {institutionName && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="text-xs text-slate-500 mb-1">Institution / Hospital</div>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-cyan-600" />
+                    <span className="text-sm font-medium text-slate-700">{institutionName}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Care Team Section */}
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <div className="text-sm font-semibold text-slate-800 mb-2">Care Team</div>
+
+                <div className="mb-2">
+                  <div className="text-xs text-slate-500 mb-1">
+                    Primary Cardiologist <span className="text-red-500">*</span>
+                  </div>
+                  {isEditing ? (
+                    <Select
+                      value={selectedCardiologistDocId || "__none"}
+                      onValueChange={(v) => setSelectedCardiologistDocId(v === "__none" ? "" : v)}
+                    >
+                      <SelectTrigger className={!selectedCardiologistDocId ? "border-red-300" : ""}>
+                        <SelectValue placeholder="Select a cardiologist" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="__none" disabled>Select a cardiologist</SelectItem>
+                        {allDoctors.map((doc) => (
+                          <SelectItem key={doc.documentId} value={doc.documentId}>
+                            {doc.fullName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm font-medium text-slate-700">
+                      {(patient as any).primary_cardiologist?.fullName || (
+                        <span className="text-red-500 italic">Not Assigned</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {(patient as any).assigned_specialists && (patient as any).assigned_specialists.length > 0 && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Consulting Specialists</div>
+                    <div className="flex flex-col gap-1">
+                      {(patient as any).assigned_specialists.map((s: any) => (
+                        <div key={s.id} className="text-sm text-slate-600 bg-slate-50 px-2 py-1 rounded">
+                          {s.fullName} <span className="text-xs text-slate-400">({s.specialty})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 pt-2">
                 <Checkbox
@@ -649,36 +919,74 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
                   <DialogHeader>
                     <DialogTitle>Clinical Records</DialogTitle>
+                    <DialogDescription>
+                      This table shows the historical clinical measurement records for the patient.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="text-slate-600 text-sm">Strapi Measurement tablosundan ölçüm geçmişi gösterilir.</div>
 
-                  <div className="mt-4 border rounded-xl overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Test</TableHead>
-                          <TableHead>Value</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {clinicalRows.length === 0 ? (
+                  <div className="flex flex-col gap-4 mt-4">
+                    {/* Filters */}
+                    <div className="flex flex-wrap gap-4 items-end">
+                      <div className="w-[200px]">
+                        <div className="text-xs text-slate-500 mb-1">Filter by Test</div>
+                        <Select value={filterTest} onValueChange={setFilterTest}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Tests" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Tests</SelectItem>
+                            <SelectItem value="GFR">GFR</SelectItem>
+                            <SelectItem value="NT-proBNP">NT-proBNP</SelectItem>
+                            <SelectItem value="BNP">BNP</SelectItem>
+                            <SelectItem value="EF">EF</SelectItem>
+                            <SelectItem value="LVH">LVH</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="w-[150px]">
+                        <div className="text-xs text-slate-500 mb-1">Sort by Date</div>
+                        <Select value={sortOrder} onValueChange={(v: "asc" | "desc") => setSortOrder(v)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="desc">Newest First</SelectItem>
+                            <SelectItem value="asc">Oldest First</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-xl overflow-hidden">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={3} className="text-slate-600">
-                              Kayıtlı ölçüm bulunamadı.
-                            </TableCell>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Test</TableHead>
+                            <TableHead>Value</TableHead>
                           </TableRow>
-                        ) : (
-                          clinicalRows.map((r, i) => (
-                            <TableRow key={i}>
-                              <TableCell>{r.date}</TableCell>
-                              <TableCell>{r.test}</TableCell>
-                              <TableCell>{r.value}</TableCell>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredClinicalRows.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-slate-600">
+                                Kayıtlı ölçüm bulunamadı.
+                              </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            filteredClinicalRows.map((r, i) => (
+                              <TableRow key={i}>
+                                <TableCell>{r.date}</TableCell>
+                                <TableCell>{r.test}</TableCell>
+                                <TableCell>{r.value}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -815,6 +1123,15 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
           </Card>
         </div>
 
+        {/* ── Examinations & Specialist Notes (combined) ── */}
+        {patient.documentId && (
+          <CombinedExaminations
+            patientDocumentId={patient.documentId}
+            historyRows={historyRows}
+          />
+        )}
+
+        {/* ── Diagnosis Summary ── */}
         <Card className="rounded-2xl mt-6">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Diagnosis Summary</CardTitle>

@@ -11,6 +11,13 @@ type FetchFromStrapiOptions = {
 async function fetchFromStrapi<T>(path: string, opts: FetchFromStrapiOptions = {}): Promise<T> {
   if (!STRAPI_URL) throw new Error("VITE_STRAPI_URL is not set.");
 
+  // Strapi 5 deep populate syntax with 'on' or standard v4 populate
+  // Here we use standard object notation or wildcard if simple.
+  // For deep fields: populate[primary_cardiologist][fields][0]=name&populate[primary_cardiologist][fields][1]=role
+  // We'll use a helper or simple wildcard for now if permissions allowed.
+  // Let's stick to standard URL if we can, or just use * if it works for relations.
+  // "populate=*" usually creates 1-level deep. If we need deeply nested (like doctor's hospital), we need query builder.
+  // For now, let's keep it robust.
   const url = `${STRAPI_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
   const res = await fetch(url, {
@@ -77,6 +84,24 @@ export type Patient = {
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
+
+  lastVisit?: string | null;
+  nextAppointment?: string | null;
+  reportDeadline?: string | null;
+
+  primary_cardiologist?: {
+    id: number;
+    documentId: string;
+    fullName: string;
+    specialty: string;
+  } | null;
+
+  assigned_specialists?: Array<{
+    id: number;
+    documentId: string;
+    fullName: string;
+    specialty: string;
+  }> | null;
 };
 
 function sanitizePatientPayload(payload: Partial<Patient>) {
@@ -100,10 +125,15 @@ function sanitizePatientPayload(payload: Partial<Patient>) {
   setIfDefined("allowCaregiver", payload.allowCaregiver ?? undefined);
   setIfDefined("clinicalStatus", payload.clinicalStatus ?? undefined);
   setIfDefined("statu", payload.statu ?? undefined);
+  setIfDefined("kvkkConsentStatus", payload.kvkkConsentStatus ?? undefined);
+  setIfDefined("kvkkConsentAt", payload.kvkkConsentAt ?? undefined);
 
   // JSON
   setIfDefined("clinicalFindings", payload.clinicalFindings ?? undefined);
   setIfDefined("redFlagSymptoms", payload.redFlagSymptoms ?? undefined);
+
+  setIfDefined("lastVisit", payload.lastVisit ?? undefined);
+  setIfDefined("nextAppointment", payload.nextAppointment ?? undefined);
 
   if (payload.statu === "Cancelled") {
     setIfDefined("cancellationReason", payload.cancellationReason ?? "");
@@ -122,17 +152,21 @@ async function fetchPatientDocumentIdByNumericId(numericId: string) {
 
 export async function fetchPatientByAnyId(anyId: string, opts?: { populate?: boolean }) {
   const populate = opts?.populate ?? true;
-  const pop = populate ? `?populate=*` : "";
+  // Revert to simple populate=* to ensure page loads.
+  // Complex field selection queries can fail if not properly encoded or if schema doesn't match exactly.
+  const popQuery = populate ? "?populate=*" : "";
+  // Note: we also keep clinicalFindings/redFlagSymptoms populated just in case they are components (Strapi often needs explicit pop for comps)
 
   if (!/^\d+$/.test(anyId)) {
-    const json = await fetchFromStrapi<{ data: Patient }>(`/api/patients/${anyId}${pop}`, { method: "GET" });
+    // anyId is likely documentId
+    const json = await fetchFromStrapi<{ data: Patient }>(`/api/patients/${anyId}${popQuery}`, { method: "GET" });
     return json?.data ?? null;
   }
 
   const documentId = await fetchPatientDocumentIdByNumericId(anyId);
   if (!documentId) return null;
 
-  const json = await fetchFromStrapi<{ data: Patient }>(`/api/patients/${documentId}${pop}`, { method: "GET" });
+  const json = await fetchFromStrapi<{ data: Patient }>(`/api/patients/${documentId}${popQuery}`, { method: "GET" });
   return json?.data ?? null;
 }
 
@@ -162,7 +196,7 @@ export type Measurement = {
   id: number;
   documentId?: string;
   measurementDate: string;
-  type: "NT_PRO_BNP" | "GFR";
+  type: "NT_PRO_BNP" | "GFR" | "BNP" | "EF" | "LVH";
   value: number;
   unit?: string | null;
   notes?: string | null;
@@ -172,14 +206,19 @@ export type Measurement = {
   patient?: any;
 };
 
-export async function fetchMeasurementsByPatient(patientId: number, type: "NT_PRO_BNP" | "GFR") {
-  const qs = new URLSearchParams({
+export async function fetchMeasurementsByPatient(patientId: number, type?: "NT_PRO_BNP" | "GFR" | "BNP" | "EF" | "LVH") {
+  const filters: Record<string, string> = {
     "filters[patient][id][$eq]": String(patientId),
-    "filters[type][$eq]": type,
     "sort": "measurementDate:asc",
     "pagination[pageSize]": "100",
     "populate": "*",
-  });
+  };
+
+  if (type) {
+    filters["filters[type][$eq]"] = type;
+  }
+
+  const qs = new URLSearchParams(filters);
 
   const json = await fetchFromStrapi<{ data: Measurement[] }>(`/api/measurements?${qs.toString()}`);
   return json.data ?? [];
@@ -191,15 +230,16 @@ export async function fetchMeasurementsByPatient(patientId: number, type: "NT_PR
  * - create sonrası publishedAt boşsa PUT/PATCH ile publish
  */
 export async function createMeasurement(input: {
-  patientId: number;
+  patientId: number | string;
   measurementDate: string; // YYYY-MM-DD
-  type: "NT_PRO_BNP" | "GFR";
+  type: "NT_PRO_BNP" | "GFR" | "BNP" | "EF" | "LVH";
   value: number;
   unit?: string;
   notes?: string;
+  doctorId?: number | string;
 }) {
   // 1) CREATE (relation connect ile)
-  const createBody = {
+  const createBody: any = {
     data: {
       patient: { connect: [input.patientId] },
       measurementDate: input.measurementDate,
@@ -209,6 +249,9 @@ export async function createMeasurement(input: {
       notes: input.notes ?? null,
     },
   };
+  if (input.doctorId) {
+    createBody.data.doctor = { connect: [input.doctorId] };
+  }
 
   const created = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements`, {
     method: "POST",
