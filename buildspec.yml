@@ -1,0 +1,96 @@
+version: 0.2
+env:
+  parameter-store:
+    GITHUB_TOKEN: "/general/GITHUB_TOKEN"
+    GITHUB_USER: "/general/GITHUB_USER"
+    SONAR_TOKEN: "/general/SONAR_TOKEN" 
+    WEBHOOK: "/general/webhook"  
+  variables:  
+    helmchartsrepo: "github.com/YOUR-ORG/attr-cm-tracker-31-config.git"  # TODO-DEVOPS: Update with actual org
+    remoterepo: "github.com/YOUR-ORG/attr-cm-tracker-31"                 # TODO-DEVOPS: Update with actual org
+    localrepo: attr-cm-tracker-31
+    ecrurl: "799121415609.dkr.ecr.eu-central-1.amazonaws.com/attr-cm-tracker-31"  # TODO-DEVOPS: Verify ECR URL
+
+phases: 
+  pre_build: 
+    commands:
+    - |
+      if [ "$BranchName" = "master" ]; then
+        export deployenv="prod"
+        export helmchartsbranch="prod"
+        export branch="master"
+      elif [ "$BranchName" = "staging" ]; then
+        export deployenv="staging"
+        export helmchartsbranch="staging"
+        export branch="staging"
+      elif [ "$BranchName" = "test" ]; then
+        export deployenv="test"
+        export helmchartsbranch="test"
+        export branch="test"
+      fi
+      echo "BranchName: $BranchName"
+      echo $deployenv
+      echo $branch
+    
+    - echo Logging in to Amazon ECR.... 
+    - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin $ecrurl
+    - cd /tmp
+    - git clone https://$GITHUB_USER:$GITHUB_TOKEN@$remoterepo
+    - cd $localrepo
+    - git checkout $branch
+    - COMMIT_HASH=$(git log --format="%H" -n 1| cut -c 1-7)
+    - export COMMIT_MSG=$(git log -1 --pretty=%B)
+    - IMAGE_TAG=${COMMIT_HASH:=latest}
+    - git config --global user.name "CODEBUILD"
+    - git config --global user.email "vistream.support@niceye.com"
+    - |
+      export scan=yes
+      export SONAR_SCANNER_VERSION=5.0.1.3006
+      export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
+      curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
+      unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+      export PATH=$SONAR_SCANNER_HOME/bin:$PATH
+      export SONAR_SCANNER_OPTS="-server"
+      export SONAR_TOKEN=$SONAR_TOKEN
+      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
+  build: 
+    commands: 
+    - echo Build started on `date` 
+    - echo Building the Docker image... 
+    - docker build -t $ecrurl:latest . 
+    - docker tag $ecrurl:latest $ecrurl:$IMAGE_TAG 
+  post_build: 
+    commands:
+    - echo Build completed on `date`
+    - echo pushing to repo
+    - docker push $ecrurl:latest
+    - docker push $ecrurl:$IMAGE_TAG
+    - git clone https://$GITHUB_USER:$GITHUB_TOKEN@$helmchartsrepo helm-charts
+    - cd helm-charts
+    - echo pushing to helmcharts
+    - git checkout $helmchartsbranch
+    - sed "s/+tag+/$IMAGE_TAG/g" helm/valuesaws.yaml > helm/values.yaml                              
+    - git add .
+    - git commit -m "$COMMIT_MSG"
+    - git push
+    - |        
+        cd /tmp/$localrepo
+        MESSAGE="<h2>Build completed at $localrepo branch $branch</h2><br><p>Code Quality and Vulnerability scan started. &#x1F50E; &#x1F440; </p>"
+        curl -H 'Content-Type: application/json' -d "{\"text\": \"${MESSAGE}\" }" ${WEBHOOK}
+        nohup sonar-scanner -Dsonar.projectKey=$localrepo -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.vistreamtv.com
+        now=$(date +"%m%d%Y_%H%M")
+        trivyreport=trivyreport_$localrepo\_$branch\_$now    
+        wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+        trivy image --no-progress --exit-code 0 --severity HIGH,CRITICAL --format template --template "@./html.tpl" -o $trivyreport.html $ecrurl:$IMAGE_TAG 
+
+        if cat $trivyreport.html | grep -q "No Vulnerabilities"; then
+          MESSAGE="<h2>Trivy image scan completed at $localrepo branch $branch no vulnerabilities found. &#x1F389; &#x1F60E; </h2>"
+        else
+          zippass=$(LC_ALL=C tr -dc '[:alnum:]' </dev/urandom | head -c 32)     
+          zip -e -P $zippass $trivyreport.zip $trivyreport.html
+          aws s3 cp "$trivyreport.zip" "s3://24h-pipelinelogs/$trivyreport.zip"
+          REPORT_URL="https://24h-pipelinelogs.s3.eu-central-1.amazonaws.com/$trivyreport.zip"
+          echo "File URL: $REPORT_URL"
+          MESSAGE="<h2>Trivy image scan completed at $localrepo branch $branch vulnerabilities found. &#x1F525; &#x1F614; </h2><br><pre><a href='$REPORT_URL'>Download Report</></pre><br><b>Password</b><pre>$zippass</pre>"
+        fi
+        curl -H 'Content-Type: application/json' -d "{\"text\": \"${MESSAGE}\" }" ${WEBHOOK}
