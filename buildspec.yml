@@ -6,8 +6,8 @@ env:
     SONAR_TOKEN: "/general/SONAR_TOKEN" 
     WEBHOOK: "/general/webhook"  
   variables:  
-    helmchartsrepo: "github.com/YOUR-ORG/attr-cm-tracker-31-config.git"  # TODO-DEVOPS: Update with actual org
-    remoterepo: "github.com/YOUR-ORG/attr-cm-tracker-31"                 # TODO-DEVOPS: Update with actual org
+    helmchartsrepo: "github.com/vidizayn-com/attr-cm-tracker-31-config.git"  # TODO-DEVOPS: Update with actual org
+    remoterepo: "github.com/vidizayn-com/attr-cm-tracker-31"                 # TODO-DEVOPS: Update with actual org
     localrepo: attr-cm-tracker-31
     ecrurl: "799121415609.dkr.ecr.eu-central-1.amazonaws.com/attr-cm-tracker-31"  # TODO-DEVOPS: Verify ECR URL
 
@@ -53,6 +53,8 @@ phases:
       export SONAR_SCANNER_OPTS="-server"
       export SONAR_TOKEN=$SONAR_TOKEN
       curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
+    - echo Installing yq...
+    - wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq && chmod +x /usr/local/bin/yq
   build: 
     commands: 
     - echo Build started on `date` 
@@ -69,7 +71,7 @@ phases:
     - cd helm-charts
     - echo pushing to helmcharts
     - git checkout $helmchartsbranch
-    - sed "s/+tag+/$IMAGE_TAG/g" helm/valuesaws.yaml > helm/values.yaml                              
+    - yq -i ".frontend.image.tag = \"$IMAGE_TAG\"" helm/values.yaml
     - git add .
     - git commit -m "$COMMIT_MSG"
     - git push
