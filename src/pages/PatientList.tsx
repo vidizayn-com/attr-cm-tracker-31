@@ -85,10 +85,9 @@ const PatientList = () => {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       New: "bg-green-500 text-white",
-      Diagnosis: "bg-orange-500 text-white",
-      Specialist_Review: "bg-purple-500 text-white",
-      "Follow-up": "bg-blue-500 text-white",
-      Cancelled: "bg-red-500 text-white",
+      Diagnostic_Process: "bg-orange-500 text-white",
+      Follow_Up: "bg-blue-500 text-white",
+      Amyloidosis_Ruled_Out: "bg-red-500 text-white",
     };
     return styles[status] || "bg-gray-500 text-white";
   };
@@ -214,11 +213,9 @@ const PatientList = () => {
   const renderPatientCard = (patient: StrapiPatient, sectionType: 'primary' | 'consulting') => {
     const status = safeText(patient.statu) || "New";
 
-    let assignedDisplay = "Patient Pool";
+    let assignedDisplay = "Unassigned";
     if (patient.primary_cardiologist) {
       assignedDisplay = patient.primary_cardiologist.fullName;
-    } else if (status === 'Pending_Cardiologist_Assignment') {
-      assignedDisplay = "Pending Assignment";
     }
 
     const detailParam = safeText(patient.documentId) || String(patient.id);
@@ -242,9 +239,9 @@ const PatientList = () => {
             </span>
           </div>
 
-          {/* Report deadline warning - only for Follow-up patients */}
+          {/* Report deadline warning - only for Follow_Up patients */}
           {(() => {
-            if (status !== 'Follow-up' || !patient.reportDeadline) return null;
+            if (status !== 'Follow_Up' || !patient.reportDeadline) return null;
             const deadline = new Date(patient.reportDeadline);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -400,10 +397,9 @@ const PatientList = () => {
               >
                 <option>All Statuses</option>
                 <option>New</option>
-                <option>Diagnosis</option>
-                <option>Specialist_Review</option>
-                <option>Follow-up</option>
-                <option>Cancelled</option>
+                <option>Diagnostic_Process</option>
+                <option>Follow_Up</option>
+                <option>Amyloidosis_Ruled_Out</option>
               </select>
 
               <Button

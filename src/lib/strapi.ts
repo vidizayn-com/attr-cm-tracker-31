@@ -135,7 +135,7 @@ function sanitizePatientPayload(payload: Partial<Patient>) {
   setIfDefined("lastVisit", payload.lastVisit ?? undefined);
   setIfDefined("nextAppointment", payload.nextAppointment ?? undefined);
 
-  if (payload.statu === "Cancelled") {
+  if (payload.statu === "Amyloidosis_Ruled_Out") {
     setIfDefined("cancellationReason", payload.cancellationReason ?? "");
   }
 

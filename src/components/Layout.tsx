@@ -80,7 +80,7 @@ function AppSidebar() {
         const seenIds = new Set<number>();
 
         for (const p of allPatients) {
-          if (!p.reportDeadline || p.statu !== 'Follow-up' || seenIds.has(p.id)) continue;
+          if (!p.reportDeadline || p.statu !== 'Follow_Up' || seenIds.has(p.id)) continue;
           seenIds.add(p.id);
 
           const deadline = new Date(p.reportDeadline);

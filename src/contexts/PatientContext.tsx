@@ -76,7 +76,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       lastVisit: 'Apr 27, 2025',
       nextAppointment: 'May 2, 2025',
       assignedTo: 'Hematologist',
-      status: 'Diagnosis',
+      status: 'Diagnostic_Process',
       allowCaregiver: false,
       physicianData: [],
       clinicalFindings: {
@@ -117,7 +117,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       lastVisit: 'Feb 12, 2024',
       nextAppointment: 'May 3, 2025',
       assignedTo: 'Cardiologist',
-      status: 'Follow-up',
+      status: 'Follow_Up',
       allowCaregiver: false,
       physicianData: [],
       clinicalFindings: {
@@ -199,7 +199,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       lastVisit: 'Nov 18, 2024',
       nextAppointment: 'Jun 8, 2025',
       assignedTo: 'Genetics specialist',
-      status: 'Diagnosis',
+      status: 'Diagnostic_Process',
       allowCaregiver: false,
       physicianData: [],
       clinicalFindings: {

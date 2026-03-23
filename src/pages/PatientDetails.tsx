@@ -391,7 +391,7 @@ export default function PatientDetails() {
         kvkkConsentAt: (draft as any).kvkkConsentAt || undefined,
 
         statu: draft.statu ?? "New",
-        cancellationReason: draft.statu === "Cancelled" ? (draft.cancellationReason ?? "") : undefined,
+        cancellationReason: draft.statu === "Amyloidosis_Ruled_Out" ? (draft.cancellationReason ?? "") : undefined,
 
         lastVisit: (draft as any).lastVisit || undefined,
         nextAppointment: (draft as any).nextAppointment || undefined,
@@ -788,17 +788,16 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     <SelectItem value="New">New</SelectItem>
-                    <SelectItem value="Diagnosis">Diagnosis</SelectItem>
-                    <SelectItem value="Specialist_Review">Specialist Review</SelectItem>
-                    <SelectItem value="Follow-up">Follow-up</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    <SelectItem value="Diagnostic_Process">Diagnostic Process</SelectItem>
+                    <SelectItem value="Follow_Up">Follow Up</SelectItem>
+                    <SelectItem value="Amyloidosis_Ruled_Out">Amyloidosis Ruled Out</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {safeText((draft as any).statu) === "Cancelled" && (
+              {safeText((draft as any).statu) === "Amyloidosis_Ruled_Out" && (
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">Cancellation Reason</div>
+                  <div className="text-xs text-slate-500 mb-1">Reason</div>
                   <Textarea
                     value={safeText((draft as any).cancellationReason)}
                     disabled={!isEditing}
@@ -807,8 +806,8 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 </div>
               )}
 
-              {/* Report Date - shown for Follow-up patients */}
-              {safeText((draft as any).statu) === "Follow-up" && reportDate && (
+              {/* Report Date - shown for Follow_Up patients */}
+              {safeText((draft as any).statu) === "Follow_Up" && reportDate && (
                 <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl">
                   <div className="text-xs text-teal-600 font-medium mb-1 flex items-center gap-1">
                     <FileBarChart className="w-3.5 h-3.5" />
@@ -824,7 +823,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               )}
 
               {/* Report Deadline - editable */}
-              {(safeText((draft as any).statu) === "Follow-up" || safeText((draft as any).statu) === "Diagnosis") && (
+              {(safeText((draft as any).statu) === "Follow_Up" || safeText((draft as any).statu) === "Diagnostic_Process") && (
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
                   <Input
