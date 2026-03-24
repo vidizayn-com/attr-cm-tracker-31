@@ -23,10 +23,11 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, Users, BookOpen, FileText, User, Bell, UserCheck, AlertTriangle } from 'lucide-react';
+import { Home, Users, BookOpen, FileText, User, Bell, UserCheck, AlertTriangle, UserPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ConsentDialog from '@/components/ConsentDialog';
+import InviteDialog from '@/components/InviteDialog';
 import { strapiGet } from '@/lib/strapiClient';
 
 type DeadlineNotification = {
@@ -114,9 +115,12 @@ function AppSidebar() {
     navigate('/profile/edit');
   };
 
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+
   const isCollapsed = state === 'collapsed';
 
   return (
+    <>
     <Sidebar
       className={`border-r border-gray-200 bg-[#089bab] transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-[200px]'
         }`}
@@ -241,7 +245,8 @@ function AppSidebar() {
                   Edit Profile
                 </DropdownMenuItem>
                 {currentUser?.canInvite && (
-                  <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                  <DropdownMenuItem className="cursor-pointer hover:bg-muted" onClick={() => setShowInviteDialog(true)}>
+                    <UserPlus className="w-4 h-4 mr-2" />
                     Invite New Member
                   </DropdownMenuItem>
                 )}
@@ -329,7 +334,8 @@ function AppSidebar() {
                     Edit Profile
                   </DropdownMenuItem>
                   {currentUser?.canInvite && (
-                    <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                    <DropdownMenuItem className="cursor-pointer hover:bg-muted" onClick={() => setShowInviteDialog(true)}>
+                      <UserPlus className="w-4 h-4 mr-2" />
                       Invite New Member
                     </DropdownMenuItem>
                   )}
@@ -340,6 +346,8 @@ function AppSidebar() {
         )}
       </SidebarFooter>
     </Sidebar>
+    <InviteDialog open={showInviteDialog} onOpenChange={setShowInviteDialog} />
+    </>
   );
 }
 

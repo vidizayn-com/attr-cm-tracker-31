@@ -22,6 +22,7 @@ import ReportDetails from "./pages/ReportDetails";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import RegisterInvited from "./pages/RegisterInvited";
 
 import { UserProvider } from "@/contexts/UserContext";
 
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/verification" element={<Verification />} />
+              <Route path="/register/:token" element={<RegisterInvited />} />
               <Route path="/admin" element={<AdminLogin />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
