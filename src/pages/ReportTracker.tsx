@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Layout from '@/components/Layout';
-import { Search, Filter, Calendar, User, FileText, Clock, Loader2, AlertTriangle } from 'lucide-react';
+import { Search, Filter, Calendar, User, FileText, Clock, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { strapiGet } from '@/lib/strapiClient';
 import { toast } from 'sonner';
@@ -130,44 +130,58 @@ const ReportTracker = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 sm:p-6">
+      <div className="container mx-auto p-4 sm:p-6" style={{zIndex:10, position:'relative'}}>
         <div className="flex justify-between items-center mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: '#29a8b6' }}>Report Tracker</h1>
-            <p className="text-gray-500 mt-2">Follow up patients requiring diagnosis report renewal every 3 months.</p>
+          <div className="page-title">
+            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#056a75' }}>Report Tracker</h1>
+            <p className="text-slate-500 mt-1">Track upcoming and overdue patient diagnosis reports.</p>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-              <p className="text-gray-600 text-sm mt-1">Total Follow Up</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-emerald-600">{stats.completed}</div>
-              <p className="text-gray-600 text-sm mt-1">Up to Date</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-amber-600">{stats.pending}</div>
-              <p className="text-gray-600 text-sm mt-1">Renewal Soon (&lt;20 Days)</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-red-600">{stats.overdue}</div>
-              <p className="text-gray-600 text-sm mt-1">Overdue</p>
-            </CardContent>
-          </Card>
-        </div>
+        <section className="dashboard-grid mb-8">
+            <div className="kpi-row">
+                <div className="glass-card kpi-card">
+                    <div className="kpi-icon blue">
+                        <FileText className="w-6 h-6" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Total Follow Up</h4>
+                        <div className="value">{stats.total}</div>
+                    </div>
+                </div>
+
+                <div className="glass-card kpi-card">
+                    <div className="kpi-icon teal">
+                        <CheckCircle className="w-6 h-6" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Up to Date</h4>
+                        <div className="value">{stats.completed}</div>
+                    </div>
+                </div>
+
+                <div className="glass-card kpi-card">
+                    <div className="kpi-icon amber">
+                        <Clock className="w-6 h-6" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Renewal Soon</h4>
+                        <div className="value">{stats.pending}</div>
+                    </div>
+                </div>
+
+                <div className="glass-card kpi-card">
+                    <div className="kpi-icon rose">
+                        <AlertTriangle className="w-6 h-6" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Overdue</h4>
+                        <div className="value" style={{color: 'var(--danger)'}}>{stats.overdue}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         {/* Filters */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
@@ -177,7 +191,7 @@ const ReportTracker = () => {
               placeholder="Search patients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-12 pl-10 bg-white/90 border-none rounded-xl shadow-sm"
+              className="w-full h-11 pl-10 rounded-xl bg-white/50 border-gray-200 focus:bg-white transition-colors"
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           </div>
@@ -186,7 +200,7 @@ const ReportTracker = () => {
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-12 px-4 bg-white/90 border-none shadow-sm rounded-xl w-full sm:w-auto outline-none"
+              className="h-11 px-4 rounded-xl bg-white/50 border border-gray-200 focus:bg-white transition-colors w-full sm:w-auto outline-none"
             >
               <option>All Statuses</option>
               <option>Completed</option>
@@ -202,7 +216,7 @@ const ReportTracker = () => {
             <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
           </div>
         ) : filteredReports.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20 glass-card">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900">No reports found</h3>
             <p className="text-gray-500">No follow up patients match your criteria.</p>
@@ -210,25 +224,26 @@ const ReportTracker = () => {
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
             {filteredReports.map((report) => (
-              <Card key={report.id} className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border-none hover:shadow-2xl transition-shadow duration-300">
+              <Card key={report.id} className="glass-card cursor-pointer border-none" onClick={() => navigate(`/patients/${report.id}`)}>
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-lg sm:text-xl font-bold text-gray-900">
+                    <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <User className="w-5 h-5 text-cyan-600" />
                       {report.patientName}
                     </CardTitle>
                     <div className="flex gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${getPriorityBadge(report.priority)}`}>
+                      <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold border ${getPriorityBadge(report.priority)}`}>
                         {report.priority} Priority
                       </span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusBadge(report.status)}`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold ${getStatusBadge(report.status)}`}>
                         {report.status}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-blue-700">{report.reportType}</h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <h3 className="text-sm font-semibold text-slate-700">{report.reportType}</h3>
                     {report.diffDays <= 20 && report.diffDays >= 0 && (
-                      <span className="flex items-center text-xs text-amber-600 font-medium">
+                      <span className="flex items-center text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-md">
                         <AlertTriangle className="w-3 h-3 mr-1" />
                         Due in {report.diffDays} Days
                       </span>
@@ -236,17 +251,21 @@ const ReportTracker = () => {
                   </div>
                 </CardHeader>
                 
-                <CardContent className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-700">
-                    <User className="w-4 h-4 mr-2 text-gray-400" />
-                    <span className="font-medium min-w-[100px]">Assigned to:</span>
-                    <span>{report.assignedTo}</span>
+                <CardContent className="space-y-3 pt-2">
+                  <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
+                    <div className="flex items-center text-slate-500">
+                        <User className="w-4 h-4 mr-2" />
+                        <span>Assigned to</span>
+                    </div>
+                    <span className="font-medium text-slate-800">{report.assignedTo}</span>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-700">
-                    <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                    <span className="font-medium min-w-[100px]">Last Report:</span>
-                    <span>{report.createdDate}</span>
+                  <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
+                    <div className="flex items-center text-slate-500">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>Last Report</span>
+                    </div>
+                    <span className="font-medium text-slate-800">{report.createdDate}</span>
                   </div>
                   
                   <div className="flex items-center text-sm text-gray-700">

@@ -224,10 +224,10 @@ const PatientList = () => {
     return (
       <Card
         key={`${sectionType}-${patient.documentId || patient.id}`}
-        className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border-none hover:shadow-2xl transition-shadow duration-300"
+        className="glass-card border-none hover:shadow-2xl transition-shadow duration-300"
       >
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2">
+        <CardContent className="p-4 sm:p-6 pb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2 border-b border-gray-100/50 pb-3">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               {patientFullName(patient)}
             </h3>
@@ -265,28 +265,26 @@ const PatientList = () => {
           })()}
 
           <div className="space-y-2 text-sm sm:text-base text-gray-700 mb-4">
-            <p>
-              <span className="font-semibold">ID:</span> {patient.id}
-            </p>
-            <p>
-              <span className="font-semibold">Age:</span> {calculateAge(patient.dateOfBirth)}
-            </p>
-            <p>
-              <span className="font-semibold">Last Visit:</span>{' '}
-              {patient.lastVisit
+            <div className="flex justify-between items-center pb-2 border-b border-gray-50 text-slate-600">
+              <span className="font-medium text-slate-500">ID / YSN:</span> 
+              <span>{patient.id} / <span className="font-mono text-xs">{calculateAge(patient.dateOfBirth)}</span></span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-gray-50 text-slate-600">
+              <span className="font-medium text-slate-500">Last Visit:</span>{' '}
+              <span>{patient.lastVisit
                 ? new Date(patient.lastVisit).toLocaleDateString('tr-TR')
-                : <span className="text-gray-400">-</span>}
-            </p>
-            <p>
-              <span className="font-semibold">Next Appointment:</span>{' '}
-              {patient.nextAppointment
+                : <span className="text-gray-400">-</span>}</span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-gray-50 text-slate-600">
+              <span className="font-medium text-slate-500">Next Appt:</span>{' '}
+              <span>{patient.nextAppointment
                 ? new Date(patient.nextAppointment).toLocaleDateString('tr-TR')
-                : <span className="text-gray-400">-</span>}
-            </p>
-            <p>
-              <span className="font-semibold">Primary Cardiologist:</span>{' '}
-              <span className={patient.primary_cardiologist ? "text-blue-600 font-medium" : "text-red-500 font-bold"}>{assignedDisplay}</span>
-            </p>
+                : <span className="text-gray-400">-</span>}</span>
+            </div>
+            <div className="flex justify-between items-center pb-2 text-slate-600">
+              <span className="font-medium text-slate-500">Primary Cardio:</span>{' '}
+              <span className={patient.primary_cardiologist ? "text-cyan-700 font-semibold" : "text-red-500 font-bold"}>{assignedDisplay}</span>
+            </div>
             {patient.assigned_specialists && patient.assigned_specialists.length > 0 && (
               <p className="text-xs text-gray-500 mt-1">
                 + {patient.assigned_specialists.length} Specialist(s)
@@ -298,7 +296,7 @@ const PatientList = () => {
             <Link to={`/patients/${detailParam}`} className="w-full">
               <Button
                 variant="outline"
-                className="w-full bg-white hover:bg-gray-50 text-gray-700 hover:text-blue-600 border border-gray-200 rounded-xl"
+                className="w-full bg-white/50 hover:bg-white text-slate-700 hover:text-cyan-600 border border-gray-200 rounded-xl transition-colors shadow-sm"
               >
                 View Full Profile →
               </Button>
@@ -327,12 +325,14 @@ const PatientList = () => {
 
   return (
     <Layout>
-      <div className="p-2 sm:p-4">
+      <div className="p-4 sm:p-6" style={{zIndex:10, position:'relative'}}>
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: "#29a8b6" }}>
-            Patient List
-          </h1>
+        <div className="flex justify-between items-center mb-6">
+          <div className="page-title">
+             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#056a75' }}>
+               Patient List
+             </h1>
+          </div>
         </div>
 
         {/* Role info banner for specialists */}
@@ -365,42 +365,43 @@ const PatientList = () => {
 
         {/* Controls */}
         {!loading && !error && (
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
-            <div className="relative w-full lg:w-80">
-              <Input
-                type="text"
-                placeholder="Search patients"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-12 pl-10 bg-white/90 border-none rounded-xl"
-              />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <span className="text-gray-500">🔍</span>
+          <div className="glass-card mb-6 p-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div className="relative w-full lg:w-80">
+                <Input
+                  type="text"
+                  placeholder="Search patients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-11 pl-10 rounded-xl bg-white/50 border-gray-200 focus:bg-white transition-colors"
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  <span className="text-gray-400">🔍</span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row w-full lg:w-auto space-y-2 sm:space-y-0 sm:space-x-4">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-12 px-4 bg-white/90 border-none rounded-xl w-full sm:w-auto"
-              >
-                <option>Sort by: A-Z</option>
-                <option>Sort by: Z-A</option>
-                <option>Sort by: Date</option>
-              </select>
+              <div className="flex flex-col sm:flex-row w-full lg:w-auto space-y-2 sm:space-y-0 sm:space-x-4">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="h-11 px-4 rounded-xl bg-white/50 border border-gray-200 focus:bg-white transition-colors w-full sm:w-auto outline-none"
+                >
+                  <option>Sort by: A-Z</option>
+                  <option>Sort by: Z-A</option>
+                  <option>Sort by: Date</option>
+                </select>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-12 px-4 bg-white/90 border-none rounded-xl w-full sm:w-auto"
-              >
-                <option>All Statuses</option>
-                <option>New</option>
-                <option>Diagnostic Process</option>
-                <option>Follow Up</option>
-                <option>Amyloidosis was ruled out</option>
-              </select>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-11 px-4 rounded-xl bg-white/50 border border-gray-200 focus:bg-white transition-colors w-full sm:w-auto outline-none"
+                >
+                  <option>All Statuses</option>
+                  <option>New</option>
+                  <option>Diagnostic Process</option>
+                  <option>Follow Up</option>
+                  <option>Amyloidosis was ruled out</option>
+                </select>
 
               <Button
                 onClick={handleExcelExport}
@@ -418,6 +419,7 @@ const PatientList = () => {
                   </Button>
                 </Link>
               )}
+              </div>
             </div>
           </div>
         )}
@@ -427,10 +429,10 @@ const PatientList = () => {
           <>
             {/* My Patients Section - only for Cardiologists */}
             {isCardiologist && (
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100">
-                    <Users className="w-5 h-5 text-blue-600" />
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 shadow-sm">
+                    <Users className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-gray-900">

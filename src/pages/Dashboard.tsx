@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { Zap, Loader2 } from 'lucide-react';
+import { Zap, Loader2, Users, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { strapiGet } from '@/lib/strapiClient';
 import { useUser } from '@/contexts/UserContext';
 
@@ -76,71 +76,77 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 sm:p-6">
-        <h1 className="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#29a8b6' }}>Dashboard</h1>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <Link to="/patients">
-            <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl">Total Patients</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.totalPatients ?? 0}
-                </div>
-                <p className="text-gray-600 text-sm sm:text-base">Active patients in system</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          {isCardiologist ? (
-            <Link to="/patients/register">
-              <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl">New Patients</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-bold text-green-600">
-                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.newPatients ?? 0}
-                  </div>
-                  <p className="text-gray-600 text-sm sm:text-base">Pending assignment</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Link to="/patients">
-              <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl">Referred to Me</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-bold text-purple-600">
-                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.assignedPatients ?? 0}
-                  </div>
-                  <p className="text-gray-600 text-sm sm:text-base">Awaiting my review</p>
-                </CardContent>
-              </Card>
-            </Link>
-          )}
-
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg sm:col-span-2 lg:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg sm:text-xl">Assignments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-orange-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.assignedPatients ?? 0}
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Active assignments</p>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto p-4 sm:p-6" style={{zIndex:10, position:'relative'}}>
+        <div className="flex justify-between items-center mb-8">
+            <div className="page-title">
+                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#056a75' }}>Overview Dashboard</h2>
+                <p className="text-slate-500 mt-1">Welcome back, {currentUser?.name || 'Doctor'}. Here's what's happening with your patients today.</p>
+            </div>
         </div>
 
+        <section className="dashboard-grid">
+            <div className="kpi-row">
+                {/* 1. Total Assigned */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                    <div className="kpi-icon blue">
+                        <Users className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Total Assigned</h4>
+                        <div className="value flex items-baseline">
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
+                            <span className="trend ml-2 text-[#10b981] font-semibold text-xs">↑ 12%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Diagnostic Process */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                    <div className="kpi-icon teal">
+                        <CheckCircle2 className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Diagnostic Process</h4>
+                        <div className="value flex items-baseline">
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.assignedPatients ?? 0}
+                            <span className="trend ml-2 text-slate-500 font-semibold text-xs">- 2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Follow Up Tracking */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                    <div className="kpi-icon amber">
+                        <Clock className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Follow Up Tracking</h4>
+                        <div className="value flex items-baseline">
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
+                            <span className="trend ml-2 text-[#10b981] font-semibold text-xs">↑ 8%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Reports Overdue */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/reports'}>
+                    <div className="kpi-icon rose">
+                        <AlertTriangle className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Reports Overdue</h4>
+                        <div className="value flex items-baseline text-red-500">
+                            3
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <div className="mt-6 sm:mt-8">
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
+          <Card className="glass-card border-none shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-slate-800">
                 <Zap className="w-5 h-5" style={{ color: '#29a8b6' }} />
                 Quick Actions
               </CardTitle>

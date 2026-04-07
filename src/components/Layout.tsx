@@ -135,72 +135,76 @@ function AppSidebar() {
   return (
     <>
     <Sidebar
-      className={`border-r border-gray-200 bg-[#089bab] transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-[200px]'
+      className={`glass-sidebar shadow-lg z-20 transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-[280px]'
         }`}
       collapsible="icon"
     >
-      <SidebarHeader className="p-2 sm:p-4 border-b border-white/20">
-        <div className="flex flex-col items-center space-y-1 sm:space-y-2">
-          <div className={`${isCollapsed ? 'w-8 h-8' : 'w-[160px] h-12'} flex items-center justify-center transition-all duration-300`}>
-            <img
-              src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
-              alt="ATTR-CM Tracker Logo"
-              className={`${isCollapsed ? 'w-6 h-6' : 'w-full h-full'} object-contain filter brightness-0 invert transition-all duration-300`}
-            />
+      <SidebarHeader className="p-4 border-b border-slate-200/50">
+          <div className="flex w-full items-center gap-3">
+            <div className={`${isCollapsed ? 'w-8 h-8' : 'w-12 h-12'} flex items-center justify-center transition-all duration-300 flex-shrink-0`}>
+              <img
+                src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
+                alt="ATTR-CM Tracker Logo"
+                className={`${isCollapsed ? 'w-6 h-6' : 'w-full h-full'} object-contain transition-all duration-300 drop-shadow-sm`}
+              />
+            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-slate-800 font-bold text-[1.1rem] leading-tight">ATTR-CM Tracker</span>
+              </div>
+            )}
           </div>
-          {!isCollapsed && (
-            <span className="text-white font-bold text-xs sm:text-sm text-center">ATTR-CM Tracker</span>
-          )}
-        </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+              {navigationItems.map((item) => {
+                const isActive = location.pathname === item.url || (item.url !== '/' && location.pathname.includes(item.url));
+                return (
+                  <SidebarMenuItem key={item.title}>
                     <Link
                       to={item.url}
-                      className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 ${isCollapsed ? 'text-sm' : 'text-base sm:text-lg'} ${location.pathname === item.url || location.pathname.includes(item.url)
-                        ? 'text-white bg-white/20 border-r-2 border-white'
-                        : ''
+                      className={`flex items-center gap-3 px-4 py-3 rounded-[12px] font-medium transition-all duration-300 ${isCollapsed ? 'justify-center px-2 text-sm' : 'text-[15px]'
+                        } ${isActive
+                          ? 'text-[#056a75] bg-gradient-to-r from-[#089bab]/10 to-transparent border-l-[4px] border-[#089bab]'
+                          : 'text-slate-500 hover:bg-white/50 hover:text-[#056a75] hover:translate-x-1'
                         }`}
                       title={isCollapsed ? item.title : undefined}
                     >
-                      <item.icon className={`${isCollapsed ? 'w-5 h-5' : 'w-5 h-5 sm:w-6 sm:h-6'} flex-shrink-0`} />
+                      <item.icon className={`${isCollapsed ? 'w-5 h-5' : 'w-5 h-5'} flex-shrink-0 transition-all ${isActive ? 'stroke-[#089bab] text-[#089bab] opacity-100' : 'opacity-70 text-slate-500 hover:opacity-100 hover:stroke-[#089bab]'}`} />
                       {!isCollapsed && <span className="truncate">{item.title}</span>}
                     </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 sm:p-3 border-t border-white/20">
+      <SidebarFooter className="p-3 sm:p-4 mb-2 mt-auto">
         {!isCollapsed ? (
-          <div className="flex items-center space-x-2">
-            <Avatar className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0">
-              <AvatarFallback className="bg-white/20 text-white font-bold text-xs">
+          <div className="flex flex-wrap sm:flex-nowrap items-center w-full gap-2 sm:gap-3 bg-white/50 border border-slate-200/50 p-2 sm:p-3 rounded-[12px] shadow-sm transition-all hover:bg-white hover:shadow-md relative cursor-pointer">
+            <Avatar className="w-10 h-10 flex-shrink-0 bg-[#4f46e5] text-white font-bold flex items-center justify-center rounded-full text-sm">
+              <AvatarFallback className="bg-[#4f46e5] text-white font-bold text-sm">
                 {currentUser?.avatarFallback || '?'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="text-white font-semibold text-xs truncate">{currentUser?.name || 'User'}</div>
-              <div className="text-white/70 text-xs italic">{currentUser?.role || ''}</div>
+              <div className="text-slate-800 font-bold text-xs sm:text-sm truncate">{currentUser?.name || 'User'}</div>
+              <div className="text-slate-500 text-[10px] sm:text-[11px] truncate">{currentUser?.role || ''}</div>
             </div>
 
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative text-white/80 hover:text-white p-1 mr-1 flex-shrink-0">
+                <button className="relative text-slate-400 hover:text-slate-600 p-1 mr-1 flex-shrink-0 transition-colors">
                   <Bell className="w-4 h-4" />
                   {totalNotifications > 0 && (
                     <Badge
-                      className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-red-500 hover:bg-red-500 text-white border-0 rounded-full flex items-center justify-center"
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] bg-red-500 hover:bg-red-500 text-white border-0 rounded-full flex items-center justify-center animate-pulse"
                     >
                       {totalNotifications > 9 ? '9+' : totalNotifications}
                     </Badge>
@@ -246,7 +250,7 @@ function AppSidebar() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="text-white/80 hover:text-white p-1 flex-shrink-0">
+                <button className="text-slate-400 hover:text-slate-600 p-1 flex-shrink-0 transition-colors ml-auto mr-1">
                   <User className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>
@@ -275,9 +279,9 @@ function AppSidebar() {
             </DropdownMenu>
           </div>
         ) : (
-          <div className="flex flex-col items-center space-y-2">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="bg-white/20 text-white font-bold text-xs">
+          <div className="flex flex-col items-center space-y-2 mt-2">
+            <Avatar className="w-8 h-8 ring-2 ring-white shadow-sm">
+              <AvatarFallback className="bg-[#4f46e5] text-white font-bold text-xs">
                 {currentUser?.avatarFallback || '?'}
               </AvatarFallback>
             </Avatar>
@@ -286,11 +290,11 @@ function AppSidebar() {
             <div className="flex flex-col items-center space-y-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="relative text-white/80 hover:text-white p-1">
+                  <button className="relative text-slate-400 hover:text-slate-600 p-1 transition-colors">
                     <Bell className="w-4 h-4" />
                     {totalNotifications > 0 && (
                       <Badge
-                        className="absolute -top-1 -right-1 h-3 w-3 p-0 text-xs bg-red-500 hover:bg-red-500 text-white border-0 rounded-full flex items-center justify-center"
+                        className="absolute -top-1 -right-1 h-3 w-3 p-0 text-[10px] bg-red-500 hover:bg-red-500 text-white border-0 rounded-full flex items-center justify-center animate-pulse"
                       >
                       </Badge>
                     )}
@@ -335,13 +339,13 @@ function AppSidebar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="text-white/80 hover:text-white p-1">
+                  <button className="text-slate-400 hover:text-slate-600 p-1 transition-colors">
                     <User className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-card border border-border shadow-lg">
+                <DropdownMenuContent align="start" className="w-48 bg-white border border-slate-200 shadow-lg">
                   <DropdownMenuItem
-                    className="cursor-pointer hover:bg-muted"
+                    className="cursor-pointer hover:bg-slate-50"
                     onClick={handleEditProfile}
                   >
                     Edit Profile
@@ -378,10 +382,12 @@ const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="ambient-shape shape-1"></div>
+      <div className="ambient-shape shape-2"></div>
+      <div className="min-h-screen flex w-full relative z-10 bg-transparent">
         <AppSidebar />
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 bg-transparent relative z-10">
           {/* Mobile header with trigger */}
           {isMobile && (
             <div className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3">
@@ -400,7 +406,7 @@ const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
           )}
 
           {/* Main Content */}
-          <main className="bg-background">
+          <main className="bg-transparent relative z-10 p-6 md:p-8 lg:p-12 w-full max-w-full overflow-x-hidden">
             {children}
           </main>
         </div>

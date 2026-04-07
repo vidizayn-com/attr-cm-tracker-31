@@ -146,7 +146,7 @@ const PatientPool = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6" style={{zIndex:10, position:'relative'}}>
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold" style={{ color: '#29a8b6' }}>Patient Pool</h1>
@@ -158,14 +158,14 @@ const PatientPool = () => {
         </div>
 
         {/* Filters */}
-        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
+        <Card className="glass-card mb-6 overflow-visible">
+          <CardHeader className="pb-3 border-b border-gray-100/50">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl text-slate-700">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-500" />
               <span>Filters</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search */}
               <div className="relative sm:col-span-2 lg:col-span-1">
@@ -174,17 +174,17 @@ const PatientPool = () => {
                   placeholder="Search patients..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-10 sm:h-auto"
+                  className="pl-10 h-10 sm:h-11 rounded-xl bg-white/50 border-gray-200 focus:bg-white transition-colors"
                 />
               </div>
 
               {/* Hospital Filter */}
               <div className="w-full">
                 <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
-                  <SelectTrigger className="h-10 sm:h-auto">
+                  <SelectTrigger className="h-10 sm:h-11 rounded-xl bg-white/50 border-gray-200 focus:bg-white transition-colors">
                     <SelectValue placeholder="All Hospitals" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                  <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-xl">
                     <SelectItem value="all">All Hospitals</SelectItem>
                     {hospitalNames.map((name) => (
                       <SelectItem key={name} value={name}>
@@ -198,10 +198,10 @@ const PatientPool = () => {
               {/* Specialty Filter */}
               <div className="w-full">
                 <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                  <SelectTrigger className="h-10 sm:h-auto">
+                  <SelectTrigger className="h-10 sm:h-11 rounded-xl bg-white/50 border-gray-200 focus:bg-white transition-colors">
                     <SelectValue placeholder="All Specialties" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                  <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-xl">
                     <SelectItem value="all">All Specialties</SelectItem>
                     {Object.entries(specialtyLabels).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
@@ -221,7 +221,7 @@ const PatientPool = () => {
                     setHospitalFilter('all');
                     setSpecialtyFilter('all');
                   }}
-                  className="w-full h-10 sm:h-auto"
+                  className="w-full h-10 sm:h-11 rounded-xl border-gray-200 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                   Clear Filters
                 </Button>
@@ -231,9 +231,9 @@ const PatientPool = () => {
         </Card>
 
         {/* Patient Pool Table */}
-        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg sm:text-xl">Patients Waiting for Assignment</CardTitle>
+        <Card className="glass-card overflow-hidden">
+          <CardHeader className="pb-3 border-b border-gray-100/50">
+            <CardTitle className="text-lg sm:text-xl text-slate-700">Patients Waiting for Assignment</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
