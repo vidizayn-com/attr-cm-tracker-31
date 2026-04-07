@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ConsentDialog from '@/components/ConsentDialog';
 import InviteDialog from '@/components/InviteDialog';
+import ReportReminderDialog from '@/components/ReportReminderDialog';
 import { strapiGet } from '@/lib/strapiClient';
 
 type DeadlineNotification = {
@@ -81,7 +82,7 @@ function AppSidebar() {
         const seenIds = new Set<number>();
 
         for (const p of allPatients) {
-          if (!p.reportDeadline || p.statu !== 'Follow_Up' || seenIds.has(p.id)) continue;
+          if (!p.reportDeadline || p.statu !== 'Follow Up' || seenIds.has(p.id)) continue;
           seenIds.add(p.id);
 
           const deadline = new Date(p.reportDeadline);
@@ -108,6 +109,18 @@ function AppSidebar() {
       }
     })();
   }, []);
+
+  const [showReportReminder, setShowReportReminder] = useState(false);
+
+  useEffect(() => {
+    const isCardio = currentUser?.role === 'Cardiology' || currentUser?.role === 'Cardiologist';
+    if (currentUser && isCardio && currentUser.consentAsked) {
+      if (deadlineNotifications.length > 0 && !sessionStorage.getItem('reportReminderShown')) {
+          setShowReportReminder(true);
+          sessionStorage.setItem('reportReminderShown', 'true');
+      }
+    }
+  }, [currentUser, deadlineNotifications]);
 
   const totalNotifications = deadlineNotifications.length;
 
@@ -347,6 +360,7 @@ function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
     <InviteDialog open={showInviteDialog} onOpenChange={setShowInviteDialog} />
+    <ReportReminderDialog open={showReportReminder} onOpenChange={setShowReportReminder} notifications={deadlineNotifications} />
     </>
   );
 }

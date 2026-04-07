@@ -84,10 +84,10 @@ const PatientList = () => {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      New: "bg-green-500 text-white",
-      Diagnostic_Process: "bg-orange-500 text-white",
-      Follow_Up: "bg-blue-500 text-white",
-      Amyloidosis_Ruled_Out: "bg-red-500 text-white",
+      "New": "bg-green-500 text-white",
+      "Diagnostic Process": "bg-orange-500 text-white",
+      "Follow Up": "bg-blue-500 text-white",
+      "Amyloidosis was ruled out": "bg-red-500 text-white",
     };
     return styles[status] || "bg-gray-500 text-white";
   };
@@ -213,7 +213,7 @@ const PatientList = () => {
   const renderPatientCard = (patient: StrapiPatient, sectionType: 'primary' | 'consulting') => {
     const status = safeText(patient.statu) || "New";
 
-    let assignedDisplay = "Unassigned";
+    let assignedDisplay = "Atanmamış (HATA)";
     if (patient.primary_cardiologist) {
       assignedDisplay = patient.primary_cardiologist.fullName;
     }
@@ -239,9 +239,9 @@ const PatientList = () => {
             </span>
           </div>
 
-          {/* Report deadline warning - only for Follow_Up patients */}
+          {/* Report deadline warning - only for Follow Up patients */}
           {(() => {
-            if (status !== 'Follow_Up' || !patient.reportDeadline) return null;
+            if (status !== 'Follow Up' || !patient.reportDeadline) return null;
             const deadline = new Date(patient.reportDeadline);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -285,7 +285,7 @@ const PatientList = () => {
             </p>
             <p>
               <span className="font-semibold">Primary Cardiologist:</span>{' '}
-              <span className="text-blue-600 font-medium">{assignedDisplay}</span>
+              <span className={patient.primary_cardiologist ? "text-blue-600 font-medium" : "text-red-500 font-bold"}>{assignedDisplay}</span>
             </p>
             {patient.assigned_specialists && patient.assigned_specialists.length > 0 && (
               <p className="text-xs text-gray-500 mt-1">
@@ -397,9 +397,9 @@ const PatientList = () => {
               >
                 <option>All Statuses</option>
                 <option>New</option>
-                <option>Diagnostic_Process</option>
-                <option>Follow_Up</option>
-                <option>Amyloidosis_Ruled_Out</option>
+                <option>Diagnostic Process</option>
+                <option>Follow Up</option>
+                <option>Amyloidosis was ruled out</option>
               </select>
 
               <Button

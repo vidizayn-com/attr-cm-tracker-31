@@ -14,6 +14,7 @@ import { Upload, FileText, Image, Trash2, Eye, TrendingUp } from 'lucide-react';
 
 // ✅ NEW: Strapi API helpers
 import { createPatient, createCaregiver, linkCaregiverToPatient } from '@/lib/patientApi';
+import { strapiGet } from '@/lib/strapiClient';
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
@@ -22,6 +23,18 @@ const PatientRegistration = () => {
 
   // ✅ NEW: prevent double submit
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cardiologists, setCardiologists] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const docs = await strapiGet<any[]>("/api/auth/doctor/all-doctors?specialty=Cardiology");
+        setCardiologists(Array.isArray(docs) ? docs : []);
+      } catch (e) {
+        console.warn("Failed to load cardiologists", e);
+      }
+    })();
+  }, []);
 
   // Historical chart data for demonstration
   const ntProBnpChartData = [
@@ -46,6 +59,7 @@ const PatientRegistration = () => {
     dateOfBirth: '',
     contactNumber: '',
     email: '',
+    primaryCardiologist: '',
     caregiverPermission: false,
     caregiverName: '',
     caregiverEmail: '',
@@ -118,11 +132,14 @@ const PatientRegistration = () => {
       }
     }
 
-    // Primary Cardiologist check: JWT token must be present (doctor must be logged in)
-    // Backend automatically sets the logged-in doctor as primary_cardiologist
+    if (!formData.primaryCardiologist) {
+      toast.error("Primary Cardiologist alanı tüm hastalar için dolu olmalı ve boş geçilemez.");
+      return;
+    }
+
     const doctorToken = localStorage.getItem("doctor_token");
     if (!doctorToken) {
-      toast.error("Primary Cardiologist is required. Please log in as a doctor first.");
+      toast.error("Please log in as a doctor first.");
       return;
     }
 
@@ -320,6 +337,20 @@ const PatientRegistration = () => {
                   placeholder="Enter email address"
                   className="h-10 sm:h-auto"
                 />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Primary Cardiologist <span className="text-red-500">*</span></label>
+                <select
+                  value={formData.primaryCardiologist}
+                  onChange={(e) => setFormData({ ...formData, primaryCardiologist: e.target.value })}
+                  className="w-full h-10 px-3 border border-gray-300 rounded-md text-sm sm:text-base"
+                >
+                  <option value="">Select a cardiologist</option>
+                  {cardiologists.map((doc: any) => (
+                    <option key={doc.documentId} value={doc.documentId}>{doc.fullName}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Caregiver Permission Checkbox */}

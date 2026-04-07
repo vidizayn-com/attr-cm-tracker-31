@@ -14,8 +14,8 @@ import { Shield, ShieldCheck, ShieldX } from 'lucide-react';
 const ConsentDialog = () => {
     const { currentUser, updateConsent } = useUser();
 
-    // Only show if user is logged in and consent has NOT been asked yet
-    const shouldShow = currentUser && !currentUser.consentAsked;
+    // Only show if user is logged in, is a Cardiologist, and consent has NOT been asked yet
+    const shouldShow = currentUser && (currentUser.role === 'Cardiology' || currentUser.role === 'Cardiologist') && !currentUser.consentAsked;
 
     const handleAccept = async () => {
         const success = await updateConsent(true);

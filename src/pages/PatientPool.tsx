@@ -35,6 +35,21 @@ type PoolPatient = {
     fullName: string;
     specialty: string;
   } | null;
+  neededSpecialties: string[];
+};
+
+const specialtyColors: Record<string, { bg: string; text: string }> = {
+  Cardiology: { bg: 'bg-red-100', text: 'text-red-700' },
+  Hematology: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  NuclearMedicine: { bg: 'bg-amber-100', text: 'text-amber-700' },
+  Genetics: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+};
+
+const specialtyLabels: Record<string, string> = {
+  Cardiology: 'Cardiology',
+  Hematology: 'Hematology',
+  NuclearMedicine: 'Nuc. Medicine',
+  Genetics: 'Genetics',
 };
 
 const PatientPool = () => {
@@ -42,6 +57,7 @@ const PatientPool = () => {
   const { currentUser } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState('all');
+  const [specialtyFilter, setSpecialtyFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState<PoolPatient[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
@@ -53,6 +69,11 @@ const PatientPool = () => {
       try {
         const data = await strapiGet<PoolPatient[]>('/api/auth/doctor/pool-patients');
         setPatients(data || []);
+        
+        // Auto-set specialty filter to doctor's specialty on first load if not already set
+        if ((currentUser as any)?.specialty && specialtyFilter === 'all') {
+          setSpecialtyFilter((currentUser as any).specialty);
+        }
       } catch (e: any) {
         console.error('Failed to load pool patients', e);
         toast.error('Failed to load pool patients');
@@ -60,7 +81,7 @@ const PatientPool = () => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [currentUser]);
 
   // ── Derive unique hospital names for filter ──
   const hospitalNames = useMemo(() => {
@@ -84,9 +105,13 @@ const PatientPool = () => {
         hospitalFilter === 'all' ||
         patient.hospital?.name === hospitalFilter;
 
-      return matchesSearch && matchesHospital;
+      const matchesSpecialty =
+        specialtyFilter === 'all' ||
+        patient.neededSpecialties?.includes(specialtyFilter);
+
+      return matchesSearch && matchesHospital && matchesSpecialty;
     });
-  }, [patients, searchTerm, hospitalFilter]);
+  }, [patients, searchTerm, hospitalFilter, specialtyFilter]);
 
   const handleViewPatient = (documentId: string) => {
     navigate(`/patients/${documentId}`);
@@ -170,6 +195,23 @@ const PatientPool = () => {
                 </Select>
               </div>
 
+              {/* Specialty Filter */}
+              <div className="w-full">
+                <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                  <SelectTrigger className="h-10 sm:h-auto">
+                    <SelectValue placeholder="All Specialties" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all">All Specialties</SelectItem>
+                    {Object.entries(specialtyLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Clear Filters */}
               <div className="w-full">
                 <Button
@@ -177,6 +219,7 @@ const PatientPool = () => {
                   onClick={() => {
                     setSearchTerm('');
                     setHospitalFilter('all');
+                    setSpecialtyFilter('all');
                   }}
                   className="w-full h-10 sm:h-auto"
                 >
@@ -209,6 +252,7 @@ const PatientPool = () => {
                       <TableHead className="text-xs sm:text-sm hidden md:table-cell">Registration Date</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden lg:table-cell">Hospital</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden xl:table-cell">Primary Cardiologist</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden lg:table-cell">Needed Specialists</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden xl:table-cell">Last Visit</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
@@ -232,6 +276,11 @@ const PatientPool = () => {
                           <div className="text-xs text-gray-500 xl:hidden">
                             {patient.primaryCardiologist?.fullName || 'No cardiologist'}
                           </div>
+                          <div className="text-xs text-gray-500 lg:hidden">
+                            {patient.neededSpecialties?.length > 0
+                              ? `Needed: ${patient.neededSpecialties.map(s => specialtyLabels[s] || s).join(', ')}`
+                              : '✓ All specialists assigned'}
+                          </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell text-xs sm:text-sm">
                           {patient.age ?? '-'}
@@ -246,7 +295,28 @@ const PatientPool = () => {
                         </TableCell>
                         <TableCell className="hidden xl:table-cell">
                           <div className="text-xs sm:text-sm font-medium">
-                            {patient.primaryCardiologist?.fullName || <span className="text-gray-400">Not assigned</span>}
+                            {patient.primaryCardiologist?.fullName || <span className="text-red-500 font-bold">Atanmamış (HATA)</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <div className="flex flex-wrap gap-1">
+                            {patient.neededSpecialties?.length > 0 ? (
+                              patient.neededSpecialties.map((specialty) => {
+                                const colors = specialtyColors[specialty] || { bg: 'bg-gray-100', text: 'text-gray-700' };
+                                const label = specialtyLabels[specialty] || specialty;
+                                return (
+                                  <Badge
+                                    key={specialty}
+                                    variant="secondary"
+                                    className={`${colors.bg} ${colors.text} text-[10px] sm:text-xs font-medium px-1.5 py-0.5 whitespace-nowrap`}
+                                  >
+                                    {label}
+                                  </Badge>
+                                );
+                              })
+                            ) : (
+                              <span className="text-xs text-emerald-600 font-medium">✓ All assigned</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden xl:table-cell text-xs sm:text-sm">

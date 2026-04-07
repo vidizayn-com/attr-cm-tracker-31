@@ -88,6 +88,7 @@ export type Patient = {
   lastVisit?: string | null;
   nextAppointment?: string | null;
   reportDeadline?: string | null;
+  lastReportDate?: string | null;
 
   primary_cardiologist?: {
     id: number;
@@ -135,7 +136,7 @@ function sanitizePatientPayload(payload: Partial<Patient>) {
   setIfDefined("lastVisit", payload.lastVisit ?? undefined);
   setIfDefined("nextAppointment", payload.nextAppointment ?? undefined);
 
-  if (payload.statu === "Amyloidosis_Ruled_Out") {
+  if (payload.statu === "Amyloidosis was ruled out") {
     setIfDefined("cancellationReason", payload.cancellationReason ?? "");
   }
 
