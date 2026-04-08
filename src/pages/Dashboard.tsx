@@ -45,6 +45,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(true);
 
+  // New dynamic sections state
+  const EXPIRING_DAYS = 7; // configurable threshold
+  const [expiringPatients, setExpiringPatients] = useState<any[]>([]);
+  const [diagnosisPatients, setDiagnosisPatients] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
+
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
