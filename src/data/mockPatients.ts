@@ -23,7 +23,7 @@ export interface PatientProfile {
   caregiverName: string;
   caregiverEmail: string;
   caregiverPhone: string;
-  status: 'New' | 'Diagnosis' | 'Follow-up' | 'Cancelled';
+  status: 'New' | 'Diagnostic Process' | 'Follow Up' | 'Amyloidosis was ruled out';
   cancellationReason?: string;
   physicianData: PhysicianEntry[];
   clinicalFindings: {
@@ -139,7 +139,7 @@ export const mockPatients: Record<string, PatientProfile> = {
     caregiverName: '',
     caregiverEmail: '',
     caregiverPhone: '',
-    status: 'Diagnosis',
+    status: 'Diagnostic Process',
     physicianData: [
       {
         id: '1',
@@ -200,7 +200,7 @@ export const mockPatients: Record<string, PatientProfile> = {
     caregiverName: 'Mary Davis',
     caregiverEmail: 'mary.davis@email.com',
     caregiverPhone: '+1234567899',
-    status: 'Follow-up',
+    status: 'Follow Up',
     physicianData: [
       {
         id: '1',
@@ -312,7 +312,7 @@ export const mockPatients: Record<string, PatientProfile> = {
     caregiverName: '',
     caregiverEmail: '',
     caregiverPhone: '',
-    status: 'Diagnosis',
+    status: 'Diagnostic Process',
     physicianData: [
       {
         id: '1',

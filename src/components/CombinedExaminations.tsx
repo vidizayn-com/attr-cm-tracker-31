@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { strapiGet, strapiPost } from '@/lib/strapiClient';
 import {
     Loader2, FileText, Upload, CheckCircle2, Clock,
     Stethoscope, Microscope, Atom, Dna, Paperclip, ExternalLink,
-    ClipboardList, FlaskConical, ChevronDown, ChevronUp
+    ClipboardList, FlaskConical, ChevronDown, ChevronUp, Download, Eye
 } from 'lucide-react';
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
@@ -114,6 +115,7 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
     const [saving, setSaving] = useState(false);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [filterType, setFilterType] = useState<'all' | 'measurements' | 'notes'>('all');
+    const [previewFile, setPreviewFile] = useState<NoteAttachment | null>(null);
 
     // Form state
     const [showForm, setShowForm] = useState(false);
@@ -231,6 +233,7 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
 
             // Upload files if any
             const noteDocId = saveResult?.noteDocumentId || editingNoteId;
+            
             if (noteDocId && formFiles.length > 0) {
                 for (const file of formFiles) {
                     const fd = new FormData();
@@ -273,16 +276,28 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
     };
 
     const handleFormFileSelect = (files: FileList | null) => {
-        if (!files) return;
-        setFormFiles(prev => [...prev, ...Array.from(files)]);
+        if (!files || files.length === 0) return;
+        const newFiles = Array.from(files);
+        setFormFiles(prev => [...prev, ...newFiles]);
     };
 
     const handleEdit = (note: SpecialistNote) => {
         setEditingNoteId(note.documentId);
         setFormTitle(note.title || '');
         setFormNotes(note.notes || '');
-        setFormFindings(note.findings ? JSON.stringify(note.findings, null, 2) : '');
+        
+        let plainFindings = '';
+        if (typeof note.findings === 'string') {
+            plainFindings = note.findings;
+        } else if (note.findings && (note.findings as any).summary) {
+            plainFindings = (note.findings as any).summary;
+        } else if (note.findings && Object.keys(note.findings).length > 0) {
+            try { plainFindings = JSON.stringify(note.findings, null, 2); } catch { }
+        }
+        setFormFindings(plainFindings);
+        
         setFormStatus(note.status || 'pending');
+        setFormFiles([]); // Important: clear previous files!
         setShowForm(true);
     };
 
@@ -310,8 +325,9 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
     const totalNotes = notes.length;
 
     return (
-        <Card className="rounded-2xl mt-6">
-            <CardHeader>
+        <>
+            <Card className="rounded-2xl mt-6">
+                <CardHeader>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <CardTitle className="flex items-center gap-2">
                         <ClipboardList className="w-5 h-5 text-cyan-600" />
@@ -554,24 +570,45 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
 
                                                 {/* Files */}
                                                 <td className="py-3 px-2">
-                                                    {row.attachments.length > 0 ? (
-                                                        <Badge variant="secondary" className="text-[10px]">
-                                                            <Paperclip className="w-3 h-3 mr-0.5" />
-                                                            {row.attachments.length}
-                                                        </Badge>
-                                                    ) : isNote ? (
-                                                        <span className="text-slate-300 text-xs">—</span>
-                                                    ) : null}
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {row.attachments.map((att, idx) => {
+                                                            if (idx > 1) return null;
+                                                            const isPreviewable = att.mime?.startsWith('image/') || att.mime?.startsWith('video/') || att.ext?.toLowerCase() === '.mp4' || att.ext?.toLowerCase() === '.avi';
+                                                            return (
+                                                                <Button
+                                                                    key={att.id}
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="h-6 px-2 text-[10px] bg-white border-slate-200 hover:border-cyan-300 hover:bg-cyan-50/50 text-slate-700 transition-colors shadow-sm"
+                                                                    title={isPreviewable ? `Preview ${att.name}` : `Download ${att.name}`}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (isPreviewable) setPreviewFile(att);
+                                                                        else window.open(`${STRAPI_URL}${att.url}`, '_blank');
+                                                                    }}
+                                                                >
+                                                                    {isPreviewable ? <Eye className="w-3 h-3 mr-1.5 text-cyan-500" /> : <Download className="w-3 h-3 mr-1.5 text-slate-400" />}
+                                                                    <span className="max-w-[80px] truncate">{att.name}</span>
+                                                                </Button>
+                                                            );
+                                                        })}
+                                                        {row.attachments.length > 2 && (
+                                                            <Badge variant="secondary" className="px-1.5 py-0.5 text-[9px] bg-slate-100 text-slate-500 hover:bg-slate-200 cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleExpand(row.id); }}>
+                                                                +{row.attachments.length - 2} files
+                                                            </Badge>
+                                                        )}
+                                                        {row.attachments.length === 0 && isNote && <span className="text-slate-300 text-xs ml-1">—</span>}
 
-                                                    {/* Expand chevron for notes */}
-                                                    {isNote && (
-                                                        <span className="ml-1 inline-block">
-                                                            {isExpanded
-                                                                ? <ChevronUp className="w-4 h-4 text-slate-400 inline" />
-                                                                : <ChevronDown className="w-4 h-4 text-slate-400 inline" />
-                                                            }
-                                                        </span>
-                                                    )}
+                                                        {/* Expand chevron for notes */}
+                                                        {isNote && (
+                                                            <span className="ml-1 inline-block">
+                                                                {isExpanded
+                                                                    ? <ChevronUp className="w-4 h-4 text-slate-400 inline" />
+                                                                    : <ChevronDown className="w-4 h-4 text-slate-400 inline" />
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
 
@@ -613,22 +650,41 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
                                                                     <div className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
                                                                         <Paperclip className="w-3 h-3" /> Attachments ({row.attachments.length})
                                                                     </div>
-                                                                    <div className="flex flex-wrap gap-2">
-                                                                        {row.attachments.map((att) => (
-                                                                            <a
-                                                                                key={att.id}
-                                                                                href={`${STRAPI_URL}${att.url}`}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="flex items-center gap-1 bg-white border rounded-lg px-2 py-1 text-xs hover:shadow-sm transition-all"
-                                                                                onClick={(e) => e.stopPropagation()}
-                                                                            >
-                                                                                <span>{getFileIcon(att.mime)}</span>
-                                                                                <span className="max-w-[120px] truncate">{att.name}</span>
-                                                                                <span className="text-slate-400">({formatFileSize(att.size)})</span>
-                                                                                <ExternalLink className="w-3 h-3 text-slate-400" />
-                                                                            </a>
-                                                                        ))}
+                                                                    <div className="flex flex-col gap-2">
+                                                                        {row.attachments.map((att) => {
+                                                                            const isPreviewable = att.mime?.startsWith('image/') || att.mime?.startsWith('video/') || att.ext?.toLowerCase() === '.mp4' || att.ext?.toLowerCase() === '.avi';
+                                                                            return (
+                                                                                <div key={att.id} className="flex items-center justify-between bg-white border border-slate-200/60 rounded-lg p-2.5 text-xs shadow-sm hover:border-slate-300 transition-all">
+                                                                                    <div className="flex items-center gap-2 overflow-hidden flex-1 mr-4">
+                                                                                        <span>{getFileIcon(att.mime)}</span>
+                                                                                        <span className="font-medium text-slate-700 truncate">{att.name}</span>
+                                                                                        <span className="text-slate-400 whitespace-nowrap">({formatFileSize(att.size)})</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                                                        {isPreviewable && (
+                                                                                            <Button 
+                                                                                                variant="ghost" 
+                                                                                                size="sm" 
+                                                                                                className="h-7 px-2.5 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg" 
+                                                                                                onClick={(e) => { e.stopPropagation(); setPreviewFile(att); }}
+                                                                                            >
+                                                                                                <Eye className="w-3.5 h-3.5 mr-1" /> Preview
+                                                                                            </Button>
+                                                                                        )}
+                                                                                        <a
+                                                                                            href={`${STRAPI_URL}${att.url}`}
+                                                                                            target="_blank"
+                                                                                            download={att.name}
+                                                                                            rel="noopener noreferrer"
+                                                                                            className="flex items-center h-7 gap-1 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 rounded-lg transition-colors"
+                                                                                            onClick={(e) => e.stopPropagation()}
+                                                                                        >
+                                                                                            <Download className="w-3.5 h-3.5 mr-1" /> Download
+                                                                                        </a>
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -656,8 +712,51 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
                     </div>
                 )}
             </CardContent>
-
-
         </Card>
+            
+        {/* File Preview Dialog */}
+            <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) setPreviewFile(null); }}>
+                <DialogContent className="sm:max-w-4xl w-[90vw] h-[85vh] flex flex-col p-4">
+                    <DialogHeader className="mb-2 shrink-0">
+                        <DialogTitle className="text-lg flex items-center gap-2">
+                            <span>{getFileIcon(previewFile?.mime || '')}</span>
+                            <span className="truncate max-w-[500px]">{previewFile?.name}</span>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 bg-slate-100/50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative shadow-inner">
+                        {previewFile?.mime?.startsWith('image/') ? (
+                            <img
+                                src={`${STRAPI_URL}${previewFile.url}`}
+                                alt={previewFile.name}
+                                className="max-w-full max-h-full object-contain"
+                            />
+                        ) : previewFile?.mime?.startsWith('video/') || previewFile?.ext?.toLowerCase() === '.mp4' || previewFile?.ext?.toLowerCase() === '.avi' ? (
+                            <video
+                                controls
+                                className="max-w-full max-h-full w-full outline-none"
+                                preload="metadata"
+                                src={`${STRAPI_URL}${previewFile.url}`}
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <div className="text-center text-slate-500">
+                                <FileText className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                                <p>Preview not available for this file type.</p>
+                                <a
+                                    href={`${STRAPI_URL}${previewFile?.url}`}
+                                    target="_blank"
+                                    download={previewFile?.name}
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 mt-4 text-cyan-600 hover:underline"
+                                >
+                                    <Download className="w-4 h-4" /> Download File Instead
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

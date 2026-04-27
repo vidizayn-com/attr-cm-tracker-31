@@ -5,10 +5,11 @@ import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import { Mail, Lock } from 'lucide-react';
 
 const Login = () => {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,40 +21,26 @@ const Login = () => {
     return <Navigate to={from} replace />;
   }
 
-  // Format phone: 0XXX XXX XX XX
-  const formatPhone = (raw: string) => {
-    const digits = raw.replace(/\D/g, '').slice(0, 11);
-    if (digits.length <= 4) return digits;
-    if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
-    if (digits.length <= 9) return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
-    return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 9)} ${digits.slice(9)}`;
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, '');
-    setPhoneNumber(digits.slice(0, 11));
-  };
-
   const handleSendOtp = async () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      toast.error("Please enter a valid phone number.");
+    if (!email || !email.includes('@')) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
-    const { success, debug_otp } = await sendOtp(phoneNumber);
+    const { success, debug_otp } = await sendOtp(email);
     if (success) {
-      toast.success("OTP Code Sent: " + debug_otp);
+      toast.success("Verification code sent to your email" + (debug_otp ? `: ${debug_otp}` : ''));
       setStep('otp');
     }
   };
 
   const handleVerify = async () => {
     if (!otp) {
-      toast.error("Please enter the code.");
+      toast.error("Please enter the verification code.");
       return;
     }
 
-    const success = await verifyLogin(phoneNumber, otp);
+    const success = await verifyLogin(email, otp);
     if (success) {
       toast.success("Login successful!");
       navigate(from, { replace: true });
@@ -62,11 +49,11 @@ const Login = () => {
 
   return (
     <Layout showNavigation={false}>
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-cyan-50">
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-white/60">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full border border-primary/20 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full border border-primary/20 mb-4 shadow-sm">
               <img
                 src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
                 alt="ATTR-CM Tracker Logo"
@@ -80,37 +67,28 @@ const Login = () => {
           </div>
 
           {/* Description */}
-          <div className="bg-yellow-50 rounded-xl p-4 mb-6 border border-yellow-200">
+          <div className="bg-cyan-50 rounded-xl p-4 mb-6 border border-cyan-100">
             <p className="text-gray-700 text-center text-sm sm:text-base">
-              Secure access to your ATTR-CM Tracker
+              Enter your email to receive a verification code
             </p>
           </div>
 
-          {step === 'phone' && (
+          {step === 'email' && (
             <>
-              {/* Phone Number Input */}
+              {/* Email Input */}
               <div className="mb-6">
-                <label className="block text-gray-700 font-semibold mb-3 text-sm sm:text-base">Phone Number</label>
+                <label className="block text-gray-700 font-semibold mb-3 text-sm sm:text-base">Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500">📞</span>
+                    <Mail className="w-4 h-4 text-gray-400" />
                   </div>
                   <Input
-                    type="tel"
-                    inputMode="numeric"
-                    value={formatPhone(phoneNumber)}
-                    onChange={handlePhoneChange}
-                    onKeyDown={(e) => {
-                      const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
-                      if (allowed.includes(e.key)) return;
-                      if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
-                      if (!/^\d$/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    className="pl-10 h-12 text-base sm:text-lg border-gray-300 rounded-xl tracking-wider"
-                    placeholder="0555 111 22 33"
-                    maxLength={15}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
+                    className="pl-10 h-12 text-base sm:text-lg border-gray-300 rounded-xl"
+                    placeholder="doctor@hospital.com"
                   />
                 </div>
               </div>
@@ -119,7 +97,7 @@ const Login = () => {
               <Button
                 onClick={handleSendOtp}
                 disabled={isLoading}
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base sm:text-lg font-semibold rounded-xl"
+                className="w-full h-12 bg-gradient-to-r from-[#089bab] to-[#06767f] hover:from-[#07858e] hover:to-[#055c64] text-white text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-cyan-200/50 transition-all"
               >
                 {isLoading ? "Sending..." : "Send Verification Code"}
               </Button>
@@ -132,27 +110,32 @@ const Login = () => {
                 <label className="block text-gray-700 font-semibold mb-3 text-sm sm:text-base">Verification Code</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500">🔒</span>
+                    <Lock className="w-4 h-4 text-gray-400" />
                   </div>
                   <Input
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="pl-10 h-12 text-base sm:text-lg border-gray-300 rounded-xl"
+                    className="pl-10 h-12 text-base sm:text-lg border-gray-300 rounded-xl tracking-widest text-center"
                     placeholder="123456"
                     maxLength={6}
                     onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-2 text-right cursor-pointer hover:underline" onClick={() => setStep('phone')}>
-                  Change phone number
-                </p>
+                <div className="flex justify-between mt-2">
+                  <p className="text-xs text-gray-500 cursor-pointer hover:underline hover:text-gray-700" onClick={() => setStep('email')}>
+                    ← Change email
+                  </p>
+                  <p className="text-xs text-gray-500 cursor-pointer hover:underline hover:text-[#089bab]" onClick={handleSendOtp}>
+                    Resend code
+                  </p>
+                </div>
               </div>
 
               <Button
                 onClick={handleVerify}
                 disabled={isLoading}
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base sm:text-lg font-semibold rounded-xl"
+                className="w-full h-12 bg-gradient-to-r from-[#089bab] to-[#06767f] hover:from-[#07858e] hover:to-[#055c64] text-white text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-cyan-200/50 transition-all"
               >
                 {isLoading ? "Verifying..." : "Verify & Login"}
               </Button>
@@ -163,7 +146,7 @@ const Login = () => {
           <div className="text-center mt-6">
             <p className="text-gray-600 text-sm sm:text-base">
               Need assistance? Please contact{' '}
-              <a href="mailto:dika.cardio@gmail.com" className="text-blue-600 hover:underline">
+              <a href="mailto:dika.cardio@gmail.com" className="text-[#089bab] hover:underline font-medium">
                 dika.cardio@gmail.com
               </a>
             </p>
@@ -186,3 +169,4 @@ const Login = () => {
 };
 
 export default Login;
+

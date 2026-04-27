@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
+import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft } from "lucide-react";
 
@@ -58,6 +58,20 @@ type ClinicalFindings = {
 
   age65: boolean;
   age65Value: string;
+
+  // Cardiology Echo
+  echoEfValue?: string;
+  echoIvsValue?: string;
+  echoPwValue?: string;
+  echoSddValue?: string;
+  echoLaValue?: string;
+
+  // Additional Specialties
+  nmBoneScintigraphyGrade?: string;
+  geneticsAnomaly?: string;
+  hemSerumImmunofixation?: string;
+  hemUrineImmunofixation?: string;
+  hemFreeLightChain?: string;
 };
 
 type RedFlagSymptoms = {
@@ -90,6 +104,18 @@ const defaultClinicalFindings: ClinicalFindings = {
 
   age65: false,
   age65Value: "",
+
+  echoEfValue: "",
+  echoIvsValue: "",
+  echoPwValue: "",
+  echoSddValue: "",
+  echoLaValue: "",
+
+  nmBoneScintigraphyGrade: "",
+  geneticsAnomaly: "",
+  hemSerumImmunofixation: "",
+  hemUrineImmunofixation: "",
+  hemFreeLightChain: "",
 };
 
 const defaultRedFlags: RedFlagSymptoms = {
@@ -151,6 +177,9 @@ export default function PatientDetails() {
   const [showNtProBnpChart, setShowNtProBnpChart] = useState(false);
   const [showGfrChart, setShowGfrChart] = useState(false);
 
+  const [showMissingReportDialog, setShowMissingReportDialog] = useState(false);
+  const [missingFieldsList, setMissingFieldsList] = useState<string[]>([]);
+
   // Chart state
   const [gfrChartData, setGfrChartData] = useState<any[]>([]);
   const [ntProBnpChartData, setNtProBnpChartData] = useState<any[]>([]);
@@ -188,42 +217,7 @@ export default function PatientDetails() {
   }, [clinicalRows, filterTest, sortOrder]);
 
   // ---------------- Measurements loader (tek kaynak) ----------------
-  // ---------------- Measurements loader (tek kaynak) ----------------
-  const loadMeasurements = async (p: UIModel) => {
-    // Tüm ölçümleri çek
-    const allMeasurements = await fetchMeasurementsByPatient(p.id);
-
-    // Chartlar için filtrele
-    const gfrData = allMeasurements
-      .filter((m) => m.type === "GFR")
-      .map((r) => ({ date: r.measurementDate, value: r.value }));
-
-    const ntData = allMeasurements
-      .filter((m) => m.type === "NT_PRO_BNP")
-      .map((r) => ({ date: r.measurementDate, value: r.value }));
-
-    setGfrChartData(gfrData);
-    setNtProBnpChartData(ntData);
-
-    // Tablo için hepsi
-    const rows: ClinicalRow[] = allMeasurements.map((r) => {
-      let testName = r.type as string;
-      if (r.type === "NT_PRO_BNP") testName = "NT-proBNP";
-      if (r.type === "GFR") testName = "GFR";
-      // Diğerleri oldugu gibi (BNP, EF, LVH vs)
-
-      return {
-        date: r.measurementDate,
-        test: testName,
-        value: `${r.value} ${r.unit ?? ""}`.trim(),
-      };
-    });
-
-    // Old -> New sıralama
-    rows.sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : a.test.localeCompare(b.test)));
-
-    setClinicalRows(rows);
-  };
+  // Measurements loaded via patient-detail API now to avoid Strapi 5 deep filter issues.
 
   // ---------------- Fetch all cardiologists for dropdown ----------------
   useEffect(() => {
@@ -264,19 +258,56 @@ export default function PatientDetails() {
         const currentCardioDocId = (p as any).primary_cardiologist?.documentId || "";
         setSelectedCardiologistDocId(currentCardioDocId);
 
-        // Hasta gelir gelmez measurements çek
-        await loadMeasurements(merged);
-
-        // Fetch extra detail (institution + history)
         try {
           const detailData = await strapiGet<any>(`/api/auth/doctor/patient-detail?patientDocumentId=${merged.documentId}`);
           if (detailData) {
             setInstitutionName(detailData.institutionName || null);
             setHistoryRows(detailData.history || []);
             setReportDate(detailData.reportDate || null);
+
+            if (detailData.primaryCardiologist) {
+              merged.primary_cardiologist = detailData.primaryCardiologist;
+              setSelectedCardiologistDocId(detailData.primaryCardiologist.documentId);
+              setPatient({ ...merged });
+              setDraft({ ...merged });
+            }
+            if (detailData.assignedSpecialists) {
+              merged.assigned_specialists = detailData.assignedSpecialists;
+              setPatient({ ...merged });
+              setDraft({ ...merged });
+            }
+
+            // Process measurements for charts and clinical table
+            const measurements = detailData.history || [];
+            
+            setGfrChartData(
+              measurements.filter((m: any) => m.type === "GFR")
+                          .map((r: any) => ({ date: r.date, value: r.value }))
+            );
+            
+            setNtProBnpChartData(
+              measurements.filter((m: any) => m.type === "NT_PRO_BNP")
+                          .map((r: any) => ({ date: r.date, value: r.value }))
+            );
+
+            const rows: ClinicalRow[] = measurements.map((r: any) => {
+              let testName = r.type as string;
+              if (r.type === "NT_PRO_BNP") testName = "NT-proBNP";
+              if (r.type === "GFR") testName = "GFR";
+
+              return {
+                date: r.date,
+                test: testName,
+                value: `${r.value} ${r.unit ?? ""}`.trim(),
+              };
+            });
+
+            rows.sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : a.test.localeCompare(b.test)));
+            setClinicalRows(rows);
           }
-        } catch (e) {
+        } catch (e: any) {
           console.warn('Failed to load patient detail extras:', e);
+          toast.error(e?.message || "Patient fetch failed");
         }
       } catch (e: any) {
         toast.error(e?.message || "Patient fetch failed");
@@ -288,28 +319,6 @@ export default function PatientDetails() {
       alive = false;
     };
   }, [id]);
-
-  // Eğer patient state değişirse (ör. farklı hasta), measurements tekrar çek
-  useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      try {
-        if (!patient) return;
-        await loadMeasurements(patient);
-      } catch (e: any) {
-        console.error(e);
-        if (!alive) return;
-        setGfrChartData([]);
-        setNtProBnpChartData([]);
-        setClinicalRows([]);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [patient?.id]);
 
   // ---------------- UI helpers ----------------
   const fullName = useMemo(() => {
@@ -374,6 +383,11 @@ export default function PatientDetails() {
         return;
       }
 
+      if (!selectedCardiologistDocId || selectedCardiologistDocId === "__none") {
+        toast.error("Primary Cardiologist alanı tüm hastalar için dolu olmalı ve boş geçilemez.");
+        return;
+      }
+
       const payload: Partial<StrapiPatient> = {
         firstName: fn,
         lastName: ln,
@@ -391,7 +405,7 @@ export default function PatientDetails() {
         kvkkConsentAt: (draft as any).kvkkConsentAt || undefined,
 
         statu: draft.statu ?? "New",
-        cancellationReason: draft.statu === "Cancelled" ? (draft.cancellationReason ?? "") : undefined,
+        cancellationReason: draft.statu === "Amyloidosis was ruled out" ? (draft.cancellationReason ?? "") : undefined,
 
         lastVisit: (draft as any).lastVisit || undefined,
         nextAppointment: (draft as any).nextAppointment || undefined,
@@ -485,14 +499,43 @@ export default function PatientDetails() {
       setSelectedCardiologistDocId((refreshed as any).primary_cardiologist?.documentId || "");
       setIsEditing(false);
 
-      // 5) Measurements refresh (grafik + historical table anında güncellenir)
-      await loadMeasurements(merged);
-
+      // 5) Graph/table will reflect the state because we removed the manual load.
       toast.success("Saved!");
     } catch (e: any) {
       toast.error(e?.message || "Save failed");
       console.error(e);
     }
+  };
+
+  const getMissingReportFields = (p: any): string[] => {
+    if (!p) return ["Patient data missing"];
+    const cf: ClinicalFindings = p.clinicalFindings ?? defaultClinicalFindings;
+    const missing: string[] = [];
+
+    // Cardiology
+    if (!cf.echoEfValue || !cf.echoIvsValue || !cf.echoPwValue || !cf.echoSddValue || !cf.echoLaValue) {
+      missing.push("Kardiyoloji (Eko Bulguları)");
+    }
+    // Nuclear Medicine
+    if (!cf.nmBoneScintigraphyGrade) {
+      missing.push("Nükleer Tıp (Sintigrafi Sonucu)");
+    }
+    // Genetics
+    if (!cf.geneticsAnomaly) {
+      missing.push("Genetik (Test Sonucu)");
+    }
+    // Hematology
+    if (!cf.hemSerumImmunofixation) {
+      missing.push("Hematoloji (Serum İmmünfiksasyon Elektroforezi)");
+    }
+    if (!cf.hemUrineImmunofixation) {
+      missing.push("Hematoloji (İdrar İmmünfiksasyon Elektroforezi)");
+    }
+    if (!cf.hemFreeLightChain) {
+      missing.push("Hematoloji (Serbest Hafif Zincir Analizi)");
+    }
+
+    return missing;
   };
 
   const generateDiagnosisSummary = (p: any) => {
@@ -508,6 +551,20 @@ export default function PatientDetails() {
     if (cf.ef40) clinical.push(`Preserved EF (${safeText(cf.ef40Value)}%)`);
     if (cf.gfr30) clinical.push(`GFR >30 (${safeText(cf.gfr30Value)} ml/min/1.73m²)`);
     if (cf.age65) clinical.push(`Age ≥65 years (${safeText(cf.age65Value)} years)`);
+
+    const echoItems: string[] = [];
+    if (cf.echoEfValue) echoItems.push(`EF: ${cf.echoEfValue}%`);
+    if (cf.echoIvsValue) echoItems.push(`IVS: ${cf.echoIvsValue}mm`);
+    if (cf.echoPwValue) echoItems.push(`PW: ${cf.echoPwValue}mm`);
+    if (cf.echoSddValue) echoItems.push(`SDD: ${cf.echoSddValue}`);
+    if (cf.echoLaValue) echoItems.push(`LA: ${cf.echoLaValue}mm`);
+
+    const extraSpecialtyItems: string[] = [];
+    if (cf.nmBoneScintigraphyGrade) extraSpecialtyItems.push(`Nuclear Med - Bone Scintigraphy (GRADE): ${cf.nmBoneScintigraphyGrade}`);
+    if (cf.geneticsAnomaly) extraSpecialtyItems.push(`Genetics - Anomaly: ${cf.geneticsAnomaly}`);
+    if (cf.hemSerumImmunofixation) extraSpecialtyItems.push(`Hematology - Serum Immunofixation: ${cf.hemSerumImmunofixation}`);
+    if (cf.hemUrineImmunofixation) extraSpecialtyItems.push(`Hematology - Urine Immunofixation: ${cf.hemUrineImmunofixation}`);
+    if (cf.hemFreeLightChain) extraSpecialtyItems.push(`Hematology - Free Light Chain: ${cf.hemFreeLightChain}`);
 
     if (rf.ecgHypovoltage) red.push("ECG hypovoltage");
     if (rf.pericardialEffusion) red.push("pericardial effusion");
@@ -529,6 +586,12 @@ Status: ${safeText(p.statu) || "New"}
 SIGNIFICANT CLINICAL FINDINGS:
 ${clinical.length ? clinical.map((x) => `• ${x}`).join("\n") : "• -"}
 
+ECHOCARDIOGRAPHY (CARDIOLOGY):
+${echoItems.length ? echoItems.map((x) => `• ${x}`).join("\n") : "• -"}
+
+OTHER SPECIALTY FINDINGS:
+${extraSpecialtyItems.length ? extraSpecialtyItems.map((x) => `• ${x}`).join("\n") : "• -"}
+
 RED FLAG SYMPTOMS:
 ${red.length ? red.map((x) => `• ${x}`).join("\n") : "• -"}
 
@@ -540,9 +603,54 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
     try {
       const text = generateDiagnosisSummary(draft ?? patient);
       await navigator.clipboard.writeText(text);
-      toast.success("Copied!");
+      toast.success("Rapor kopyalandı!");
     } catch {
       toast.error("Copy failed");
+    }
+  };
+
+  const handleGeneratePDF = () => {
+    const missing = getMissingReportFields(draft ?? patient);
+    if (missing.length > 0) {
+      setMissingFieldsList(missing);
+      setShowMissingReportDialog(true);
+      return;
+    }
+    try {
+      const text = generateDiagnosisSummary(draft ?? patient);
+      const doc = new jsPDF();
+      doc.setFont("helvetica");
+      doc.setFontSize(16);
+      doc.text("PATIENT DIAGNOSIS REPORT", 105, 20, { align: "center" });
+      
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(text.replace("PATIENT DIAGNOSIS SUMMARY", ""), 180);
+      doc.text(lines, 15, 30);
+      
+      doc.save(`Report_${patient.firstName}_${patient.lastName}.pdf`);
+      toast.success("PDF Raporu başarıyla oluşturuldu!");
+
+      const today = new Date();
+      const nextDate = new Date();
+      nextDate.setDate(today.getDate() + 90);
+      
+      const payload: Partial<StrapiPatient> = {
+        lastReportDate: today.toISOString().split('T')[0],
+        reportDeadline: nextDate.toISOString().split('T')[0],
+      };
+
+      updatePatientByAnyId(String(patient.id), payload).then((updated) => {
+        if (updated) {
+           toast.success("Son rapor tarihi güncellendi ve yeni Deadline (3 ay) oluşturuldu!");
+           if (draft) {
+             setDraft({ ...draft, lastReportDate: payload.lastReportDate, reportDeadline: payload.reportDeadline } as any);
+           }
+        }
+      });
+
+    } catch (e) {
+      console.error(e);
+      toast.error("PDF oluşturulurken bir hata oluştu.");
     }
   };
 
@@ -596,10 +704,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               className={`bg-[hsl(184,94%,34%)] hover:bg-[hsl(184,94%,28%)] text-white rounded-xl px-5 h-10 shadow-sm transition-all ${uiDisabledClass(
                 otherButtonsDisabled
               )}`}
-              onClick={() => window.open("#", "_blank")}
+              onClick={handleGeneratePDF}
             >
               <FileBarChart className="w-4 h-4 mr-2" />
-              Report
+              Generate PDF Report
             </Button>
 
 
@@ -788,17 +896,16 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     <SelectItem value="New">New</SelectItem>
-                    <SelectItem value="Diagnosis">Diagnosis</SelectItem>
-                    <SelectItem value="Specialist_Review">Specialist Review</SelectItem>
-                    <SelectItem value="Follow-up">Follow-up</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    <SelectItem value="Diagnostic Process">Diagnostic Process</SelectItem>
+                    <SelectItem value="Follow Up">Follow Up</SelectItem>
+                    <SelectItem value="Amyloidosis was ruled out">Amyloidosis Ruled Out</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {safeText((draft as any).statu) === "Cancelled" && (
+              {safeText((draft as any).statu) === "Amyloidosis was ruled out" && (
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">Cancellation Reason</div>
+                  <div className="text-xs text-slate-500 mb-1">Reason</div>
                   <Textarea
                     value={safeText((draft as any).cancellationReason)}
                     disabled={!isEditing}
@@ -807,8 +914,8 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 </div>
               )}
 
-              {/* Report Date - shown for Follow-up patients */}
-              {safeText((draft as any).statu) === "Follow-up" && reportDate && (
+              {/* Report Date - shown for Follow_Up patients */}
+              {safeText((draft as any).statu) === "Follow Up" && reportDate && (
                 <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl">
                   <div className="text-xs text-teal-600 font-medium mb-1 flex items-center gap-1">
                     <FileBarChart className="w-3.5 h-3.5" />
@@ -824,7 +931,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               )}
 
               {/* Report Deadline - editable */}
-              {(safeText((draft as any).statu) === "Follow-up" || safeText((draft as any).statu) === "Diagnosis") && (
+              {(safeText((draft as any).statu) === "Follow Up" || safeText((draft as any).statu) === "Diagnostic Process") && (
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
                   <Input
@@ -857,14 +964,13 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   </div>
                   {isEditing ? (
                     <Select
-                      value={selectedCardiologistDocId || "__none"}
-                      onValueChange={(v) => setSelectedCardiologistDocId(v === "__none" ? "" : v)}
+                      value={selectedCardiologistDocId || ""}
+                      onValueChange={(v) => setSelectedCardiologistDocId(v)}
                     >
                       <SelectTrigger className={!selectedCardiologistDocId ? "border-red-300" : ""}>
                         <SelectValue placeholder="Select a cardiologist" />
                       </SelectTrigger>
                       <SelectContent className="bg-white">
-                        <SelectItem value="__none" disabled>Select a cardiologist</SelectItem>
                         {allDoctors.map((doc) => (
                           <SelectItem key={doc.documentId} value={doc.documentId}>
                             {doc.fullName}
@@ -1123,6 +1229,170 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
           </Card>
         </div>
 
+        {/* ── Cardiology: Echocardiography Findings ── */}
+        <Card className="rounded-2xl mt-6 border-[#089bab]/20 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-[#089bab] flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Cardiology: Echocardiography Findings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Ejection Fraction (EF) %</div>
+                <Input
+                  value={safeText(cf.echoEfValue)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, echoEfValue: e.target.value } } as any)}
+                  placeholder="e.g. 50"
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">IVS Thickness (mm)</div>
+                <Input
+                  value={safeText(cf.echoIvsValue)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, echoIvsValue: e.target.value } } as any)}
+                  placeholder="e.g. 13"
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">PW Thickness (mm)</div>
+                <Input
+                  value={safeText(cf.echoPwValue)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, echoPwValue: e.target.value } } as any)}
+                  placeholder="e.g. 12"
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Diastolic Dysf. (SDD)</div>
+                <Input
+                  value={safeText(cf.echoSddValue)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, echoSddValue: e.target.value } } as any)}
+                  placeholder="e.g. Grade 2"
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">LA Diameter (mm)</div>
+                <Input
+                  value={safeText(cf.echoLaValue)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, echoLaValue: e.target.value } } as any)}
+                  placeholder="e.g. 40"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Nuclear Medicine Findings ── */}
+        <Card className="rounded-2xl mt-6 border-purple-500/20 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-purple-600 flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Nuclear Medicine Findings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Bone Scintigraphy Uptake (GRADE)</div>
+                <Select
+                  disabled={!isEditing}
+                  value={cf.nmBoneScintigraphyGrade || undefined}
+                  onValueChange={(val) => setDraft({ ...draft, clinicalFindings: { ...cf, nmBoneScintigraphyGrade: val } } as any)}
+                >
+                  <SelectTrigger className="w-full h-10 border-slate-200">
+                    <SelectValue placeholder="Select Grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Grade 0">Grade 0</SelectItem>
+                    <SelectItem value="Grade 1">Grade 1</SelectItem>
+                    <SelectItem value="Grade 2">Grade 2</SelectItem>
+                    <SelectItem value="Grade 3">Grade 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Genetics Findings ── */}
+        <Card className="rounded-2xl mt-6 border-emerald-500/20 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-emerald-600 flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Genetics Findings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Genetic Anomaly</div>
+                <Select
+                  disabled={!isEditing}
+                  value={cf.geneticsAnomaly || undefined}
+                  onValueChange={(val) => setDraft({ ...draft, clinicalFindings: { ...cf, geneticsAnomaly: val } } as any)}
+                >
+                  <SelectTrigger className="w-full h-10 border-slate-200">
+                    <SelectValue placeholder="Select Result" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ATTRv">ATTRv</SelectItem>
+                    <SelectItem value="ATTRwt">ATTRwt</SelectItem>
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Hematology Findings ── */}
+        <Card className="rounded-2xl mt-6 border-rose-500/20 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-rose-600 flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Hematology Findings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Serum Immunofixation Electrophoresis</div>
+                <Input
+                  value={safeText(cf.hemSerumImmunofixation)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, hemSerumImmunofixation: e.target.value } } as any)}
+                  placeholder="Enter findings..."
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Urine Immunofixation Electrophoresis</div>
+                <Input
+                  value={safeText(cf.hemUrineImmunofixation)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, hemUrineImmunofixation: e.target.value } } as any)}
+                  placeholder="Enter findings..."
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Free Light Chain Analysis</div>
+                <Input
+                  value={safeText(cf.hemFreeLightChain)}
+                  disabled={!isEditing}
+                  onChange={(e) => setDraft({ ...draft, clinicalFindings: { ...cf, hemFreeLightChain: e.target.value } } as any)}
+                  placeholder="Enter analysis..."
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* ── Examinations & Specialist Notes (combined) ── */}
         {patient.documentId && (
           <CombinedExaminations
@@ -1134,19 +1404,43 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
         {/* ── Diagnosis Summary ── */}
         <Card className="rounded-2xl mt-6">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Diagnosis Summary</CardTitle>
+            <CardTitle>Diagnosis Report</CardTitle>
             <div className="flex gap-2">
               <Button variant="outline" onClick={copyDiagnosis} className="rounded-xl">
-                <Copy className="w-4 h-4 mr-2" /> Copy
+                <Copy className="w-4 h-4 mr-2" /> Copy Text
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <pre className="bg-slate-50 border rounded-xl p-4 text-xs whitespace-pre-wrap">
-              {generateDiagnosisSummary(draft)}
-            </pre>
+            <div className="flex flex-col gap-4">
+              <pre className="bg-slate-50 border rounded-xl p-4 text-xs whitespace-pre-wrap">
+                {generateDiagnosisSummary(draft ?? patient)}
+              </pre>
+            </div>
           </CardContent>
         </Card>
+
+        {/* Missing Report Fields Dialog */}
+        <Dialog open={showMissingReportDialog} onOpenChange={setShowMissingReportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-amber-600 flex items-center gap-2">
+                Eksik Tetkikler
+              </DialogTitle>
+              <DialogDescription className="text-slate-600 mt-2">
+                PDF Raporu oluşturulması için testlerin tamamlanması bekleniyor. Lütfen aşağıdaki bölümlerden eksik bilgilerin girildiğinden emin olun:
+              </DialogDescription>
+            </DialogHeader>
+            <ul className="list-disc ml-5 mt-4 space-y-1 text-sm bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200">
+              {missingFieldsList.map((m, i) => <li key={i}>{m}</li>)}
+            </ul>
+            <div className="flex justify-end mt-4">
+              <Button variant="outline" onClick={() => setShowMissingReportDialog(false)}>
+                Anladım
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* NT-proBNP */}
         <Dialog open={showNtProBnpChart} onOpenChange={setShowNtProBnpChart}>

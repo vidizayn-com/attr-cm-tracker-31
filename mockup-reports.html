@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTR-CM Tracker - Modern Concept</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #089bab;
+            --primary-light: #52c1cc;
+            --primary-dark: #056a75;
+            --secondary: #4338ca;
+            --secondary-light: #6366f1;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg-color: #f1f5f9;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Background shapes */
+        .ambient-shape {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .shape-1 { top: -100px; left: -100px; width: 400px; height: 400px; background: var(--primary-light); }
+        .shape-2 { bottom: -150px; right: 10%; width: 500px; height: 500px; background: var(--secondary-light); opacity: 0.2; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            z-index: 10;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 3rem;
+        }
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(8, 155, 171, 0.3);
+        }
+        .brand-text h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            letter-spacing: -0.5px;
+        }
+        .brand-text p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .nav-menu { list-style: none; padding: 0; margin: 0; flex: 1; }
+        .nav-item { margin-bottom: 0.5rem; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-link svg { width: 20px; height: 20px; opacity: 0.7; transition: all 0.3s; }
+        .nav-link:hover {
+            background: rgba(255,255,255,0.5);
+            color: var(--primary-dark);
+            transform: translateX(4px);
+        }
+        .nav-link:hover svg { opacity: 1; color: var(--primary); }
+        .nav-link.active {
+            background: linear-gradient(90deg, rgba(8,155,171,0.1) 0%, transparent 100%);
+            color: var(--primary-dark);
+            border-left: 4px solid var(--primary);
+        }
+        .nav-link.active svg { opacity: 1; stroke: var(--primary); }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem;
+            background: rgba(255,255,255,0.5);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            margin-top: auto;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-profile:hover { background: white; box-shadow: var(--shadow-sm); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--secondary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        
+        /* Main Layout */
+        .main-content {
+            flex: 1;
+            padding: 2rem 3rem;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        /* Topheader */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-title h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: var(--text-main); }
+        .page-title p { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+        
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .search-bar { 
+            position: relative; 
+        }
+        .search-bar input {
+            padding: 12px 20px 12px 45px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.5);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            width: 250px;
+            font-family: inherit;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            outline: none;
+        }
+        .search-bar input:focus { width: 300px; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(8,155,171,0.1); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; color: var(--text-muted); }
+        
+        .icon-button {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .icon-button:hover { background: white; transform: translateY(-2px); box-shadow: var(--shadow-sm); color: var(--primary); }
+        .badge {
+            position: absolute; top: -2px; right: -2px;
+            background: var(--danger); color: white;
+            font-size: 0.65rem; font-weight: bold;
+            width: 18px; height: 18px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #e0f2fe;
+            animation: pulse 2s infinite;
+        }
+
+        /* Widgets Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* Glass Card Base */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08); }
+
+        /* KPI Row */
+        .kpi-row { grid-column: span 12; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        .kpi-card { display: flex; align-items: center; gap: 1rem; }
+        .kpi-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .kpi-icon.blue { background: rgba(59,130,246,0.1); color: #3b82f6; }
+        .kpi-icon.teal { background: rgba(20,184,166,0.1); color: #14b8a6; }
+        .kpi-icon.amber { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .kpi-icon.rose { background: rgba(244,63,94,0.1); color: #f43f5e; }
+        .kpi-info h4 { margin: 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        .kpi-info .value { margin: 4px 0 0; font-size: 1.8rem; font-weight: 700; color: var(--text-main); line-height: 1; }
+        .kpi-info .trend { font-size: 0.75rem; color: var(--success); font-weight: 600; display: inline-flex; align-items: center; margin-left: 8px; }
+
+        /* Main Content Aras */
+        .chart-widget { grid-column: span 8; height: 380px; display: flex; flex-direction: column; }
+        .deadlines-widget { grid-column: span 4; height: 380px; display: flex; flex-direction: column; }
+
+        .widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .widget-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .widget-action { color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+        .widget-action:hover { text-decoration: underline; }
+
+        /* Fake Chart Area */
+        .chart-area {
+            flex: 1;
+            display: flex; align-items: flex-end; justify-content: space-between;
+            padding: 1rem 0;
+            gap: 12px;
+            position: relative;
+        }
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary-light) 0%, rgba(8,155,171,0.2) 100%);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .chart-bar:hover { background: linear-gradient(180deg, var(--secondary-light) 0%, rgba(99,102,241,0.2) 100%); transform: scaleY(1.05); transform-origin: bottom; }
+        .chart-bar::after { content: attr(data-label); position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
+        .chart-bar::before { content: attr(data-val); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: var(--primary-dark); font-weight: 700; opacity: 0; transition: opacity 0.3s;}
+        .chart-bar:hover::before { opacity: 1; }
+
+        /* Timeline / Deadlines */
+        .deadline-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 5px; }
+        .deadline-list::-webkit-scrollbar { width: 4px; }
+        .deadline-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        .deadline-item {
+            background: white;
+            padding: 12px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+        .deadline-item:hover { transform: translateX(4px); box-shadow: var(--shadow-sm); }
+        .deadline-item.overdue { border-left-color: var(--danger); background: #fef2f2; }
+        .deadline-info h5 { margin: 0 0 4px 0; font-size: 0.9rem; color: var(--text-main); }
+        .deadline-info p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+        .deadline-status { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+        .deadline-status.urgent { background: rgba(245,158,11,0.15); color: #d97706; }
+        .deadline-status.critical { background: rgba(239,68,68,0.15); color: #dc2626; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Ambient background -->
+    <div class="ambient-shape shape-1"></div>
+    <div class="ambient-shape shape-2"></div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">AT</div>
+            <div class="brand-text">
+                <h1>ATTR-CM Tracker</h1>
+                <p>Cardio Intelligence</p>
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="mockup-dashboard.html" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="mockup-pool.html" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Patient Pool
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="mockup-reports.html" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Report Tracker
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="mockup-diagnostics.html" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    Diagnostics
+                </a>
+            </li>
+        </ul>
+
+        <div class="user-profile">
+            <div class="avatar">JD</div>
+            <div>
+                <div style="font-weight: 600; font-size:0.9rem; color:var(--text-main)">Dr. John Doe</div>
+                <div style="font-size:0.75rem; color:var(--text-muted)">Cardiologist</div>
+            </div>
+            <svg style="margin-left:auto; width:16px; color:var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+    </aside>
+
+    
+    <main class="main-content">
+        <header class="top-header">
+            <div class="page-title">
+                <h2>Report Tracker</h2>
+                <p>Track upcoming and overdue patient diagnosis reports.</p>
+            </div>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" placeholder="Search...">
+                </div>
+            </div>
+        </header>
+        <section class="dashboard-grid">
+            
+    <div class="glass-card" style="grid-column: span 12; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+        <div style="background: #fef2f2; border-left: 4px solid var(--danger); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="margin:0 0 0.5rem 0; color:var(--danger)">Overdue</h3>
+            <div style="font-size:2rem; font-weight:700;">3</div>
+            <p style="margin:0; font-size:0.85rem; color:#991b1b">Patients require urgent attention.</p>
+        </div>
+        <div style="background: #fffbeb; border-left: 4px solid var(--accent); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="margin:0 0 0.5rem 0; color:#d97706">Pending Restudy</h3>
+            <div style="font-size:2rem; font-weight:700;">8</div>
+            <p style="margin:0; font-size:0.85rem; color:#b45309">Due within 20 days.</p>
+        </div>
+        <div style="background: #ecfdf5; border-left: 4px solid var(--success); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="margin:0 0 0.5rem 0; color:var(--success)">Completed </h3>
+            <div style="font-size:2rem; font-weight:700;">45</div>
+            <p style="margin:0; font-size:0.85rem; color:#065f46">Up to date reports.</p>
+        </div>
+    </div>
+    
+        </section>
+    </main>
+</body>
+</html>

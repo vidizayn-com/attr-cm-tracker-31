@@ -104,25 +104,25 @@ const ConsentReportTab = () => {
         <div className="space-y-4">
             {/* Summary */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-                    <CardContent className="p-5">
-                        <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-8 h-8 opacity-80" />
-                            <div>
-                                <div className="text-2xl font-bold">{reportData.doctors.length}</div>
-                                <div className="text-emerald-100 text-sm">Consenting Doctors</div>
-                            </div>
+                <Card className="glass-card !border-0 bg-white/70 hover:-translate-y-1 transition-transform">
+                    <CardContent className="p-5 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <ShieldCheck className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Consenting Doctors</h4>
+                            <p className="text-2xl font-bold text-emerald-600 leading-none">{reportData.doctors.length}</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-                    <CardContent className="p-5">
-                        <div className="flex items-center gap-3">
-                            <Users className="w-8 h-8 opacity-80" />
-                            <div>
-                                <div className="text-2xl font-bold">{reportData.totalPatients}</div>
-                                <div className="text-blue-100 text-sm">Total Patients</div>
-                            </div>
+                <Card className="glass-card !border-0 bg-white/70 hover:-translate-y-1 transition-transform">
+                    <CardContent className="p-5 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Patients</h4>
+                            <p className="text-2xl font-bold text-blue-600 leading-none">{reportData.totalPatients}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -130,9 +130,9 @@ const ConsentReportTab = () => {
 
             {/* Doctor-Patient Cards */}
             {reportData.doctors.map((doctor: any) => (
-                <Card key={doctor.id} className="rounded-2xl border-0 shadow-md">
+                <Card key={doctor.id} className="glass-card !border-0 bg-white/50 mb-4 transition-all">
                     <CardHeader
-                        className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-2xl"
+                        className="cursor-pointer hover:bg-white/70 transition-colors rounded-t-2xl px-5 py-4"
                         onClick={() => setExpandedDoctor(expandedDoctor === doctor.id ? null : doctor.id)}
                     >
                         <div className="flex items-center justify-between">
@@ -165,17 +165,17 @@ const ConsentReportTab = () => {
                     {expandedDoctor === doctor.id && (
                         <CardContent className="pt-0">
                             {doctor.patients.length === 0 ? (
-                                <p className="text-gray-400 text-sm text-center py-4">No patient records yet</p>
+                                <p className="text-slate-400 text-sm text-center py-6 bg-slate-50/50 rounded-xl my-2 border border-slate-100">No patient records yet</p>
                             ) : (
-                                <div className="rounded-xl overflow-hidden border">
+                                <div className="rounded-[12px] overflow-hidden border border-slate-200/60 bg-white">
                                     <Table>
                                         <TableHeader>
-                                            <TableRow className="bg-gray-50">
-                                                <TableHead className="text-xs">Patient Name</TableHead>
-                                                <TableHead className="text-xs">Gender</TableHead>
-                                                <TableHead className="text-xs">Birth Date</TableHead>
-                                                <TableHead className="text-xs">Status</TableHead>
-                                                <TableHead className="text-xs">Registered</TableHead>
+                                            <TableRow className="bg-slate-50 border-b border-slate-200/60 hover:bg-transparent">
+                                                <TableHead className="text-xs font-semibold text-slate-500 uppercase">Patient Name</TableHead>
+                                                <TableHead className="text-xs font-semibold text-slate-500 uppercase">Gender</TableHead>
+                                                <TableHead className="text-xs font-semibold text-slate-500 uppercase">Birth Date</TableHead>
+                                                <TableHead className="text-xs font-semibold text-slate-500 uppercase">Status</TableHead>
+                                                <TableHead className="text-xs font-semibold text-slate-500 uppercase">Registered</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -470,100 +470,87 @@ const AdminDashboard = () => {
     const { summary, hospitals } = data;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-teal-50/30">
-            {/* Top Bar */}
-            <header className="bg-gradient-to-r from-[hsl(184,91%,17%)] via-[hsl(184,58%,28%)] to-[hsl(184,58%,35%)] text-white shadow-xl">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/15 backdrop-blur-sm rounded-xl">
+        <div className="min-h-screen bg-[#f4f9f9] relative overflow-hidden font-sans">
+            {/* Ambient background */}
+            <div className="ambient-shape shape-1" style={{ top: '-10%', right: '-5%', background: '#089bab', width: '600px', height: '600px' }}></div>
+            <div className="ambient-shape shape-2" style={{ bottom: '-10%', left: '-5%', background: '#6366f1', opacity: 0.15 }}></div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+                {/* Top Bar as Glass Card */}
+                <header className="glass-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-5">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#089bab] to-teal-600 flex items-center justify-center text-white shadow-lg">
                             <Shield className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                            <p className="text-teal-100/60 text-xs">ATTR-CM Tracker Administration</p>
+                            <h1 className="text-[1.3rem] font-bold text-slate-800 leading-tight">Admin Dashboard</h1>
+                            <p className="text-slate-500 text-xs">ATTR-CM Tracker Administration</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" onClick={loadDashboard} className="text-teal-100 hover:text-white hover:bg-white/10">
-                            <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+                        <Button variant="outline" size="sm" onClick={loadDashboard} className="rounded-xl border-slate-200 text-slate-600 hover:text-[#089bab] hover:bg-slate-50 transition-all shadow-sm">
+                            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-300 hover:text-red-200 hover:bg-red-500/10">
-                            <LogOut className="w-4 h-4 mr-1" /> Logout
+                        <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 transition-all shadow-sm">
+                            <LogOut className="w-4 h-4 mr-2" /> Logout
                         </Button>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <Card className="bg-gradient-to-br from-[hsl(184,58%,44%)] to-[hsl(184,91%,17%)] text-white border-0 shadow-lg shadow-teal-500/20 rounded-2xl">
-                        <CardContent className="p-5">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-teal-100 text-sm">Total Hospitals</p>
-                                    <p className="text-3xl font-bold">{summary.totalInstitutions}</p>
-                                </div>
-                                <Building2 className="w-10 h-10 text-white/30" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-[hsl(184,58%,52%)] to-[hsl(184,58%,38%)] text-white border-0 shadow-lg shadow-teal-500/15 rounded-2xl">
-                        <CardContent className="p-5">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-teal-50 text-sm">Total Doctors</p>
-                                    <p className="text-3xl font-bold">{summary.totalDoctors}</p>
-                                </div>
-                                <Stethoscope className="w-10 h-10 text-white/30" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-lg shadow-emerald-500/15 rounded-2xl">
-                        <CardContent className="p-5">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-emerald-100 text-sm">Total Patients</p>
-                                    <p className="text-3xl font-bold">{summary.totalPatients}</p>
-                                </div>
-                                <Users className="w-10 h-10 text-white/30" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-cyan-500 to-[hsl(184,58%,44%)] text-white border-0 shadow-lg shadow-cyan-500/15 rounded-2xl">
-                        <CardContent className="p-5">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-cyan-100 text-sm">Specialties</p>
-                                    <p className="text-3xl font-bold">{Object.keys(summary.specialtyCounts).length}</p>
-                                </div>
-                                <Activity className="w-10 h-10 text-white/30" />
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                                {Object.entries(summary.specialtyCounts).map(([sp, count]) => (
-                                    <span key={sp} className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
-                                        {sp}: {count}
-                                    </span>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="glass-card flex items-center gap-4 !p-5 hover:-translate-y-1 transition-transform">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Hospitals</h4>
+                            <p className="text-2xl font-bold text-slate-800 leading-none">{summary.totalInstitutions}</p>
+                        </div>
+                    </div>
+                    <div className="glass-card flex items-center gap-4 !p-5 hover:-translate-y-1 transition-transform">
+                        <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+                            <Stethoscope className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Doctors</h4>
+                            <p className="text-2xl font-bold text-slate-800 leading-none">{summary.totalDoctors}</p>
+                        </div>
+                    </div>
+                    <div className="glass-card flex items-center gap-4 !p-5 hover:-translate-y-1 transition-transform">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Patients</h4>
+                            <p className="text-2xl font-bold text-slate-800 leading-none">{summary.totalPatients}</p>
+                        </div>
+                    </div>
+                    <div className="glass-card flex items-center gap-4 !p-5 hover:-translate-y-1 transition-transform">
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                            <Activity className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Specialties</h4>
+                            <p className="text-2xl font-bold text-slate-800 leading-none">{Object.keys(summary.specialtyCounts).length}</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex gap-2 mb-4">
+                <div className="glass-card !p-2 inline-flex gap-2 self-start mb-2">
                     {(['overview', 'hospitals', 'doctors', 'reports'] as const).map(tab => (
                         <Button
                             key={tab}
-                            variant={activeTab === tab ? 'default' : 'outline'}
+                            variant="ghost"
                             size="sm"
-                            className={`rounded-xl capitalize ${activeTab === tab ? 'bg-[hsl(184,58%,44%)] hover:bg-[hsl(184,58%,38%)] text-white' : ''}`}
+                            className={`rounded-xl capitalize transition-all ${activeTab === tab ? 'bg-gradient-to-r from-[#089bab] to-teal-500 text-white shadow-md font-medium' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'}`}
                             onClick={() => setActiveTab(tab)}
                         >
-                            {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-1" />}
-                            {tab === 'hospitals' && <Building2 className="w-4 h-4 mr-1" />}
-                            {tab === 'doctors' && <Stethoscope className="w-4 h-4 mr-1" />}
-                            {tab === 'reports' && <FileBarChart className="w-4 h-4 mr-1" />}
+                            {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-2" />}
+                            {tab === 'hospitals' && <Building2 className="w-4 h-4 mr-2" />}
+                            {tab === 'doctors' && <Stethoscope className="w-4 h-4 mr-2" />}
+                            {tab === 'reports' && <FileBarChart className="w-4 h-4 mr-2" />}
                             {tab}
                         </Button>
                     ))}
@@ -573,44 +560,44 @@ const AdminDashboard = () => {
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {hospitals.map(h => (
-                            <Card key={h.id} className="rounded-2xl border-0 shadow-md hover:shadow-lg transition-shadow">
+                            <Card key={h.id} className="glass-card !border-0 hover:-translate-y-1 transition-transform">
                                 <CardHeader className="pb-2">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="flex items-center gap-2 text-lg">
-                                            <Building2 className="w-5 h-5 text-[hsl(184,58%,44%)]" />
+                                        <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
+                                            <Building2 className="w-5 h-5 text-[#089bab]" />
                                             {h.name}
                                         </CardTitle>
                                     </div>
-                                    {h.address && <p className="text-xs text-slate-400">{h.address}</p>}
+                                    {h.address && <p className="text-xs text-slate-500 bg-slate-100/50 p-2 rounded-lg mt-2 inline-block border border-slate-200/50">{h.address}</p>}
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="grid grid-cols-3 gap-3 mb-3">
-                                        <div className="bg-teal-50 rounded-xl p-3 text-center">
-                                            <p className="text-2xl font-bold text-teal-700">{h.doctorCount}</p>
-                                            <p className="text-[10px] text-teal-500 font-medium">Doctors</p>
+                                    <div className="grid grid-cols-3 gap-3 mb-4 mt-2">
+                                        <div className="bg-white/50 border border-slate-200/50 rounded-xl p-3 text-center shadow-sm">
+                                            <p className="text-2xl font-bold text-[#089bab]">{h.doctorCount}</p>
+                                            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Doctors</p>
                                         </div>
-                                        <div className="bg-green-50 rounded-xl p-3 text-center">
-                                            <p className="text-2xl font-bold text-green-700">{h.patientCount}</p>
-                                            <p className="text-[10px] text-green-500 font-medium">Patients</p>
+                                        <div className="bg-white/50 border border-slate-200/50 rounded-xl p-3 text-center shadow-sm">
+                                            <p className="text-2xl font-bold text-emerald-600">{h.patientCount}</p>
+                                            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Patients</p>
                                         </div>
-                                        <div className="bg-amber-50 rounded-xl p-3 text-center">
-                                            <p className="text-2xl font-bold text-amber-700">{h.poolPatientCount}</p>
-                                            <p className="text-[10px] text-amber-500 font-medium">Pool</p>
+                                        <div className="bg-white/50 border border-slate-200/50 rounded-xl p-3 text-center shadow-sm">
+                                            <p className="text-2xl font-bold text-amber-500">{h.poolPatientCount}</p>
+                                            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Pool</p>
                                         </div>
                                     </div>
                                     {/* Specialty breakdown */}
                                     <div className="flex flex-wrap gap-1">
                                         {Object.entries(h.doctorsBySpecialty).map(([sp, cnt]) => (
-                                            <Badge key={sp} variant="outline" className={`text-[10px] ${specialtyColors[sp] || ''}`}>
-                                                {specialtyIcons[sp]} {sp}: {cnt}
+                                            <Badge key={sp} variant="outline" className={`text-[10px] px-2 py-0.5 rounded-full bg-white/50 ${specialtyColors[sp] || 'border-slate-200 text-slate-600'}`}>
+                                                {specialtyIcons[sp]} <span className="ml-1">{sp}: {cnt}</span>
                                             </Badge>
                                         ))}
                                     </div>
                                     {/* Patient status breakdown */}
                                     {Object.keys(h.patientsByStatus).length > 0 && (
-                                        <div className="mt-2 flex flex-wrap gap-1">
+                                        <div className="mt-2 flex flex-wrap gap-1 opacity-80">
                                             {Object.entries(h.patientsByStatus).map(([st, cnt]) => (
-                                                <span key={st} className="text-[10px] bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">
+                                                <span key={st} className="text-[10px] bg-white border border-slate-200 text-slate-600 rounded-full px-2 py-0.5 shadow-sm">
                                                     {st}: {cnt}
                                                 </span>
                                             ))}
@@ -624,15 +611,17 @@ const AdminDashboard = () => {
 
                 {/* ── Hospitals Tab ── */}
                 {activeTab === 'hospitals' && (
-                    <Card className="rounded-2xl border-0 shadow-md">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
-                                <Building2 className="w-5 h-5 text-[hsl(184,58%,44%)]" />
+                    <Card className="glass-card !border-0 flex-1">
+                        <CardHeader className="flex flex-row items-center justify-between pb-4">
+                            <CardTitle className="flex items-center gap-3 text-slate-800">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex justify-center items-center">
+                                    <Building2 className="w-5 h-5" />
+                                </div>
                                 Hospital Management
                             </CardTitle>
                             <Dialog open={showHospitalForm} onOpenChange={setShowHospitalForm}>
                                 <DialogTrigger asChild>
-                                    <Button size="sm" className="bg-[hsl(184,58%,44%)] hover:bg-[hsl(184,58%,38%)] text-white rounded-xl">
+                                    <Button size="sm" className="bg-gradient-to-r from-[#089bab] to-teal-500 hover:from-teal-600 hover:to-teal-600 text-white rounded-xl shadow-md">
                                         <Plus className="w-4 h-4 mr-1" /> Add Hospital
                                     </Button>
                                 </DialogTrigger>
@@ -720,26 +709,28 @@ const AdminDashboard = () => {
 
                 {/* ── Doctors Tab ── */}
                 {activeTab === 'doctors' && (
-                    <Card className="rounded-2xl border-0 shadow-md">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
-                                <Stethoscope className="w-5 h-5 text-[hsl(184,58%,44%)]" />
+                    <Card className="glass-card !border-0 flex-1">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 gap-4">
+                            <CardTitle className="flex items-center gap-3 text-slate-800">
+                                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex justify-center items-center">
+                                    <Stethoscope className="w-5 h-5" />
+                                </div>
                                 Doctor Management
-                                <Badge variant="secondary">{filteredDoctors.length}</Badge>
+                                <Badge className="bg-white/60 text-slate-600 ml-2 shadow-sm border-slate-200">{filteredDoctors.length}</Badge>
                             </CardTitle>
-                            <div className="flex items-center gap-2">
-                                <div className="relative">
-                                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <div className="relative flex-1 sm:flex-none">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <Input
-                                        placeholder="Search..."
+                                        placeholder="Search doctors..."
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
-                                        className="pl-8 h-9 w-48 rounded-xl text-sm"
+                                        className="pl-9 h-10 w-full sm:w-64 rounded-xl bg-white/50 border-slate-200/60 focus:bg-white transition-colors"
                                     />
                                 </div>
                                 <Dialog open={showDoctorForm} onOpenChange={setShowDoctorForm}>
                                     <DialogTrigger asChild>
-                                        <Button size="sm" className="bg-[hsl(184,58%,44%)] hover:bg-[hsl(184,58%,38%)] text-white rounded-xl">
+                                        <Button size="sm" className="h-10 bg-gradient-to-r from-[#089bab] to-teal-500 hover:from-teal-600 hover:to-teal-600 text-white rounded-xl shadow-md whitespace-nowrap">
                                             <Plus className="w-4 h-4 mr-1" /> Add Doctor
                                         </Button>
                                     </DialogTrigger>
@@ -912,7 +903,21 @@ const AdminDashboard = () => {
                 )}
 
                 {/* ── Reports Tab ── */}
-                {activeTab === 'reports' && <ConsentReportTab />}
+                {activeTab === 'reports' && (
+                    <Card className="glass-card !border-0 flex-1">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="flex items-center gap-3 text-slate-800">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex justify-center items-center">
+                                    <FileBarChart className="w-5 h-5" />
+                                </div>
+                                Consent & Analytics Reports
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ConsentReportTab />
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );

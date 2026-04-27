@@ -10,7 +10,7 @@ export interface Patient {
   lastVisit: string;
   nextAppointment: string;
   assignedTo: string;
-  status: 'New' | 'Diagnosis' | 'Follow-up' | 'Cancelled';
+  status: 'New' | 'Diagnostic Process' | 'Follow Up' | 'Amyloidosis was ruled out';
   cancellationReason?: string;
   allowCaregiver: boolean;
   clinicalFindings: {

@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { Zap, Loader2 } from 'lucide-react';
+import { Zap, Loader2, Users, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { strapiGet } from '@/lib/strapiClient';
 import { useUser } from '@/contexts/UserContext';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 
 // Chart configuration
 const chartConfig = {
@@ -45,6 +46,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(true);
 
+  // New dynamic sections state
+  const EXPIRING_DAYS = 7; // configurable threshold
+  const [expiringPatients, setExpiringPatients] = useState<any[]>([]);
+  const [diagnosisPatients, setDiagnosisPatients] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
+
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -70,77 +79,101 @@ const Dashboard = () => {
       }
     };
 
+    const fetchSections = async () => {
+      try {
+        const [exp, diag, recent] = await Promise.all([
+          strapiGet<any[]>("/dashboard/expiring-medication"),
+          strapiGet<any[]>("/dashboard/diagnosis-patients"),
+          strapiGet<any[]>("/dashboard/recent-reports"),
+        ]);
+        setExpiringPatients(exp);
+        setDiagnosisPatients(diag);
+        setRecentReports(recent);
+      } catch (e) {
+        console.error("Failed to fetch dashboard sections:", e);
+      } finally {
+        setSectionsLoading(false);
+      }
+    };
+
     fetchStats();
     fetchTrends();
+    fetchSections();
   }, []);
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 sm:p-6">
-        <h1 className="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#29a8b6' }}>Dashboard</h1>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <Link to="/patients">
-            <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl">Total Patients</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.totalPatients ?? 0}
-                </div>
-                <p className="text-gray-600 text-sm sm:text-base">Active patients in system</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          {isCardiologist ? (
-            <Link to="/patients/register">
-              <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl">New Patients</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-bold text-green-600">
-                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.newPatients ?? 0}
-                  </div>
-                  <p className="text-gray-600 text-sm sm:text-base">Pending assignment</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Link to="/patients">
-              <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl">Referred to Me</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-bold text-purple-600">
-                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.assignedPatients ?? 0}
-                  </div>
-                  <p className="text-gray-600 text-sm sm:text-base">Awaiting my review</p>
-                </CardContent>
-              </Card>
-            </Link>
-          )}
-
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg sm:col-span-2 lg:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg sm:text-xl">Assignments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-orange-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.assignedPatients ?? 0}
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Active assignments</p>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto p-4 sm:p-6" style={{zIndex:10, position:'relative'}}>
+        <div className="flex justify-between items-center mb-8">
+            <div className="page-title">
+                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#056a75' }}>Overview Dashboard</h2>
+                <p className="text-slate-500 mt-1">Welcome back, {currentUser?.name || 'Doctor'}. Here's what's happening with your patients today.</p>
+            </div>
         </div>
 
+        <section className="dashboard-grid">
+            <div className="kpi-row">
+                {/* 1. Total Assigned */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                    <div className="kpi-icon blue">
+                        <Users className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Total Assigned</h4>
+                        <div className="value flex items-baseline">
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
+                            <span className="trend ml-2 text-[#10b981] font-semibold text-xs">↑ 12%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Diagnostic Process */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                    <div className="kpi-icon teal">
+                        <CheckCircle2 className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Diagnostic Process</h4>
+                        <div className="value flex items-baseline">
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.assignedPatients ?? 0}
+                            <span className="trend ml-2 text-slate-500 font-semibold text-xs">- 2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Follow Up Tracking */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                    <div className="kpi-icon amber">
+                        <Clock className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Follow Up Tracking</h4>
+                        <div className="value flex items-baseline">
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
+                            <span className="trend ml-2 text-[#10b981] font-semibold text-xs">↑ 8%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Reports Overdue */}
+                <div className="glass-card kpi-card" onClick={() => window.location.href='/reports'}>
+                    <div className="kpi-icon rose">
+                        <AlertTriangle className="w-7 h-7" />
+                    </div>
+                    <div className="kpi-info">
+                        <h4>Reports Overdue</h4>
+                        <div className="value flex items-baseline text-red-500">
+                            3
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <div className="mt-6 sm:mt-8">
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
+          <Card className="glass-card border-none shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-slate-800">
                 <Zap className="w-5 h-5" style={{ color: '#29a8b6' }} />
                 Quick Actions
               </CardTitle>
@@ -271,20 +304,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl text-red-600">Medication Report Period Expiring Soon</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: John Smith</span>
-                    <span className="text-xs text-red-600">3 days</span>
+                {sectionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : expiringPatients.length ? (
+                  <div className="space-y-2">
+                    {expiringPatients.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
+                        <span className="text-sm font-medium">Patient: {p.name}</span>
+                        <span className="text-xs text-red-600">{p.medicationReport?.daysLeft ?? '—'} days</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Sarah Wilson</span>
-                    <span className="text-xs text-red-600">5 days</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Mike Johnson</span>
-                    <span className="text-xs text-red-600">7 days</span>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">No medication reports expiring soon.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -293,20 +326,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl text-yellow-600">Data Entry Assignment Needed</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Emma Davis</span>
-                    <span className="text-xs text-yellow-600">Pending</span>
+                {sectionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : diagnosisPatients.length ? (
+                  <div className="space-y-2">
+                    {diagnosisPatients.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
+                        <span className="text-sm font-medium">Patient: {p.name}</span>
+                        <span className="text-xs text-yellow-600">{p.missingSpecialties?.length ? `Missing: ${p.missingSpecialties.join(', ')}` : 'Pending'}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Robert Brown</span>
-                    <span className="text-xs text-yellow-600">Pending</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Lisa Garcia</span>
-                    <span className="text-xs text-yellow-600">Pending</span>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">No patients need diagnostic data entry right now.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -315,20 +348,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl text-green-600">Recently Created Reports</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Alex Turner</span>
-                    <span className="text-xs text-green-600">Today</span>
+                {sectionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : recentReports.length ? (
+                  <div className="space-y-2">
+                    {recentReports.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
+                        <span className="text-sm font-medium">Patient: {p.patient?.name || p.name}</span>
+                        <span className="text-xs text-green-600">{p.createdAt ? formatDistanceToNow(new Date(p.createdAt), {addSuffix: true}) : 'Recently'}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Maria Lopez</span>
-                    <span className="text-xs text-green-600">Yesterday</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: David Lee</span>
-                    <span className="text-xs text-green-600">2 days ago</span>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">No recently created reports.</p>
+                )}
               </CardContent>
             </Card>
           </div>

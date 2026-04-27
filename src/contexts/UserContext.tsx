@@ -39,8 +39,8 @@ interface UserContextType {
     currentUser: User | null;
     isLoading: boolean;
     login: (phone: string, password: string) => Promise<boolean>;
-    sendOtp: (phone: string) => Promise<{ success: boolean; message?: string; debug_otp?: string }>;
-    verifyLogin: (phone: string, otp: string) => Promise<boolean>;
+    sendOtp: (email: string) => Promise<{ success: boolean; message?: string; debug_otp?: string }>;
+    verifyLogin: (email: string, otp: string) => Promise<boolean>;
     logout: () => void;
     updateConsent: (consent: boolean) => Promise<boolean>;
     updateProfile: (data: { phone?: string; hospitalId?: number }) => Promise<boolean>;
@@ -131,25 +131,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const sendOtp = async (phone: string) => {
+    const sendOtp = async (email: string) => {
         setIsLoading(true);
         try {
-            const data = await strapiPost<any>("/api/auth/doctor/login-init", { phone });
+            const data = await strapiPost<any>("/api/auth/doctor/login-init", { email });
             return { success: true, debug_otp: data.debug_otp };
         } catch (error) {
             console.error("OTP send failed:", error);
-            toast.error("Failed to send OTP. Check phone number.");
+            toast.error("Failed to send verification code. Check email address.");
             return { success: false };
         } finally {
             setIsLoading(false);
         }
     };
 
-    const verifyLogin = async (phone: string, otp: string): Promise<boolean> => {
+    const verifyLogin = async (email: string, otp: string): Promise<boolean> => {
         setIsLoading(true);
         try {
             const data = await strapiPost<LoginResponse>("/api/auth/doctor/login-verify", {
-                phone,
+                email,
                 otp
             });
 
