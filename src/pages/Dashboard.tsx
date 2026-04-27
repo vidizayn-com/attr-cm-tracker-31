@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { Zap, Loader2, Users, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { strapiGet } from '@/lib/strapiClient';
 import { useUser } from '@/contexts/UserContext';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 
 // Chart configuration
 const chartConfig = {
@@ -78,8 +79,26 @@ const Dashboard = () => {
       }
     };
 
+    const fetchSections = async () => {
+      try {
+        const [exp, diag, recent] = await Promise.all([
+          strapiGet<any[]>("/dashboard/expiring-medication"),
+          strapiGet<any[]>("/dashboard/diagnosis-patients"),
+          strapiGet<any[]>("/dashboard/recent-reports"),
+        ]);
+        setExpiringPatients(exp);
+        setDiagnosisPatients(diag);
+        setRecentReports(recent);
+      } catch (e) {
+        console.error("Failed to fetch dashboard sections:", e);
+      } finally {
+        setSectionsLoading(false);
+      }
+    };
+
     fetchStats();
     fetchTrends();
+    fetchSections();
   }, []);
 
   return (
@@ -285,20 +304,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl text-red-600">Medication Report Period Expiring Soon</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: John Smith</span>
-                    <span className="text-xs text-red-600">3 days</span>
+                {sectionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : expiringPatients.length ? (
+                  <div className="space-y-2">
+                    {expiringPatients.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
+                        <span className="text-sm font-medium">Patient: {p.name}</span>
+                        <span className="text-xs text-red-600">{p.medicationReport?.daysLeft ?? '—'} days</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Sarah Wilson</span>
-                    <span className="text-xs text-red-600">5 days</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Mike Johnson</span>
-                    <span className="text-xs text-red-600">7 days</span>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">No medication reports expiring soon.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -307,20 +326,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl text-yellow-600">Data Entry Assignment Needed</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Emma Davis</span>
-                    <span className="text-xs text-yellow-600">Pending</span>
+                {sectionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : diagnosisPatients.length ? (
+                  <div className="space-y-2">
+                    {diagnosisPatients.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
+                        <span className="text-sm font-medium">Patient: {p.name}</span>
+                        <span className="text-xs text-yellow-600">{p.missingSpecialties?.length ? `Missing: ${p.missingSpecialties.join(', ')}` : 'Pending'}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Robert Brown</span>
-                    <span className="text-xs text-yellow-600">Pending</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Lisa Garcia</span>
-                    <span className="text-xs text-yellow-600">Pending</span>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">No patients need diagnostic data entry right now.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -329,20 +348,20 @@ const Dashboard = () => {
                 <CardTitle className="text-lg sm:text-xl text-green-600">Recently Created Reports</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Alex Turner</span>
-                    <span className="text-xs text-green-600">Today</span>
+                {sectionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : recentReports.length ? (
+                  <div className="space-y-2">
+                    {recentReports.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
+                        <span className="text-sm font-medium">Patient: {p.patient?.name || p.name}</span>
+                        <span className="text-xs text-green-600">{p.createdAt ? formatDistanceToNow(new Date(p.createdAt), {addSuffix: true}) : 'Recently'}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: Maria Lopez</span>
-                    <span className="text-xs text-green-600">Yesterday</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Patient: David Lee</span>
-                    <span className="text-xs text-green-600">2 days ago</span>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">No recently created reports.</p>
+                )}
               </CardContent>
             </Card>
           </div>
