@@ -1,7 +1,13 @@
 export let STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
 if (STRAPI_URL === undefined) {
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    STRAPI_URL = '';
+    let host = window.location.hostname;
+    if (host.includes('-test')) {
+      host = host.replace('-test', '-api-test');
+    } else {
+      host = host.replace('.vidizayn.com', '-api.vidizayn.com');
+    }
+    STRAPI_URL = `https://${host}`;
   } else {
     STRAPI_URL = 'http://127.0.0.1:1337';
   }
