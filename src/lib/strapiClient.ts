@@ -1,4 +1,4 @@
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://127.0.0.1:1337';
 
 if (!STRAPI_URL) {
   console.error("VITE_STRAPI_URL is missing. Check .env.local");

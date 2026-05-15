@@ -5,7 +5,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Lock, Mail } from 'lucide-react';
 
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://127.0.0.1:1337';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('admin@attr.com');
