@@ -1,5 +1,5 @@
 export let STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
-if (STRAPI_URL === undefined) {
+if (!STRAPI_URL) {
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     let host = window.location.hostname;
     if (host.includes('-test')) {
