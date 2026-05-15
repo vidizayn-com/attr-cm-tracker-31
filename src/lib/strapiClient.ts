@@ -1,7 +1,10 @@
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://127.0.0.1:1337';
-
-if (!STRAPI_URL) {
-  console.error("VITE_STRAPI_URL is missing. Check .env.local");
+export let STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
+if (STRAPI_URL === undefined) {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    STRAPI_URL = '';
+  } else {
+    STRAPI_URL = 'http://127.0.0.1:1337';
+  }
 }
 
 type StrapiCreateResponse<T> = {
@@ -21,8 +24,6 @@ const getHeaders = () => {
 };
 
 export async function strapiPost<T = any>(path: string, body: any): Promise<T> {
-  if (!STRAPI_URL) throw new Error("VITE_STRAPI_URL is missing");
-
   const res = await fetch(`${STRAPI_URL}${path}`, {
     method: "POST",
     headers: getHeaders(),
@@ -46,8 +47,6 @@ export async function strapiPost<T = any>(path: string, body: any): Promise<T> {
 }
 
 export async function strapiPut<T = any>(path: string, body: any): Promise<T> {
-  if (!STRAPI_URL) throw new Error("VITE_STRAPI_URL is missing");
-
   const res = await fetch(`${STRAPI_URL}${path}`, {
     method: "PUT",
     headers: getHeaders(),
@@ -64,8 +63,6 @@ export async function strapiPut<T = any>(path: string, body: any): Promise<T> {
 }
 
 export async function strapiGet<T = any>(path: string): Promise<T> {
-  if (!STRAPI_URL) throw new Error("VITE_STRAPI_URL is missing");
-
   const res = await fetch(`${STRAPI_URL}${path}`, {
     method: "GET",
     headers: getHeaders(),

@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://127.0.0.1:1337';
+import { STRAPI_URL } from '@/lib/strapiClient';
 
 interface InvitationInfo {
   fullName: string;
