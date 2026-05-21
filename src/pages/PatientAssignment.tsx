@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
-import { strapiGet, strapiPost } from '@/lib/strapiClient';
+import { strapiGet, strapiPost, STRAPI_URL } from '@/lib/strapiClient';
 import {
   Loader2,
   Building2,
@@ -125,7 +125,7 @@ const PatientAssignment = () => {
       try {
         // Do NOT send custom JWT to Strapi standard API – it causes 401
         const res = await fetch(
-          `${import.meta.env.VITE_STRAPI_URL}/api/patients/${patientDocumentId}?fields[0]=firstName&fields[1]=lastName`
+          `${STRAPI_URL}/api/patients/${patientDocumentId}?fields[0]=firstName&fields[1]=lastName`
         );
         const json = await res.json();
         const patient = json?.data || json;

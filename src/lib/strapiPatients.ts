@@ -1,4 +1,4 @@
-const RAW = import.meta.env.VITE_STRAPI_URL;
+import { STRAPI_URL as RAW } from '@/lib/strapiClient';
 
 if (!RAW) throw new Error("VITE_STRAPI_URL is not set.");
 

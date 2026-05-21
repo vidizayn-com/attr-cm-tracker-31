@@ -13,7 +13,7 @@ import {
     ClipboardList, FlaskConical, ChevronDown, ChevronUp, Download, Eye
 } from 'lucide-react';
 
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
+import { STRAPI_URL } from '@/lib/strapiClient';
 
 // ── Types ──
 type NoteAttachment = {

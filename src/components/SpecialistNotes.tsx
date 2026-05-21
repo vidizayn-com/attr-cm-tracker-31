@@ -11,7 +11,7 @@ import {
     Stethoscope, Microscope, Atom, Dna, Paperclip, X, ExternalLink
 } from 'lucide-react';
 
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
+import { STRAPI_URL } from '@/lib/strapiClient';
 
 type NoteAttachment = {
     id: number;

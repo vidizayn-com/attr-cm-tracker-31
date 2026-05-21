@@ -16,7 +16,7 @@ import {
     ChevronDown, ChevronUp, ShieldCheck, UserPlus
 } from 'lucide-react';
 
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
+import { STRAPI_URL } from '@/lib/strapiClient';
 
 type Hospital = {
     id: number; documentId: string; name: string; address: string | null; email: string | null;

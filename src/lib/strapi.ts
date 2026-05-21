@@ -1,6 +1,6 @@
 // src/lib/strapi.ts
 
-const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
+import { STRAPI_URL } from '@/lib/strapiClient';
 
 type FetchFromStrapiOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

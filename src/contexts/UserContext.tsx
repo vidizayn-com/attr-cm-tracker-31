@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { strapiPost, strapiGet } from "@/lib/strapiClient";
+import { strapiPost, strapiGet, STRAPI_URL } from "@/lib/strapiClient";
 import { toast } from "sonner";
 
 export type DoctorRole = "Cardiologist" | "Hematologist" | "Nuclear Medicine" | "Genetic Expert" | string;
@@ -182,7 +182,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const updateProfile = async (data: { phone?: string; hospitalId?: number }): Promise<boolean> => {
         try {
-            const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
+            
             const token = localStorage.getItem("doctor_token");
             const res = await fetch(`${STRAPI_URL}/api/auth/doctor/update-profile`, {
                 method: 'PUT',
