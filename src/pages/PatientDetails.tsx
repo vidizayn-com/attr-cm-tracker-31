@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft } from "lucide-react";
+import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
 import CombinedExaminations from "@/components/CombinedExaminations";
 
@@ -790,11 +791,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Date of Birth</div>
-                  <Input
-                    type="date"
+                  <DateOfBirthSelect
                     value={safeText((draft as any).dateOfBirth)}
                     disabled={!isEditing}
-                    onChange={(e) => setDraft({ ...draft, dateOfBirth: e.target.value } as any)}
+                    onChange={(val) => setDraft({ ...draft, dateOfBirth: val } as any)}
                   />
                 </div>
                 <div>

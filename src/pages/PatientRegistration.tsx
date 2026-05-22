@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Upload, FileText, Image, Trash2, Eye, TrendingUp } from 'lucide-react';
+import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
 // ✅ NEW: Strapi API helpers
 import { createPatient, createCaregiver, linkCaregiverToPatient } from '@/lib/patientApi';
@@ -306,12 +307,9 @@ const PatientRegistration = () => {
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Date of Birth</label>
-                  <Input
-                    type="date"
+                  <DateOfBirthSelect
                     value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                    placeholder="mm/dd/yyyy"
-                    className="h-10 sm:h-auto"
+                    onChange={(val) => setFormData({ ...formData, dateOfBirth: val })}
                   />
                 </div>
               </div>
