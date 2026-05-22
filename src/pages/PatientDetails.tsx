@@ -931,7 +931,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               )}
 
               {/* Report Deadline - editable */}
-              {(safeText((draft as any).statu) === "Follow Up" || safeText((draft as any).statu) === "Diagnostic Process") && (
+              {safeText((draft as any).statu) === "Follow Up" && (
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
                   <Input
