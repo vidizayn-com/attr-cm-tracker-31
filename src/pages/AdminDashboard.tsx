@@ -221,7 +221,7 @@ const AdminDashboard = () => {
     const [docSpecialty, setDocSpecialty] = useState('Cardiology');
     const [docPhone, setDocPhone] = useState('');
     const [docEmail, setDocEmail] = useState('');
-    const [docPassword, setDocPassword] = useState('Test123!');
+    const [docTcNo, setDocTcNo] = useState('');
     const [docInstId, setDocInstId] = useState('');
     const [savingDoctor, setSavingDoctor] = useState(false);
 
@@ -232,7 +232,7 @@ const AdminDashboard = () => {
     const [editSpecialty, setEditSpecialty] = useState('Cardiology');
     const [editPhone, setEditPhone] = useState('');
     const [editEmail, setEditEmail] = useState('');
-    const [editPassword, setEditPassword] = useState('');
+    const [editTcNo, setEditTcNo] = useState('');
     const [editInstId, setEditInstId] = useState('');
     const [editCanInvite, setEditCanInvite] = useState(false);
     const [savingEdit, setSavingEdit] = useState(false);
@@ -292,8 +292,8 @@ const AdminDashboard = () => {
     };
 
     const handleCreateDoctor = async () => {
-        if (!docName || !docPhone || !docPassword) {
-            toast.error('Name, phone and password are required');
+        if (!docName || !docPhone || !docTcNo) {
+            toast.error('Name, phone and TC Kimlik No are required');
             return;
         }
         setSavingDoctor(true);
@@ -306,7 +306,7 @@ const AdminDashboard = () => {
                     specialty: docSpecialty,
                     phone: docPhone,
                     email: docEmail || undefined,
-                    password: docPassword,
+                    tcNo: docTcNo,
                     institutionId: docInstId ? Number(docInstId) : undefined,
                 }),
             });
@@ -356,7 +356,7 @@ const AdminDashboard = () => {
 
     const resetDoctorForm = () => {
         setDocName(''); setDocPhone(''); setDocEmail('');
-        setDocSpecialty('Cardiology'); setDocPassword('Test123!'); setDocInstId('');
+        setDocSpecialty('Cardiology'); setDocTcNo(''); setDocInstId('');
     };
 
     const openEditHospital = (h: Hospital) => {
@@ -405,7 +405,7 @@ const AdminDashboard = () => {
         setEditSpecialty(d.specialty);
         setEditPhone(d.phone.replace('+90', ''));
         setEditEmail(d.email || '');
-        setEditPassword('');
+        setEditTcNo(d.tcNo || '');
         setEditInstId(d.institution ? String(d.institution.id) : '');
         setEditCanInvite(!!d.canInvite);
         setShowEditForm(true);
@@ -427,7 +427,7 @@ const AdminDashboard = () => {
                     specialty: editSpecialty,
                     phone: editPhone || undefined,
                     email: editEmail,
-                    password: editPassword || undefined,
+                    tcNo: editTcNo || undefined,
                     institutionId: editInstId ? Number(editInstId) : null,
                     canInvite: editCanInvite,
                 }),
@@ -751,7 +751,7 @@ const AdminDashboard = () => {
                                             </Select>
                                             <Input placeholder="Phone (e.g. 5551234567) *" value={docPhone} onChange={e => setDocPhone(e.target.value)} />
                                             <Input placeholder="Email" type="email" value={docEmail} onChange={e => setDocEmail(e.target.value)} />
-                                            <Input placeholder="Password *" type="password" value={docPassword} onChange={e => setDocPassword(e.target.value)} />
+                                            <Input placeholder="TC Kimlik No *" type="text" maxLength={11} value={docTcNo} onChange={e => setDocTcNo(e.target.value.replace(/\D/g, ''))} />
                                             <Select value={docInstId} onValueChange={setDocInstId}>
                                                 <SelectTrigger><SelectValue placeholder="Select Hospital" /></SelectTrigger>
                                                 <SelectContent>
@@ -862,8 +862,8 @@ const AdminDashboard = () => {
                                             <Input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-slate-500 mb-1 block">New Password (leave empty to keep current)</label>
-                                            <Input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="••••••••" />
+                                            <label className="text-xs text-slate-500 mb-1 block">New TC Kimlik No (leave empty to keep current)</label>
+                                            <Input type="text" maxLength={11} value={editTcNo} onChange={e => setEditTcNo(e.target.value.replace(/\D/g, ''))} placeholder="11 haneli TC No" />
                                         </div>
                                         <div>
                                             <label className="text-xs text-slate-500 mb-1 block">Hospital</label>
