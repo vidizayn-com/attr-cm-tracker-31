@@ -123,7 +123,6 @@ const Dashboard = () => {
                         <h4>Total Assigned</h4>
                         <div className="value flex items-baseline">
                             {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
-                            <span className="trend ml-2 text-[#10b981] font-semibold text-xs">↑ 12%</span>
                         </div>
                     </div>
                 </div>
@@ -137,7 +136,6 @@ const Dashboard = () => {
                         <h4>Diagnostic Process</h4>
                         <div className="value flex items-baseline">
                             {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.assignedPatients ?? 0}
-                            <span className="trend ml-2 text-slate-500 font-semibold text-xs">- 2%</span>
                         </div>
                     </div>
                 </div>
@@ -151,7 +149,6 @@ const Dashboard = () => {
                         <h4>Follow Up Tracking</h4>
                         <div className="value flex items-baseline">
                             {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
-                            <span className="trend ml-2 text-[#10b981] font-semibold text-xs">↑ 8%</span>
                         </div>
                     </div>
                 </div>
