@@ -13,9 +13,10 @@ import { Shield, ShieldCheck, ShieldX } from 'lucide-react';
 
 const ConsentDialog = () => {
     const { currentUser, updateConsent } = useUser();
+    const [skipped, setSkipped] = React.useState(false);
 
     // Only show if user is logged in, is a Cardiologist, and consent has NOT been asked yet
-    const shouldShow = currentUser && (currentUser.role === 'Cardiology' || currentUser.role === 'Cardiologist') && !currentUser.consentAsked;
+    const shouldShow = currentUser && (currentUser.role === 'Cardiology' || currentUser.role === 'Cardiologist') && !currentUser.consentAsked && !skipped;
 
     const handleAccept = async () => {
         const success = await updateConsent(true);
@@ -83,14 +84,21 @@ const ConsentDialog = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                            variant="outline"
+                            className="flex-1 h-12 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            onClick={() => setSkipped(true)}
+                        >
+                            Remind Me Later
+                        </Button>
                         <Button
                             variant="outline"
                             className="flex-1 h-12 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
                             onClick={handleDecline}
                         >
                             <ShieldX className="w-4 h-4 mr-2" />
-                            Decline
+                            Do Not Ask Again
                         </Button>
                         <Button
                             className="flex-1 h-12 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-md"
