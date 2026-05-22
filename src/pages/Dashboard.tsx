@@ -21,6 +21,7 @@ interface DashboardStats {
   totalPatients: number;
   newPatients: number;
   assignedPatients: number;
+  overdueReports: number;
 }
 
 interface ChartDataPoint {
@@ -61,7 +62,7 @@ const Dashboard = () => {
         setStats(data);
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
-        setStats({ totalPatients: 0, newPatients: 0, assignedPatients: 0 });
+        setStats({ totalPatients: 0, newPatients: 0, assignedPatients: 0, overdueReports: 0 });
       } finally {
         setLoading(false);
       }
@@ -163,7 +164,7 @@ const Dashboard = () => {
                     <div className="kpi-info">
                         <h4>Reports Overdue</h4>
                         <div className="value flex items-baseline text-red-500">
-                            3
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.overdueReports ?? 0}
                         </div>
                     </div>
                 </div>
