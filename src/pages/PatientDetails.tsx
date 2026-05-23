@@ -495,9 +495,23 @@ export default function PatientDetails() {
         redFlagSymptoms: { ...defaultRedFlags, ...(refreshed as any).redFlagSymptoms },
       };
 
+      try {
+        const detailData = await strapiGet<any>(`/api/auth/doctor/patient-detail?patientDocumentId=${merged.documentId}`);
+        if (detailData) {
+          if (detailData.primaryCardiologist) {
+            merged.primary_cardiologist = detailData.primaryCardiologist;
+          }
+          if (detailData.assignedSpecialists) {
+            merged.assigned_specialists = detailData.assignedSpecialists;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to refetch details after save:", err);
+      }
+
       setPatient(merged);
       setDraft(JSON.parse(JSON.stringify(merged)));
-      setSelectedCardiologistDocId((refreshed as any).primary_cardiologist?.documentId || "");
+      setSelectedCardiologistDocId((merged as any).primary_cardiologist?.documentId || "");
       setIsEditing(false);
 
       // 5) Graph/table will reflect the state because we removed the manual load.
