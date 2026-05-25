@@ -54,7 +54,7 @@ const DateOfBirthSelect: React.FC<DateOfBirthSelectProps> = ({ value, onChange, 
         disabled={disabled}
         value={day}
         onChange={(e) => handleChange('day', e.target.value)}
-        className="flex-1 h-10 px-2 border border-gray-300 rounded-md text-sm sm:text-base bg-white outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:text-gray-500"
+        className="flex-1 min-w-0 h-10 px-1 sm:px-2 border border-gray-300 rounded-md text-sm sm:text-base bg-white outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:text-gray-500"
       >
         <option value="">Day</option>
         {days.map(d => <option key={d} value={d}>{d}</option>)}
@@ -64,7 +64,7 @@ const DateOfBirthSelect: React.FC<DateOfBirthSelectProps> = ({ value, onChange, 
         disabled={disabled}
         value={month}
         onChange={(e) => handleChange('month', e.target.value)}
-        className="flex-1 h-10 px-2 border border-gray-300 rounded-md text-sm sm:text-base bg-white outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:text-gray-500"
+        className="flex-1 min-w-0 h-10 px-1 sm:px-2 border border-gray-300 rounded-md text-sm sm:text-base bg-white outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:text-gray-500"
       >
         <option value="">Month</option>
         {months.map(m => <option key={m} value={m}>{m}</option>)}
@@ -74,7 +74,7 @@ const DateOfBirthSelect: React.FC<DateOfBirthSelectProps> = ({ value, onChange, 
         disabled={disabled}
         value={year}
         onChange={(e) => handleChange('year', e.target.value)}
-        className="flex-[1.2] h-10 px-2 border border-gray-300 rounded-md text-sm sm:text-base bg-white outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:text-gray-500"
+        className="flex-[1.2] min-w-0 h-10 px-1 sm:px-2 border border-gray-300 rounded-md text-sm sm:text-base bg-white outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:text-gray-500"
       >
         <option value="">Year</option>
         {years.map(y => <option key={y} value={y}>{y}</option>)}
