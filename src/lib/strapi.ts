@@ -1,6 +1,6 @@
 // src/lib/strapi.ts
 
-import { STRAPI_URL } from '@/lib/strapiClient';
+import { STRAPI_URL, strapiPost } from '@/lib/strapiClient';
 
 type FetchFromStrapiOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -243,52 +243,15 @@ export async function createMeasurement(input: {
   notes?: string;
   doctorId?: number | string;
 }) {
-  // 1) CREATE (relation connect ile)
-  const createBody: any = {
-    data: {
-      patient: input.patientId,
-      measurementDate: input.measurementDate,
-      type: input.type,
-      value: input.value,
-      unit: input.unit ?? null,
-      notes: input.notes ?? null,
-    },
-  };
-  if (input.doctorId) {
-    createBody.data.doctor = input.doctorId;
-  }
-
-  const created = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements`, {
-    method: "POST",
-    body: createBody,
+  const created = await strapiPost<{ id: number, documentId: string, publishedAt: string }>(`/api/auth/doctor/add-measurement`, {
+    patientId: input.patientId,
+    measurementDate: input.measurementDate,
+    type: input.type,
+    value: input.value,
+    unit: input.unit ?? null,
+    notes: input.notes ?? null,
+    doctorId: input.doctorId ?? null,
   });
-
-  const item = created?.data ?? null;
-  if (!item) return null;
-
-  // 2) DRAFT ise publish et
-  const isDraft = item.publishedAt === null || item.publishedAt === undefined;
-  const docOrId: any = (item as any).documentId ?? item.id;
-
-  if (!isDraft || !docOrId) return item;
-
-  try {
-    const published = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements/${docOrId}/actions/publish`, {
-      method: "POST",
-    });
-    return published?.data ?? item;
-  } catch (err) {
-    console.warn("Strapi 5 publish action failed, trying fallback...", err);
-    // fallback for older Strapi or if action endpoint is unavailable
-    const publishBody = { data: { publishedAt: new Date().toISOString() } };
-    try {
-      const published = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements/${docOrId}`, {
-        method: "PUT",
-        body: publishBody,
-      });
-      return published?.data ?? item;
-    } catch {
-      return item;
-    }
-  }
+  
+  return created;
 }
