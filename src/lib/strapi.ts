@@ -268,19 +268,23 @@ export async function createMeasurement(input: {
 
   if (!isDraft || !docOrId) return item;
 
-  const publishBody = { data: { publishedAt: new Date().toISOString() } };
-
   try {
-    const published = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements/${docOrId}`, {
-      method: "PUT",
-      body: publishBody,
+    const published = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements/${docOrId}/actions/publish`, {
+      method: "POST",
     });
     return published?.data ?? item;
-  } catch {
-    const published = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements/${docOrId}`, {
-      method: "PATCH",
-      body: publishBody,
-    });
-    return published?.data ?? item;
+  } catch (err) {
+    console.warn("Strapi 5 publish action failed, trying fallback...", err);
+    // fallback for older Strapi or if action endpoint is unavailable
+    const publishBody = { data: { publishedAt: new Date().toISOString() } };
+    try {
+      const published = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements/${docOrId}`, {
+        method: "PUT",
+        body: publishBody,
+      });
+      return published?.data ?? item;
+    } catch {
+      return item;
+    }
   }
 }
