@@ -504,6 +504,32 @@ export default function PatientDetails() {
           if (detailData.assignedSpecialists) {
             merged.assigned_specialists = detailData.assignedSpecialists;
           }
+          setHistoryRows(detailData.history || []);
+          
+          const measurements = detailData.history || [];
+          setGfrChartData(
+            measurements.filter((m: any) => m.type === "GFR")
+                        .map((r: any) => ({ date: r.date, value: r.value }))
+          );
+          setNtProBnpChartData(
+            measurements.filter((m: any) => m.type === "NT_PRO_BNP")
+                        .map((r: any) => ({ date: r.date, value: r.value }))
+          );
+
+          const rows: ClinicalRow[] = measurements.map((r: any) => {
+            let testName = r.type as string;
+            if (r.type === "NT_PRO_BNP") testName = "NT-proBNP";
+            if (r.type === "GFR") testName = "GFR";
+
+            return {
+              date: r.date,
+              test: testName,
+              value: `${r.value} ${r.unit ?? ""}`.trim(),
+            };
+          });
+
+          rows.sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : a.test.localeCompare(b.test)));
+          setClinicalRows(rows);
         }
       } catch (err) {
         console.warn("Failed to refetch details after save:", err);
