@@ -20,10 +20,14 @@ async function fetchFromStrapi<T>(path: string, opts: FetchFromStrapiOptions = {
   // For now, let's keep it robust.
   const url = `${STRAPI_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("doctor_token") : null;
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
   const res = await fetch(url, {
     method: opts.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...(opts.headers ?? {}),
     },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
@@ -242,7 +246,7 @@ export async function createMeasurement(input: {
   // 1) CREATE (relation connect ile)
   const createBody: any = {
     data: {
-      patient: { connect: [input.patientId] },
+      patient: input.patientId,
       measurementDate: input.measurementDate,
       type: input.type,
       value: input.value,
@@ -251,7 +255,7 @@ export async function createMeasurement(input: {
     },
   };
   if (input.doctorId) {
-    createBody.data.doctor = { connect: [input.doctorId] };
+    createBody.data.doctor = input.doctorId;
   }
 
   const created = await fetchFromStrapi<{ data: Measurement }>(`/api/measurements`, {
