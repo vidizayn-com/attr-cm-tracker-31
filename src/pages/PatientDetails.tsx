@@ -210,8 +210,10 @@ export default function PatientDetails() {
 
     // Sort by date
     rows.sort((a, b) => {
-      if (sortOrder === "asc") return a.date.localeCompare(b.date);
-      return b.date.localeCompare(a.date);
+      const dateA = a.date || "";
+      const dateB = b.date || "";
+      if (sortOrder === "asc") return dateA.localeCompare(dateB);
+      return dateB.localeCompare(dateA);
     });
 
     return rows;
