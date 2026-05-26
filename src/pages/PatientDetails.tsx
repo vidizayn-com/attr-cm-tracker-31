@@ -285,12 +285,14 @@ export default function PatientDetails() {
             
             setGfrChartData(
               measurements.filter((m: any) => m.type === "GFR")
-                          .map((r: any) => ({ date: r.date, value: r.value }))
+                          .map((r: any) => ({ date: r.date || "", value: r.value }))
+                          .sort((a: any, b: any) => a.date.localeCompare(b.date))
             );
             
             setNtProBnpChartData(
               measurements.filter((m: any) => m.type === "NT_PRO_BNP")
-                          .map((r: any) => ({ date: r.date, value: r.value }))
+                          .map((r: any) => ({ date: r.date || "", value: r.value }))
+                          .sort((a: any, b: any) => a.date.localeCompare(b.date))
             );
 
             const rows: ClinicalRow[] = measurements.map((r: any) => {
@@ -511,11 +513,13 @@ export default function PatientDetails() {
           const measurements = detailData.history || [];
           setGfrChartData(
             measurements.filter((m: any) => m.type === "GFR")
-                        .map((r: any) => ({ date: r.date, value: r.value }))
+                        .map((r: any) => ({ date: r.date || "", value: r.value }))
+                        .sort((a: any, b: any) => a.date.localeCompare(b.date))
           );
           setNtProBnpChartData(
             measurements.filter((m: any) => m.type === "NT_PRO_BNP")
-                        .map((r: any) => ({ date: r.date, value: r.value }))
+                        .map((r: any) => ({ date: r.date || "", value: r.value }))
+                        .sort((a: any, b: any) => a.date.localeCompare(b.date))
           );
 
           const rows: ClinicalRow[] = measurements.map((r: any) => {
