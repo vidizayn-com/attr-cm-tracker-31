@@ -41,7 +41,7 @@ import {
   createMeasurement,
   type Patient as StrapiPatient,
 } from "@/lib/strapi";
-import { strapiGet, strapiPut } from "@/lib/strapiClient";
+import { strapiGet, strapiPut, strapiPost } from "@/lib/strapiClient";
 
 type ClinicalFindings = {
   lvh12: boolean;
@@ -198,6 +198,8 @@ export default function PatientDetails() {
   const [institutionName, setInstitutionName] = useState<string | null>(null);
   const [historyRows, setHistoryRows] = useState<HistoryEntry[]>([]);
   const [reportDate, setReportDate] = useState<string | null>(null);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Filtered rows calculation
   const filteredClinicalRows = useMemo(() => {
@@ -267,6 +269,9 @@ export default function PatientDetails() {
             setInstitutionName(detailData.institutionName || null);
             setHistoryRows(detailData.history || []);
             setReportDate(detailData.reportDate || null);
+            if (detailData.assignments) {
+              setAssignments(detailData.assignments);
+            }
 
             if (detailData.primaryCardiologist) {
               merged.primary_cardiologist = detailData.primaryCardiologist;
@@ -323,7 +328,7 @@ export default function PatientDetails() {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, refreshKey]);
 
   // ---------------- UI helpers ----------------
   const fullName = useMemo(() => {
@@ -505,8 +510,11 @@ export default function PatientDetails() {
           if (detailData.primaryCardiologist) {
             merged.primary_cardiologist = detailData.primaryCardiologist;
           }
-          if (detailData.assignedSpecialists) {
+          if (detailData.assignedSpecialists) { 
             merged.assigned_specialists = detailData.assignedSpecialists;
+          }
+          if (detailData.assignments) {
+            setAssignments(detailData.assignments);
           }
           setHistoryRows(detailData.history || []);
           
@@ -698,6 +706,26 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
     } catch (e) {
       console.error(e);
       toast.error("PDF oluşturulurken bir hata oluştu.");
+    }
+  };
+
+  const handleApproveAssignment = async (assignmentId: number) => {
+    try {
+      await strapiPost("/api/auth/doctor/assignments/approve", { assignmentId });
+      toast.success("Assignment approved successfully");
+      setRefreshKey(prev => prev + 1);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to approve assignment");
+    }
+  };
+
+  const handleRejectAssignment = async (assignmentId: number) => {
+    try {
+      await strapiPost("/api/auth/doctor/assignments/reject", { assignmentId });
+      toast.success("Assignment rejected successfully");
+      setRefreshKey(prev => prev + 1);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to reject assignment");
     }
   };
 
@@ -1274,6 +1302,120 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
             </CardContent>
           </Card>
         </div>
+
+        {/* ── Patient Assignments Section ── */}
+        <Card className="rounded-2xl mt-6 border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-[#089bab] flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Patient Assignments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Assigned Specialty</TableHead>
+                    <TableHead>Assigned Hospital</TableHead>
+                    <TableHead>Assigned Physician</TableHead>
+                    <TableHead>Assignment Date</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assignments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-slate-500 py-6">
+                        No assignments found for this patient.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    assignments.map((assign: any) => {
+                      const lastUpdatedDate = new Date(assign.lastUpdated);
+                      const now = new Date();
+                      const diffMs = now.getTime() - lastUpdatedDate.getTime();
+                      const isWithin24Hours = diffMs < 24 * 60 * 60 * 1000;
+                      const isAssignedPhysician = currentUser?.documentId && assign.doctorDocumentId === currentUser.documentId;
+                      
+                      const hoursLeft = Math.max(0, 24 - diffMs / (1000 * 60 * 60));
+                      const hours = Math.floor(hoursLeft);
+                      const minutes = Math.floor((hoursLeft - hours) * 60);
+
+                      return (
+                        <TableRow key={assign.id}>
+                          <TableCell className="font-medium">{assign.specialty}</TableCell>
+                          <TableCell>{assign.hospital}</TableCell>
+                          <TableCell>{assign.physician}</TableCell>
+                          <TableCell>
+                            {assign.assignedDate ? new Date(assign.assignedDate).toLocaleDateString('en-US', { 
+                              year: 'numeric', month: 'short', day: 'numeric'
+                            }) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {assign.lastUpdated ? new Date(assign.lastUpdated).toLocaleDateString('en-US', { 
+                              year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                            }) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={
+                              assign.status === 'Approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                              assign.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-200' :
+                              'bg-amber-100 text-amber-800 border-amber-200'
+                            }>
+                              {assign.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isAssignedPhysician && (
+                              <div className="flex justify-end gap-2 items-center">
+                                {assign.status === 'Pending' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 h-8 shadow-sm transition-all"
+                                      onClick={() => handleApproveAssignment(assign.id)}
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="rounded-lg px-3 h-8 shadow-sm transition-all"
+                                      onClick={() => handleRejectAssignment(assign.id)}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                {assign.status === 'Rejected' && isWithin24Hours && (
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Button
+                                      size="sm"
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 h-8 shadow-sm transition-all"
+                                      onClick={() => handleApproveAssignment(assign.id)}
+                                    >
+                                      Reverse Rejection
+                                    </Button>
+                                    <span className="text-[10px] text-slate-500 italic">
+                                      Reversal window: {hours}h {minutes}m left
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* ── Cardiology: Echocardiography Findings ── */}
         <Card className="rounded-2xl mt-6 border-[#089bab]/20 shadow-sm">

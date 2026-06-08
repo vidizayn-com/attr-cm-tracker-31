@@ -117,6 +117,32 @@ const RegisterInvited = () => {
     }
   };
 
+  const handleDecline = async () => {
+    if (!window.confirm("Are you sure you want to decline this invitation?")) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${STRAPI_URL}/api/auth/doctor/invitations/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error?.message || data?.message || 'Decline failed');
+      }
+
+      toast.success('Invitation declined successfully');
+      setError('You have declined this invitation.');
+    } catch (e: any) {
+      toast.error(e.message || 'Decline failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Layout showNavigation={false}>
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-cyan-50">
@@ -263,6 +289,15 @@ const RegisterInvited = () => {
                   ) : (
                     'Complete Registration'
                   )}
+                </Button>
+
+                <Button
+                  onClick={handleDecline}
+                  disabled={submitting}
+                  variant="outline"
+                  className="w-full h-10 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 rounded-xl transition-all duration-300 mt-2"
+                >
+                  Decline Invitation
                 </Button>
               </div>
 

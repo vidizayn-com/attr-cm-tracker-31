@@ -208,11 +208,281 @@ const ConsentReportTab = () => {
     );
 };
 
+const InvitationsTab = () => {
+    const [invitations, setInvitations] = useState<any[]>([]);
+    const [metrics, setMetrics] = useState<any>({
+        totalSent: 0, pending: 0, accepted: 0, declined: 0, expired: 0, completed: 0, completionRate: 0
+    });
+    const [loading, setLoading] = useState(true);
+    const [searchName, setSearchName] = useState('');
+    const [searchEmail, setSearchEmail] = useState('');
+    const [filterInvStatus, setFilterInvStatus] = useState('All');
+    const [filterRegStatus, setFilterRegStatus] = useState('All');
+    const [sortField, setSortField] = useState('invitationDate');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+    useEffect(() => {
+        loadInvitations();
+    }, [searchName, searchEmail, filterInvStatus, filterRegStatus]);
+
+    const loadInvitations = async () => {
+        setLoading(true);
+        try {
+            const adminToken = localStorage.getItem('admin_token');
+            const params = new URLSearchParams();
+            if (searchName) params.append('search', searchName);
+            if (searchEmail) params.append('email', searchEmail);
+            if (filterInvStatus && filterInvStatus !== 'All') params.append('invitationStatus', filterInvStatus);
+            if (filterRegStatus && filterRegStatus !== 'All') params.append('registrationStatus', filterRegStatus);
+
+            const res = await fetch(`${STRAPI_URL}/api/auth/doctor/admin/invitations?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${adminToken}` },
+            });
+            const data = await res.json();
+            setInvitations(data.invitations || []);
+            setMetrics(data.metrics || {
+                totalSent: 0, pending: 0, accepted: 0, declined: 0, expired: 0, completed: 0, completionRate: 0
+            });
+        } catch (e) {
+            console.error('Failed to load invitations:', e);
+            toast.error('Failed to load invitations');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('desc');
+        }
+    };
+
+    const sortedInvitations = useMemo(() => {
+        const sorted = [...invitations];
+        sorted.sort((a, b) => {
+            let valA = a[sortField] || '';
+            let valB = b[sortField] || '';
+
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return sorted;
+    }, [invitations, sortField, sortDirection]);
+
+    const getInvitationStatusBadge = (status: string) => {
+        switch (status) {
+            case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'Accepted': return 'bg-green-100 text-green-800 border-green-200';
+            case 'Declined': return 'bg-red-100 text-red-800 border-red-200';
+            case 'Expired': return 'bg-gray-100 text-gray-800 border-gray-200';
+            default: return 'bg-slate-100 text-slate-800 border-slate-200';
+        }
+    };
+
+    const getRegistrationStatusBadge = (status: string) => {
+        switch (status) {
+            case 'Not Started': return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'In Progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'Completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            default: return 'bg-slate-100 text-slate-800 border-slate-200';
+        }
+    };
+
+    const formatDateTime = (dateStr: string | null) => {
+        if (!dateStr) return '-';
+        try {
+            return new Date(dateStr).toLocaleString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Metrics Dashboard */}
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+                <Card className="glass-card !border-0 bg-white/70">
+                    <CardContent className="p-4 text-center">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Sent</h4>
+                        <p className="text-xl font-bold text-slate-800 leading-none">{metrics.totalSent}</p>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70">
+                    <CardContent className="p-4 text-center">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pending</h4>
+                        <p className="text-xl font-bold text-yellow-600 leading-none">{metrics.pending}</p>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70">
+                    <CardContent className="p-4 text-center">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Accepted</h4>
+                        <p className="text-xl font-bold text-green-600 leading-none">{metrics.accepted}</p>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70">
+                    <CardContent className="p-4 text-center">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Declined</h4>
+                        <p className="text-xl font-bold text-red-600 leading-none">{metrics.declined}</p>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70">
+                    <CardContent className="p-4 text-center">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Completed</h4>
+                        <p className="text-xl font-bold text-emerald-600 leading-none">{metrics.completed}</p>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70">
+                    <CardContent className="p-4 text-center">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Rate</h4>
+                        <p className="text-xl font-bold text-indigo-600 leading-none">{metrics.completionRate}%</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="glass-card flex flex-col md:flex-row gap-4 p-4 items-center">
+                <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                        placeholder="Search by physician name..."
+                        value={searchName}
+                        onChange={e => setSearchName(e.target.value)}
+                        className="pl-9 bg-white/60 border-slate-200/60 rounded-xl focus:bg-white"
+                    />
+                </div>
+                <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                        placeholder="Search by email..."
+                        value={searchEmail}
+                        onChange={e => setSearchEmail(e.target.value)}
+                        className="pl-9 bg-white/60 border-slate-200/60 rounded-xl focus:bg-white"
+                    />
+                </div>
+                <div className="w-full md:w-44">
+                    <Select value={filterInvStatus} onValueChange={setFilterInvStatus}>
+                        <SelectTrigger className="bg-white/60 border-slate-200/60 rounded-xl"><SelectValue placeholder="Invitation Status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Invitation Status</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Accepted">Accepted</SelectItem>
+                            <SelectItem value="Declined">Declined</SelectItem>
+                            <SelectItem value="Expired">Expired</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="w-full md:w-44">
+                    <Select value={filterRegStatus} onValueChange={setFilterRegStatus}>
+                        <SelectTrigger className="bg-white/60 border-slate-200/60 rounded-xl"><SelectValue placeholder="Registration Status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Reg Status</SelectItem>
+                            <SelectItem value="Not Started">Not Started</SelectItem>
+                            <SelectItem value="In Progress">In Progress</SelectItem>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Button 
+                    variant="outline"
+                    onClick={() => {
+                        setSearchName('');
+                        setSearchEmail('');
+                        setFilterInvStatus('All');
+                        setFilterRegStatus('All');
+                    }}
+                    className="rounded-xl border-slate-200 w-full md:w-auto"
+                >
+                    Reset
+                </Button>
+            </div>
+
+            {/* Table */}
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-[hsl(184,58%,44%)]" />
+                </div>
+            ) : (
+                <div className="rounded-[12px] overflow-hidden border border-slate-200/60 bg-white">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-slate-50 border-b border-slate-200/60 hover:bg-transparent">
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('invitingPhysician')}>
+                                    Inviting Physician {sortField === 'invitingPhysician' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('invitedPhysician')}>
+                                    Invited Physician {sortField === 'invitedPhysician' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('emailAddress')}>
+                                    Email Address {sortField === 'emailAddress' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('invitationDate')}>
+                                    Invitation Date {sortField === 'invitationDate' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('invitationStatus')}>
+                                    Invitation Status {sortField === 'invitationStatus' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('registrationStatus')}>
+                                    Registration Status {sortField === 'registrationStatus' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('registrationCompletedAt')}>
+                                    Registration Completed At {sortField === 'registrationCompletedAt' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('lastActivity')}>
+                                    Last Activity {sortField === 'lastActivity' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sortedInvitations.map((inv: any) => (
+                                <TableRow key={inv.id} className="hover:bg-slate-50/50">
+                                    <TableCell className="font-medium text-sm text-slate-800">{inv.invitingPhysician}</TableCell>
+                                    <TableCell className="text-sm text-slate-800">{inv.invitedPhysician}</TableCell>
+                                    <TableCell className="text-sm text-slate-600 font-mono">{inv.emailAddress}</TableCell>
+                                    <TableCell className="text-sm text-slate-500">{formatDateTime(inv.invitationDate)}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-full ${getInvitationStatusBadge(inv.invitationStatus)}`}>
+                                            {inv.invitationStatus}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-full ${getRegistrationStatusBadge(inv.registrationStatus)}`}>
+                                            {inv.registrationStatus}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-slate-500">{formatDateTime(inv.registrationCompletedAt)}</TableCell>
+                                    <TableCell className="text-sm text-slate-500">{formatDateTime(inv.lastActivity)}</TableCell>
+                                </TableRow>
+                            ))}
+                            {sortedInvitations.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center text-slate-400 py-8">
+                                        No invitations found
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'hospitals' | 'reports'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'hospitals' | 'reports' | 'invitations'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
 
     // Doctor form
@@ -539,7 +809,7 @@ const AdminDashboard = () => {
 
                 {/* Tab Navigation */}
                 <div className="glass-card !p-2 inline-flex gap-2 self-start mb-2">
-                    {(['overview', 'hospitals', 'doctors', 'reports'] as const).map(tab => (
+                    {(['overview', 'hospitals', 'doctors', 'reports', 'invitations'] as const).map(tab => (
                         <Button
                             key={tab}
                             variant="ghost"
@@ -551,6 +821,7 @@ const AdminDashboard = () => {
                             {tab === 'hospitals' && <Building2 className="w-4 h-4 mr-2" />}
                             {tab === 'doctors' && <Stethoscope className="w-4 h-4 mr-2" />}
                             {tab === 'reports' && <FileBarChart className="w-4 h-4 mr-2" />}
+                            {tab === 'invitations' && <UserPlus className="w-4 h-4 mr-2" />}
                             {tab}
                         </Button>
                     ))}
@@ -915,6 +1186,23 @@ const AdminDashboard = () => {
                         </CardHeader>
                         <CardContent>
                             <ConsentReportTab />
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* ── Invitations Tab ── */}
+                {activeTab === 'invitations' && (
+                    <Card className="glass-card !border-0 flex-1">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="flex items-center gap-3 text-slate-800">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex justify-center items-center">
+                                    <UserPlus className="w-5 h-5" />
+                                </div>
+                                Physician Invitation Tracking
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <InvitationsTab />
                         </CardContent>
                     </Card>
                 )}
