@@ -1,10 +1,11 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
+import { strapiGet } from '@/lib/strapiClient';
 
 interface Article {
   id: string;
@@ -18,7 +19,7 @@ interface Article {
   category: 'diagnosis' | 'treatment' | 'research' | 'guidelines';
 }
 
-const articles: Article[] = [
+const fallbackArticles: Article[] = [
   {
     id: '1',
     title: 'Transthyretin Amyloid Cardiomyopathy: Clinical Presentation and Diagnostic Challenges',
@@ -90,6 +91,23 @@ const articles: Article[] = [
 const Resources = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadArticles = async () => {
+      try {
+        const data = await strapiGet<Article[]>('/api/auth/doctor/resources');
+        setArticles(data && data.length > 0 ? data : fallbackArticles);
+      } catch (err) {
+        console.error('Failed to load resources:', err);
+        setArticles(fallbackArticles);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadArticles();
+  }, []);
 
   const filteredArticles = useMemo(() => {
     return articles.filter(article => {
@@ -103,7 +121,7 @@ const Resources = () => {
       
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [articles, searchTerm, selectedCategory]);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -194,48 +212,69 @@ const Resources = () => {
             </div>
           </div>
 
-          {/* Articles Grid */}
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-            {filteredArticles.map((article) => (
-              <Card key={article.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <Badge className={`${getCategoryColor(article.category)} text-xs`}>
-                      {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
-                    </Badge>
-                    <span className="text-xs sm:text-sm text-gray-500">{article.year}</span>
-                  </div>
-                  <CardTitle className="text-base sm:text-lg leading-tight">
-                    {article.title}
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-gray-600">
-                    {article.journal} • {article.authors.join(', ')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed">
-                    {article.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
-                    {article.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <button className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium">
-                    Read Article →
-                  </button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredArticles.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No articles found matching your search criteria.</p>
-              <p className="text-gray-400 text-sm mt-2">Try adjusting your search terms or filters.</p>
+          {/* Loading state */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-500">
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+              <span>Loading latest research articles...</span>
             </div>
+          ) : (
+            <>
+              {/* Articles Grid */}
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+                {filteredArticles.map((article) => (
+                  <Card key={article.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3 sm:pb-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge className={`${getCategoryColor(article.category)} text-xs`}>
+                          {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
+                        </Badge>
+                        <span className="text-xs sm:text-sm text-gray-500">{article.year}</span>
+                      </div>
+                      <CardTitle className="text-base sm:text-lg leading-tight">
+                        {article.title}
+                      </CardTitle>
+                      <CardDescription className="text-xs sm:text-sm text-gray-600">
+                        {article.journal} • {article.authors.join(', ')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed">
+                        {article.description}
+                      </p>
+                      <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
+                        {article.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      {article.url && article.url !== "#" ? (
+                        <a 
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium inline-block"
+                        >
+                          Read Article →
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs sm:text-sm font-medium">
+                          No Link Available
+                        </span>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {filteredArticles.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">No articles found matching your search criteria.</p>
+                  <p className="text-gray-400 text-sm mt-2">Try adjusting your search terms or filters.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
