@@ -14,7 +14,7 @@ import { Upload, FileText, Image, Trash2, Eye, TrendingUp } from 'lucide-react';
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
 // ✅ NEW: Strapi API helpers
-import { createPatient, createCaregiver, linkCaregiverToPatient } from '@/lib/patientApi';
+import { createPatient } from '@/lib/patientApi';
 import { strapiGet } from '@/lib/strapiClient';
 
 const PatientRegistration = () => {
@@ -173,29 +173,14 @@ const PatientRegistration = () => {
 
         clinicalFindings: formData.clinicalFindings,
         redFlagSymptoms: formData.redFlagSymptoms,
-      });
 
-
-      const patientDocumentId = createdPatient?.documentId;
-      if (!patientDocumentId) {
-        throw new Error("Patient could not be created (no documentId returned).");
-      }
-
-      // 2) Caregiver create + link (permission true ise)
-      if (formData.caregiverPermission) {
-        const createdRelative: any = await createCaregiver({
+        caregiver: formData.caregiverPermission ? {
           fullName: formData.caregiverName?.trim() || undefined,
           phone: formData.caregiverPhone.trim(),
           email: formData.caregiverEmail?.trim() || undefined,
           relationToPatient: "Caregiver",
-        });
-
-        const relativeId = createdRelative?.id;
-
-        if (relativeId) {
-          await linkCaregiverToPatient(patientDocumentId, [relativeId]);
-        }
-      }
+        } : undefined,
+      });
 
       toast.success("Patient registered successfully!");
       navigate("/patients");

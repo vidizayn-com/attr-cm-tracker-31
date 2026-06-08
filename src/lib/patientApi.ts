@@ -22,6 +22,13 @@ type CreatePatientInput = {
 
   institution?: number; // institution id
   assignedCardiologistId?: number; // doctor id (tek)
+
+  caregiver?: {
+    fullName?: string;
+    phone: string;
+    email?: string;
+    relationToPatient?: string;
+  };
 };
 
 type CreateCaregiverInput = {
@@ -55,6 +62,10 @@ export async function createPatient(input: CreatePatientInput) {
     clinicalFindings: input.clinicalFindings ?? null,
     redFlagSymptoms: input.redFlagSymptoms ?? null,
   };
+
+  if (input.caregiver) {
+    payload.caregiver = input.caregiver;
+  }
 
   // Custom endpoint: JWT token → doctor identified → primary_cardiologist & registered_by set automatically
   return await strapiPost("/api/auth/doctor/register-patient", { data: payload });
