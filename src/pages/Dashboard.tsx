@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
@@ -40,6 +40,7 @@ const emptyTrends: TrendsData = {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { currentUser } = useUser();
   const isCardiologist = currentUser?.role === 'Cardiology';
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -115,7 +116,7 @@ const Dashboard = () => {
         <section className="dashboard-grid">
             <div className="kpi-row">
                 {/* 1. Total Assigned */}
-                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                <div className="glass-card kpi-card" onClick={() => navigate('/patients')}>
                     <div className="kpi-icon blue">
                         <Users className="w-7 h-7" />
                     </div>
@@ -128,7 +129,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* 2. Diagnostic Process */}
-                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                <div className="glass-card kpi-card" onClick={() => navigate('/patients')}>
                     <div className="kpi-icon teal">
                         <CheckCircle2 className="w-7 h-7" />
                     </div>
@@ -141,7 +142,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* 3. Follow Up Tracking */}
-                <div className="glass-card kpi-card" onClick={() => window.location.href='/patients'}>
+                <div className="glass-card kpi-card" onClick={() => navigate('/patients')}>
                     <div className="kpi-icon amber">
                         <Clock className="w-7 h-7" />
                     </div>
@@ -154,7 +155,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* 4. Reports Overdue */}
-                <div className="glass-card kpi-card" onClick={() => window.location.href='/reports'}>
+                <div className="glass-card kpi-card" onClick={() => navigate('/report-tracker')}>
                     <div className="kpi-icon rose">
                         <AlertTriangle className="w-7 h-7" />
                     </div>
