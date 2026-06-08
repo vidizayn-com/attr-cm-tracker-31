@@ -226,7 +226,7 @@ const ProfileEdit = () => {
               <Button
                 onClick={handleCancel}
                 variant="outline"
-                className="h-11 px-6 rounded-xl border-slate-300 hover:bg-slate-50"
+                className="h-11 px-6 rounded-xl border-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-800"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Cancel

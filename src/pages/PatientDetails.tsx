@@ -775,14 +775,14 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   <Save className="w-4 h-4 mr-2" />
                   Save
                 </Button>
-                <Button variant="outline" className="rounded-xl px-5 h-10 border-slate-300 hover:bg-slate-50" onClick={cancelEdit}>
+                <Button variant="outline" className="rounded-xl px-5 h-10 border-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-800" onClick={cancelEdit}>
                   Cancel
                 </Button>
               </>
             )}
 
             <Link to="/patients">
-              <Button variant="outline" className="rounded-xl px-5 h-10 border-slate-300 hover:bg-slate-50">
+              <Button variant="outline" className="rounded-xl px-5 h-10 border-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-800">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>

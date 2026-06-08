@@ -567,7 +567,7 @@ const PatientAssignment = () => {
           <Button
             onClick={handleCancel}
             variant="outline"
-            className="rounded-xl px-8 h-11 w-full sm:w-auto border-slate-300 hover:bg-slate-50"
+            className="rounded-xl px-8 h-11 w-full sm:w-auto border-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-800"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Cancel
