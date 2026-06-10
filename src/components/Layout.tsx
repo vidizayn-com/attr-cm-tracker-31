@@ -29,7 +29,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import ConsentDialog from '@/components/ConsentDialog';
 import InviteDialog from '@/components/InviteDialog';
 import ReportReminderDialog from '@/components/ReportReminderDialog';
-import { strapiGet } from '@/lib/strapiClient';
+import { strapiGet, strapiPost } from '@/lib/strapiClient';
 
 type DeadlineNotification = {
   patientId: number;
@@ -38,6 +38,15 @@ type DeadlineNotification = {
   reportDeadline: string;
   daysLeft: number;
   isOverdue: boolean;
+};
+
+type RejectionNotification = {
+  id: number;
+  patientId: number;
+  patientDocumentId: string;
+  patientIdentifier: string;
+  rejectingPhysicianName: string;
+  rejectionTime: string;
 };
 
 interface LayoutProps {
@@ -66,6 +75,7 @@ function AppSidebar() {
 
   // Report deadline notifications from API
   const [deadlineNotifications, setDeadlineNotifications] = useState<DeadlineNotification[]>([]);
+  const [rejectionNotifications, setRejectionNotifications] = useState<RejectionNotification[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('doctor_token');
@@ -104,11 +114,22 @@ function AppSidebar() {
         // Sort: overdue first, then by closest deadline
         deadlines.sort((a, b) => a.daysLeft - b.daysLeft);
         setDeadlineNotifications(deadlines);
+        setRejectionNotifications(data.rejectionNotifications || []);
       } catch (e) {
         console.warn('Failed to load deadline notifications:', e);
       }
     })();
   }, []);
+
+  const handleNotificationClick = async (notifId: number, documentId: string) => {
+    try {
+      await strapiPost('/api/auth/doctor/notifications/mark-read', { notificationId: notifId });
+      setRejectionNotifications(prev => prev.filter(n => n.id !== notifId));
+    } catch (err) {
+      console.warn("Failed to mark notification as read", err);
+    }
+    navigate(`/patients/${documentId}`);
+  };
 
   const [showReportReminder, setShowReportReminder] = useState(false);
 
@@ -122,7 +143,7 @@ function AppSidebar() {
     }
   }, [currentUser, deadlineNotifications]);
 
-  const totalNotifications = deadlineNotifications.length;
+  const totalNotifications = deadlineNotifications.length + rejectionNotifications.length;
 
   const handleEditProfile = () => {
     navigate('/profile/edit');
@@ -211,38 +232,62 @@ function AppSidebar() {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 bg-card border border-border shadow-lg">
-                <div className="p-3 border-b border-border">
+              <DropdownMenuContent align="end" className="w-80 bg-card border border-border shadow-lg max-h-96 overflow-y-auto">
+                <div className="p-3 border-b border-border sticky top-0 bg-card z-10">
                   <h3 className="font-semibold text-sm">Notifications</h3>
                 </div>
 
-                {deadlineNotifications.length > 0 ? (
-                  deadlineNotifications.map((n) => (
-                    <DropdownMenuItem
-                      key={n.patientId}
-                      className="cursor-pointer hover:bg-muted p-3"
-                      onClick={() => navigate(`/patients/${n.documentId || n.patientId}`)}
-                    >
-                      <div className="flex items-start space-x-3 w-full">
-                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.isOverdue ? 'bg-red-500' : 'bg-amber-500'}`}></div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{n.fullName}</div>
-                          <div className={`text-xs ${n.isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
-                            {n.isOverdue
-                              ? `Report overdue by ${Math.abs(n.daysLeft)} day(s)`
-                              : `Report due in ${n.daysLeft} day(s)`}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">
-                            Deadline: {new Date(n.reportDeadline).toLocaleDateString('tr-TR')}
+                {totalNotifications > 0 ? (
+                  <div className="divide-y divide-border">
+                    {rejectionNotifications.map((n) => (
+                      <DropdownMenuItem
+                        key={`rejection-${n.id}`}
+                        className="cursor-pointer hover:bg-muted p-3 focus:bg-muted"
+                        onClick={() => handleNotificationClick(n.id, n.patientDocumentId)}
+                      >
+                        <div className="flex items-start space-x-3 w-full">
+                          <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 bg-red-500"></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-xs text-red-700">
+                              Reassignment Alert: Patient #{n.patientId} ({n.patientIdentifier})
+                            </div>
+                            <div className="text-[11px] text-slate-600 mt-0.5 whitespace-normal">
+                              Rejected by Dr. {n.rejectingPhysicianName} on {new Date(n.rejectionTime).toLocaleString('tr-TR')}
+                            </div>
+                            <div className="text-[10px] text-[#056a75] font-semibold mt-1">
+                              Action: Review and reassign if necessary.
+                            </div>
                           </div>
                         </div>
-                        <AlertTriangle className={`w-3.5 h-3.5 flex-shrink-0 mt-1 ${n.isOverdue ? 'text-red-500' : 'text-amber-500'}`} />
-                      </div>
-                    </DropdownMenuItem>
-                  ))
+                      </DropdownMenuItem>
+                    ))}
+                    {deadlineNotifications.map((n) => (
+                      <DropdownMenuItem
+                        key={`deadline-${n.patientId}`}
+                        className="cursor-pointer hover:bg-muted p-3 focus:bg-muted"
+                        onClick={() => navigate(`/patients/${n.documentId || n.patientId}`)}
+                      >
+                        <div className="flex items-start space-x-3 w-full">
+                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.isOverdue ? 'bg-red-500' : 'bg-amber-500'}`}></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{n.fullName}</div>
+                            <div className={`text-xs ${n.isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
+                              {n.isOverdue
+                                ? `Report overdue by ${Math.abs(n.daysLeft)} day(s)`
+                                : `Report due in ${n.daysLeft} day(s)`}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              Deadline: {new Date(n.reportDeadline).toLocaleDateString('tr-TR')}
+                            </div>
+                          </div>
+                          <AlertTriangle className={`w-3.5 h-3.5 flex-shrink-0 mt-1 ${n.isOverdue ? 'text-red-500' : 'text-amber-500'}`} />
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
                 ) : (
                   <div className="p-6 text-center text-muted-foreground text-sm">
-                    No deadline notifications
+                    No notifications
                   </div>
                 )}
               </DropdownMenuContent>
@@ -300,38 +345,62 @@ function AppSidebar() {
                     )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-72 bg-card border border-border shadow-lg">
+                <DropdownMenuContent align="start" className="w-80 bg-card border border-border shadow-lg max-h-96 overflow-y-auto">
                   <div className="p-3 border-b border-border">
                     <h3 className="font-semibold text-sm">Notifications</h3>
                   </div>
 
-                  {deadlineNotifications.length > 0 ? (
-                    deadlineNotifications.map((n) => (
-                      <DropdownMenuItem
-                        key={n.patientId}
-                        className="cursor-pointer hover:bg-muted p-3"
-                        onClick={() => navigate(`/patients/${n.documentId || n.patientId}`)}
-                      >
-                        <div className="flex items-start space-x-3 w-full">
-                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.isOverdue ? 'bg-red-500' : 'bg-amber-500'}`}></div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">{n.fullName}</div>
-                            <div className={`text-xs ${n.isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
-                              {n.isOverdue
-                                ? `Report overdue by ${Math.abs(n.daysLeft)} day(s)`
-                                : `Report due in ${n.daysLeft} day(s)`}
-                            </div>
-                            <div className="text-[10px] text-muted-foreground">
-                              Deadline: {new Date(n.reportDeadline).toLocaleDateString('tr-TR')}
+                  {totalNotifications > 0 ? (
+                    <div className="divide-y divide-border">
+                      {rejectionNotifications.map((n) => (
+                        <DropdownMenuItem
+                          key={`rejection-collapsed-${n.id}`}
+                          className="cursor-pointer hover:bg-muted p-3 focus:bg-muted"
+                          onClick={() => handleNotificationClick(n.id, n.patientDocumentId)}
+                        >
+                          <div className="flex items-start space-x-3 w-full">
+                            <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 bg-red-500"></div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-xs text-red-700">
+                                Reassignment Alert: Patient #{n.patientId} ({n.patientIdentifier})
+                              </div>
+                              <div className="text-[11px] text-slate-600 mt-0.5 whitespace-normal">
+                                Rejected by Dr. {n.rejectingPhysicianName} on {new Date(n.rejectionTime).toLocaleString('tr-TR')}
+                              </div>
+                              <div className="text-[10px] text-[#056a75] font-semibold mt-1">
+                                Action: Review and reassign if necessary.
+                              </div>
                             </div>
                           </div>
-                          <AlertTriangle className={`w-3.5 h-3.5 flex-shrink-0 mt-1 ${n.isOverdue ? 'text-red-500' : 'text-amber-500'}`} />
-                        </div>
-                      </DropdownMenuItem>
-                    ))
+                        </DropdownMenuItem>
+                      ))}
+                      {deadlineNotifications.map((n) => (
+                        <DropdownMenuItem
+                          key={`deadline-collapsed-${n.patientId}`}
+                          className="cursor-pointer hover:bg-muted p-3 focus:bg-muted"
+                          onClick={() => navigate(`/patients/${n.documentId || n.patientId}`)}
+                        >
+                          <div className="flex items-start space-x-3 w-full">
+                            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.isOverdue ? 'bg-red-500' : 'bg-amber-500'}`}></div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{n.fullName}</div>
+                              <div className={`text-xs ${n.isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
+                                {n.isOverdue
+                                  ? `Report overdue by ${Math.abs(n.daysLeft)} day(s)`
+                                  : `Report due in ${n.daysLeft} day(s)`}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                Deadline: {new Date(n.reportDeadline).toLocaleDateString('tr-TR')}
+                              </div>
+                            </div>
+                            <AlertTriangle className={`w-3.5 h-3.5 flex-shrink-0 mt-1 ${n.isOverdue ? 'text-red-500' : 'text-amber-500'}`} />
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   ) : (
                     <div className="p-6 text-center text-muted-foreground text-sm">
-                      No deadline notifications
+                      No notifications
                     </div>
                   )}
                 </DropdownMenuContent>

@@ -53,6 +53,8 @@ type StrapiPatient = {
     fullName: string;
     specialty: string;
   }> | null;
+  assignmentStatus?: string | null;
+  assignmentId?: number | null;
 };
 
 interface MyPatientsResponse {
@@ -142,6 +144,43 @@ const PatientList = () => {
       toast.error(e?.message || "Failed to return patient");
     } finally {
       setReturningPatient(null);
+    }
+  };
+
+  const handleApprovePatientDirect = async (patient: StrapiPatient) => {
+    if (!patient.assignmentId) {
+      toast.error("Assignment ID not found for this patient");
+      return;
+    }
+    try {
+      await strapiPost("/api/auth/doctor/assignments/approve", {
+        assignmentId: patient.assignmentId,
+      });
+      toast.success(`"${patientFullName(patient)}" approved successfully`);
+      loadPatients();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to approve patient");
+    }
+  };
+
+  const handleRejectPatientDirect = async (patient: StrapiPatient) => {
+    if (!patient.assignmentId) {
+      toast.error("Assignment ID not found for this patient");
+      return;
+    }
+    const confirmReject = window.confirm(
+      `Are you sure you want to reject "${patientFullName(patient)}"?\n\nThis will reassign them back to their primary cardiologist.`
+    );
+    if (!confirmReject) return;
+
+    try {
+      await strapiPost("/api/auth/doctor/assignments/reject", {
+        assignmentId: patient.assignmentId,
+      });
+      toast.success(`"${patientFullName(patient)}" rejected successfully`);
+      loadPatients();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to reject patient");
     }
   };
 
@@ -302,20 +341,38 @@ const PatientList = () => {
               </Button>
             </Link>
 
-            {/* Return to Cardiologist button - for consulting section */}
+            {/* Action buttons for consulting section */}
             {sectionType === 'consulting' && (
-              <Button
-                onClick={() => handleReturnToCardiologist(patient)}
-                disabled={isReturning}
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl"
-              >
-                {isReturning ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <ArrowLeftRight className="w-4 h-4 mr-2" />
-                )}
-                Return to Cardiologist
-              </Button>
+              patient.assignmentStatus === 'Pending' ? (
+                <div className="flex gap-2 w-full">
+                  <Button
+                    onClick={() => handleApprovePatientDirect(patient)}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    onClick={() => handleRejectPatientDirect(patient)}
+                    variant="destructive"
+                    className="flex-1 rounded-xl"
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => handleReturnToCardiologist(patient)}
+                  disabled={isReturning}
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl"
+                >
+                  {isReturning ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <ArrowLeftRight className="w-4 h-4 mr-2" />
+                  )}
+                  Return to Cardiologist
+                </Button>
+              )
             )}
           </div>
         </CardContent>
@@ -497,8 +554,44 @@ const PatientList = () => {
                   }
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                  {filteredConsulting.map((patient) => renderPatientCard(patient, 'consulting'))}
+                <div className="space-y-8">
+                  {/* Pending Approval Section */}
+                  <div>
+                    <h3 className="text-md font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-amber-500" />
+                      Pending Approval ({filteredConsulting.filter(p => p.assignmentStatus === 'Pending').length})
+                    </h3>
+                    {filteredConsulting.filter(p => p.assignmentStatus === 'Pending').length === 0 ? (
+                      <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-slate-400 text-sm text-center">
+                        No pending patient approvals.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                        {filteredConsulting
+                          .filter(p => p.assignmentStatus === 'Pending')
+                          .map((patient) => renderPatientCard(patient, 'consulting'))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Approved Patients Section */}
+                  <div>
+                    <h3 className="text-md font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      Approved Patients ({filteredConsulting.filter(p => p.assignmentStatus === 'Approved').length})
+                    </h3>
+                    {filteredConsulting.filter(p => p.assignmentStatus === 'Approved').length === 0 ? (
+                      <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-slate-400 text-sm text-center">
+                        No approved patients in your list.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                        {filteredConsulting
+                          .filter(p => p.assignmentStatus === 'Approved')
+                          .map((patient) => renderPatientCard(patient, 'consulting'))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
