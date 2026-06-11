@@ -148,14 +148,18 @@ const PatientList = () => {
   };
 
   const handleApprovePatientDirect = async (patient: StrapiPatient) => {
-    if (!patient.assignmentId) {
-      toast.error("Assignment ID not found for this patient");
-      return;
-    }
     try {
-      await strapiPost("/api/auth/doctor/assignments/approve", {
-        assignmentId: patient.assignmentId,
-      });
+      const payload: any = {};
+      if (patient.assignmentId) {
+        payload.assignmentId = patient.assignmentId;
+      } else if (patient.documentId) {
+        payload.patientDocumentId = patient.documentId;
+      } else {
+        toast.error("Patient details not found");
+        return;
+      }
+
+      await strapiPost("/api/auth/doctor/assignments/approve", payload);
       toast.success(`"${patientFullName(patient)}" approved successfully`);
       loadPatients();
     } catch (e: any) {
@@ -164,19 +168,23 @@ const PatientList = () => {
   };
 
   const handleRejectPatientDirect = async (patient: StrapiPatient) => {
-    if (!patient.assignmentId) {
-      toast.error("Assignment ID not found for this patient");
-      return;
-    }
     const confirmReject = window.confirm(
       `Are you sure you want to reject "${patientFullName(patient)}"?\n\nThis will reassign them back to their primary cardiologist.`
     );
     if (!confirmReject) return;
 
     try {
-      await strapiPost("/api/auth/doctor/assignments/reject", {
-        assignmentId: patient.assignmentId,
-      });
+      const payload: any = {};
+      if (patient.assignmentId) {
+        payload.assignmentId = patient.assignmentId;
+      } else if (patient.documentId) {
+        payload.patientDocumentId = patient.documentId;
+      } else {
+        toast.error("Patient details not found");
+        return;
+      }
+
+      await strapiPost("/api/auth/doctor/assignments/reject", payload);
       toast.success(`"${patientFullName(patient)}" rejected successfully`);
       loadPatients();
     } catch (e: any) {
