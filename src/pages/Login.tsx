@@ -156,12 +156,6 @@ const Login = () => {
           <div className="text-center mt-6 sm:mt-8 text-xs sm:text-sm text-gray-500">
             <span>©2025 Dika Cardio or its affiliates. All rights reserved.</span>
           </div>
-          <div className="text-center mt-2 text-xs sm:text-sm text-gray-500 flex flex-wrap justify-center gap-2 sm:gap-4">
-            <a href="#" className="hover:underline">Privacy Policy</a>
-            <a href="#" className="hover:underline">Term of Use</a>
-            <a href="#" className="hover:underline">Copyright Note</a>
-            <a href="#" className="hover:underline">Site Map</a>
-          </div>
         </div>
       </div>
     </Layout>
