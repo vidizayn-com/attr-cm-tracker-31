@@ -27,9 +27,9 @@ const Login = () => {
       return;
     }
 
-    const { success, debug_otp } = await sendOtp(email);
+    const { success } = await sendOtp(email);
     if (success) {
-      toast.success("Verification code sent to your email" + (debug_otp ? `: ${debug_otp}` : ''));
+      toast.success("Verification code sent to your email.");
       setStep('otp');
     }
   };
