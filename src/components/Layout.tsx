@@ -165,13 +165,13 @@ function AppSidebar() {
             <div className={`${isCollapsed ? 'w-8 h-8' : 'w-12 h-12'} flex items-center justify-center transition-all duration-300 flex-shrink-0`}>
               <img
                 src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
-                alt="ATTR-CM Tracker Logo"
+                alt="ATTR Navigator Logo"
                 className={`${isCollapsed ? 'w-6 h-6' : 'w-full h-full'} object-contain transition-all duration-300 drop-shadow-sm`}
               />
             </div>
             {!isCollapsed && (
               <div className="flex flex-col">
-                <span className="text-slate-800 font-bold text-[1.1rem] leading-tight">ATTR-CM Tracker</span>
+                <span className="text-slate-800 font-bold text-[1.1rem] leading-tight">ATTR Navigator</span>
               </div>
             )}
           </div>
@@ -465,10 +465,10 @@ const Layout: React.FC<LayoutProps> = ({ children, showNavigation = true }) => {
                 <div className="flex items-center space-x-2">
                   <img
                     src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
-                    alt="ATTR-CM Tracker Logo"
+                    alt="ATTR Navigator Logo"
                     className="w-6 h-6 object-contain"
                   />
-                  <span className="text-primary font-bold text-sm">ATTR-CM Tracker</span>
+                  <span className="text-primary font-bold text-sm">ATTR Navigator</span>
                 </div>
               </div>
             </div>

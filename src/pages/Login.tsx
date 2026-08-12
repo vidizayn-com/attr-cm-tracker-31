@@ -56,13 +56,13 @@ const Login = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full border border-primary/20 mb-4 shadow-sm">
               <img
                 src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
-                alt="ATTR-CM Tracker Logo"
+                alt="ATTR Navigator Logo"
                 className="w-12 h-12 sm:w-16 sm:h-16 object-contain"
               />
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Login</h1>
             <div className="inline-block bg-white rounded-full px-4 py-2 border border-primary/20">
-              <span className="text-primary font-semibold text-sm sm:text-base">ATTR-CM Tracker</span>
+              <span className="text-primary font-semibold text-sm sm:text-base">ATTR Navigator</span>
             </div>
           </div>
 

@@ -89,7 +89,7 @@ const InviteDialog: React.FC<InviteDialogProps> = ({ open, onOpenChange }) => {
             Invite New Member
           </DialogTitle>
           <DialogDescription>
-            Send an invitation email to a new doctor to join the ATTR-CM Tracker system.
+            Send an invitation email to a new doctor to join the ATTR Navigator system.
           </DialogDescription>
         </DialogHeader>
 

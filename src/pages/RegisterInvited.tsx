@@ -152,12 +152,12 @@ const RegisterInvited = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#089bab] to-[#06767f] rounded-2xl mb-4 shadow-lg">
               <img
                 src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"
-                alt="ATTR-CM Tracker Logo"
+                alt="ATTR Navigator Logo"
                 className="w-10 h-10 sm:w-14 sm:h-14 object-contain filter brightness-0 invert"
               />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Complete Registration</h1>
-            <p className="text-sm text-gray-500">ATTR-CM Patient Tracker</p>
+            <p className="text-sm text-gray-500">ATTR Navigator</p>
           </div>
 
           {/* Loading */}

@@ -754,7 +754,7 @@ const AdminDashboard = () => {
                         </div>
                         <div>
                             <h1 className="text-[1.3rem] font-bold text-slate-800 leading-tight">Admin Dashboard</h1>
-                            <p className="text-slate-500 text-xs">ATTR-CM Tracker Administration</p>
+                            <p className="text-slate-500 text-xs">ATTR Navigator Administration</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">

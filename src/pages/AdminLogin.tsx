@@ -57,12 +57,12 @@ const AdminLogin = () => {
                     <div className="inline-flex items-center justify-center w-24 h-24 mb-4">
                         <img 
                             src="/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png" 
-                            alt="ATTR-CM Tracker Logo" 
+                            alt="ATTR Navigator Logo" 
                             className="w-full h-full object-contain drop-shadow-md" 
                         />
                     </div>
                     <h1 className="text-[1.8rem] font-bold text-slate-800 mb-2 leading-tight">Admin Portal</h1>
-                    <p className="text-slate-500 text-sm">ATTR-CM Tracker System Administration</p>
+                    <p className="text-slate-500 text-sm">ATTR Navigator System Administration</p>
                 </div>
 
                 {/* Form */}

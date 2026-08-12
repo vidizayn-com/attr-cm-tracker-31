@@ -63,7 +63,7 @@ const ConsentDialog = () => {
                             </p>
                             <p>
                                 We request your permission to transparently share statistical information
-                                about the patient data you record on the ATTR-CM Tracker platform with the
+                                about the patient data you record on the ATTR Navigator platform with the
                                 Dika Cardio Association.
                             </p>
                             <p>
