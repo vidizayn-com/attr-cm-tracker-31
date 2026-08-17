@@ -107,9 +107,6 @@ const AdminLogin = () => {
 
                 {/* Footer */}
                 <div className="mt-8 text-center border-t border-slate-200/50 pt-4">
-                    <p className="text-slate-400 text-xs mb-3">
-                        Default credentials: admin@attr.com / Admin123!
-                    </p>
                     <a href="/login" className="text-[#089bab] font-medium text-sm hover:text-teal-700 transition-colors inline-block hover:-translate-x-1 duration-200">
                         ← Return to Doctor Login
                     </a>
