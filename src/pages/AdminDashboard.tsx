@@ -761,7 +761,7 @@ const AdminDashboard = () => {
                         <Button variant="outline" size="sm" onClick={loadDashboard} className="rounded-xl border-slate-200 text-slate-600 hover:text-[#089bab] hover:bg-slate-50 transition-all shadow-sm">
                             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 transition-all shadow-sm">
+                        <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-xl border-red-200 text-red-600 hover:!bg-red-600 hover:!text-white hover:!border-red-600 transition-all shadow-sm">
                             <LogOut className="w-4 h-4 mr-2" /> Logout
                         </Button>
                     </div>
