@@ -208,7 +208,8 @@ const PatientRegistration = () => {
           type: file.type.includes('image') ? 'image' : 'pdf',
           size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
           uploadDate: new Date().toISOString().split('T')[0],
-          category: formData.fileUploadData.category
+          category: formData.fileUploadData.category,
+          url: URL.createObjectURL(file)
         };
         setFormData(prev => ({
           ...prev,
@@ -231,9 +232,11 @@ const PatientRegistration = () => {
     toast.success('File deleted successfully!');
   };
 
-  // Handle file view (mock)
-  const handleFileView = (fileName: string) => {
-    toast.info(`Opening ${fileName}...`);
+  const [reviewFile, setReviewFile] = useState<any | null>(null);
+
+  // Handle file view
+  const handleFileView = (file: any) => {
+    setReviewFile(file);
   };
 
   return (
@@ -749,7 +752,7 @@ const PatientRegistration = () => {
               <div className="space-y-4 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">File Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">File Name <span className="text-red-500">*</span></label>
                     <Input
                       value={formData.fileUploadData.fileName}
                       onChange={(e) => setFormData(prev => ({
@@ -840,7 +843,7 @@ const PatientRegistration = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleFileView(file.name)}
+                              onClick={() => handleFileView(file)}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -990,6 +993,79 @@ const PatientRegistration = () => {
                   Values remain well above the minimum threshold of 30 ml/min/1.73m², indicating acceptable kidney function.
                 </p>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* File Review Modal */}
+        <Dialog open={reviewFile !== null} onOpenChange={(open) => !open && setReviewFile(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex justify-between items-center pr-6">
+                <span>Review File: {reviewFile?.name}</span>
+                <span className="text-xs font-normal text-gray-500">({reviewFile?.category})</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto bg-slate-950/5 p-4 rounded-xl flex items-center justify-center min-h-[300px]">
+              {reviewFile?.type === 'image' ? (
+                <img
+                  src={reviewFile?.url || "/lovable-uploads/32822704-12b5-48ad-90b7-701f244d2a02.png"}
+                  alt={reviewFile?.name}
+                  className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-md"
+                />
+              ) : (
+                reviewFile?.url ? (
+                  <object
+                    data={reviewFile.url}
+                    type="application/pdf"
+                    className="w-full h-[60vh]"
+                  >
+                    <div className="text-center p-6 space-y-4">
+                      <p className="text-gray-600">Your browser does not support inline PDF viewing.</p>
+                      <Button asChild>
+                        <a href={reviewFile.url} download={reviewFile.name}>
+                          Download PDF
+                        </a>
+                      </Button>
+                    </div>
+                  </object>
+                ) : (
+                  <div className="text-center p-8 space-y-4 max-w-md bg-white rounded-2xl shadow-sm border border-slate-100">
+                    <FileText className="w-16 h-16 mx-auto text-red-400" />
+                    <h3 className="font-semibold text-lg text-slate-800">{reviewFile?.name}</h3>
+                    <p className="text-sm text-slate-500">
+                      This is a pre-configured sample document. Click the button below to download the sample file.
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
+            <div className="mt-4 flex justify-end space-x-2 border-t pt-4">
+              <Button variant="outline" onClick={() => setReviewFile(null)}>
+                Close
+              </Button>
+              {reviewFile?.url ? (
+                <Button asChild style={{ backgroundColor: '#29a8b6' }}>
+                  <a href={reviewFile.url} download={reviewFile.name}>
+                    Download
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  style={{ backgroundColor: '#29a8b6' }}
+                  onClick={() => {
+                    const element = document.createElement("a");
+                    const fileBlob = new Blob(["Sample file contents of: " + (reviewFile?.name || "")], { type: 'text/plain' });
+                    element.href = URL.createObjectURL(fileBlob);
+                    element.download = reviewFile?.name || "file.txt";
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                  }}
+                >
+                  Download Sample
+                </Button>
+              )}
             </div>
           </DialogContent>
         </Dialog>
