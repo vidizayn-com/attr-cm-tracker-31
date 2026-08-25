@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
-import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft } from "lucide-react";
+import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft, ArrowLeftRight } from "lucide-react";
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
 import CombinedExaminations from "@/components/CombinedExaminations";
@@ -735,6 +735,25 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
     }
   };
 
+  const handleReturnToCardiologistDirect = async (assignmentId: number) => {
+    const confirmReturn = window.confirm(
+      "Are you sure you want to return this patient to the primary cardiologist?\n\nThis means your review is complete."
+    );
+    if (!confirmReturn) return;
+
+    try {
+      if (!patient.documentId) return;
+      await strapiPost("/api/auth/doctor/return-to-cardiologist", {
+        patientDocumentId: patient.documentId,
+        assignmentId: assignmentId
+      });
+      toast.success("Returned to cardiologist successfully");
+      setRefreshKey(prev => prev + 1);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to return patient");
+    }
+  };
+
   if (!patient || !draft) {
     if (!patient || !draft) {
       // If we have an error, show it instead of loading
@@ -1409,6 +1428,16 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                                       Reversal window: {hours}h {minutes}m left
                                     </span>
                                   </div>
+                                )}
+                                {assign.status === 'Approved' && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-lg px-3 h-8 shadow-sm transition-all flex items-center gap-1"
+                                    onClick={() => handleReturnToCardiologistDirect(assign.id)}
+                                  >
+                                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                                    Return to Cardiologist
+                                  </Button>
                                 )}
                               </div>
                             )}
