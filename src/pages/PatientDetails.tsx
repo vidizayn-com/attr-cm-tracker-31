@@ -692,13 +692,19 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
       const payload: Partial<StrapiPatient> = {
         lastReportDate: today.toISOString().split('T')[0],
         reportDeadline: nextDate.toISOString().split('T')[0],
+        statu: "Follow Up",
       };
 
       updatePatientByAnyId(String(patient.id), payload).then((updated) => {
         if (updated) {
-           toast.success("Son rapor tarihi güncellendi ve yeni Deadline (3 ay) oluşturuldu!");
+           toast.success("Rapor başarıyla kaydedildi! Hasta Rapor Takibine (Follow Up) aktarıldı.");
            if (draft) {
-             setDraft({ ...draft, lastReportDate: payload.lastReportDate, reportDeadline: payload.reportDeadline } as any);
+             setDraft({ 
+               ...draft, 
+               lastReportDate: payload.lastReportDate, 
+               reportDeadline: payload.reportDeadline,
+               statu: "Follow Up"
+             } as any);
            }
         }
       });

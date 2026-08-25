@@ -39,6 +39,16 @@ const ReportTracker = () => {
     gfr: '',
     ef: '',
     lvh: '',
+    echoEfValue: '',
+    echoIvsValue: '',
+    echoPwValue: '',
+    echoLaValue: '',
+    echoSddValue: '',
+    nmBoneScintigraphyGrade: '',
+    geneticsAnomaly: '',
+    hemSerumImmunofixation: '',
+    hemUrineImmunofixation: '',
+    hemFreeLightChain: '',
     symptoms: {
       ecgHypovoltage: false,
       pericardialEffusion: false,
@@ -78,6 +88,20 @@ const ReportTracker = () => {
         ntProBnpValue: form.ntProBnp ? parseFloat(form.ntProBnp) : null,
         efValue: form.ef ? parseFloat(form.ef) : null,
         gfrValue: form.gfr ? parseFloat(form.gfr) : null,
+        lvh12: form.lvh ? parseFloat(form.lvh) > 12 : false,
+        ntProBnp: form.ntProBnp ? parseFloat(form.ntProBnp) > 600 : false,
+        ef40: form.ef ? parseFloat(form.ef) >= 40 : false,
+        gfr30: form.gfr ? parseFloat(form.gfr) > 30 : false,
+        echoEfValue: form.echoEfValue ? parseFloat(form.echoEfValue) : null,
+        echoIvsValue: form.echoIvsValue ? parseFloat(form.echoIvsValue) : null,
+        echoPwValue: form.echoPwValue ? parseFloat(form.echoPwValue) : null,
+        echoLaValue: form.echoLaValue ? parseFloat(form.echoLaValue) : null,
+        echoSddValue: form.echoSddValue || null,
+        nmBoneScintigraphyGrade: form.nmBoneScintigraphyGrade || null,
+        geneticsAnomaly: form.geneticsAnomaly || null,
+        hemSerumImmunofixation: form.hemSerumImmunofixation || null,
+        hemUrineImmunofixation: form.hemUrineImmunofixation || null,
+        hemFreeLightChain: form.hemFreeLightChain || null,
       };
 
       const redFlagSymptoms = {
@@ -116,6 +140,16 @@ const ReportTracker = () => {
         gfr: '',
         ef: '',
         lvh: '',
+        echoEfValue: '',
+        echoIvsValue: '',
+        echoPwValue: '',
+        echoLaValue: '',
+        echoSddValue: '',
+        nmBoneScintigraphyGrade: '',
+        geneticsAnomaly: '',
+        hemSerumImmunofixation: '',
+        hemUrineImmunofixation: '',
+        hemFreeLightChain: '',
         symptoms: {
           ecgHypovoltage: false,
           pericardialEffusion: false,
@@ -565,6 +599,162 @@ const ReportTracker = () => {
                       placeholder="e.g. 68"
                       className="rounded-xl"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section: Echocardiography (Cardiology) */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-800 border-b pb-1">Echocardiography Findings</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Echo EF (%)
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.echoEfValue}
+                      onChange={(e) => setForm(prev => ({ ...prev, echoEfValue: e.target.value }))}
+                      placeholder="e.g. 50"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Echo IVS (mm)
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.echoIvsValue}
+                      onChange={(e) => setForm(prev => ({ ...prev, echoIvsValue: e.target.value }))}
+                      placeholder="e.g. 13"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Echo PW (mm)
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.echoPwValue}
+                      onChange={(e) => setForm(prev => ({ ...prev, echoPwValue: e.target.value }))}
+                      placeholder="e.g. 12"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Echo LA (mm)
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.echoLaValue}
+                      onChange={(e) => setForm(prev => ({ ...prev, echoLaValue: e.target.value }))}
+                      placeholder="e.g. 42"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Echo SDD
+                    </label>
+                    <select
+                      value={form.echoSddValue}
+                      onChange={(e) => setForm(prev => ({ ...prev, echoSddValue: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="">Select SDD</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Grade I">Grade I</option>
+                      <option value="Grade II">Grade II</option>
+                      <option value="Grade III">Grade III</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section: Other Specialty Findings */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-800 border-b pb-1">Specialty Findings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bone Scintigraphy (Grade)
+                    </label>
+                    <select
+                      value={form.nmBoneScintigraphyGrade}
+                      onChange={(e) => setForm(prev => ({ ...prev, nmBoneScintigraphyGrade: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="">Select Grade</option>
+                      <option value="Grade 0">Grade 0</option>
+                      <option value="Grade 1">Grade 1</option>
+                      <option value="Grade 2">Grade 2</option>
+                      <option value="Grade 3">Grade 3</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Genetics Anomaly
+                    </label>
+                    <select
+                      value={form.geneticsAnomaly}
+                      onChange={(e) => setForm(prev => ({ ...prev, geneticsAnomaly: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="">Select Anomaly</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Serum Immunofixation
+                    </label>
+                    <select
+                      value={form.hemSerumImmunofixation}
+                      onChange={(e) => setForm(prev => ({ ...prev, hemSerumImmunofixation: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Abnormal">Abnormal</option>
+                      <option value="Not Done">Not Done</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Urine Immunofixation
+                    </label>
+                    <select
+                      value={form.hemUrineImmunofixation}
+                      onChange={(e) => setForm(prev => ({ ...prev, hemUrineImmunofixation: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Abnormal">Abnormal</option>
+                      <option value="Not Done">Not Done</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Free Light Chain
+                    </label>
+                    <select
+                      value={form.hemFreeLightChain}
+                      onChange={(e) => setForm(prev => ({ ...prev, hemFreeLightChain: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Abnormal">Abnormal</option>
+                      <option value="Not Done">Not Done</option>
+                    </select>
                   </div>
                 </div>
               </div>
