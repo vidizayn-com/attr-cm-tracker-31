@@ -61,7 +61,7 @@ const AdminLogin = () => {
                             className="w-full h-full object-contain drop-shadow-md" 
                         />
                     </div>
-                    <h1 className="text-[1.8rem] font-bold text-slate-800 mb-2 leading-tight">Admin Portal</h1>
+                    <h1 className="text-[1.8rem] font-bold text-slate-800 mb-2 leading-tight">Control Panel</h1>
                     <p className="text-slate-500 text-sm">ATTR Navigator System Administration</p>
                 </div>
 
