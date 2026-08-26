@@ -13,7 +13,7 @@ import {
     Building2, Users, Stethoscope, Activity, LogOut, Plus,
     Loader2, Search, RefreshCw, Microscope, Atom, Dna, Shield,
     TrendingUp, UserCheck, ClipboardList, Pencil, Save, FileBarChart,
-    ChevronDown, ChevronUp, ShieldCheck, UserPlus
+    ChevronDown, ChevronUp, ShieldCheck, UserPlus, Menu, X
 } from 'lucide-react';
 
 import { STRAPI_URL } from '@/lib/strapiClient';
@@ -478,12 +478,21 @@ const InvitationsTab = () => {
     );
 };
 
+const menuItems = [
+    { id: 'overview', label: 'Overview', icon: TrendingUp },
+    { id: 'hospitals', label: 'Hospitals', icon: Building2 },
+    { id: 'doctors', label: 'Doctors', icon: Stethoscope },
+    { id: 'reports', label: 'Consent Report', icon: FileBarChart },
+    { id: 'invitations', label: 'Invitations', icon: UserPlus },
+] as const;
+
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'hospitals' | 'reports' | 'invitations'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Doctor form
     const [showDoctorForm, setShowDoctorForm] = useState(false);
@@ -740,34 +749,146 @@ const AdminDashboard = () => {
     const { summary, hospitals } = data;
 
     return (
-        <div className="min-h-screen bg-[#f4f9f9] relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#f4f9f9] flex relative overflow-hidden font-sans w-full">
             {/* Ambient background */}
             <div className="ambient-shape shape-1" style={{ top: '-10%', right: '-5%', background: '#089bab', width: '600px', height: '600px' }}></div>
             <div className="ambient-shape shape-2" style={{ bottom: '-10%', left: '-5%', background: '#6366f1', opacity: 0.15 }}></div>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
-                {/* Top Bar as Glass Card */}
-                <header className="glass-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-5">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#089bab] to-teal-600 flex items-center justify-center text-white shadow-lg">
-                            <Shield className="w-6 h-6" />
+            {/* Sidebar - Desktop */}
+            <aside className="hidden lg:flex flex-col w-64 bg-white/80 backdrop-blur-md border-r border-slate-200/60 p-6 z-20 shrink-0 h-screen sticky top-0 justify-between">
+                <div className="flex flex-col gap-8">
+                    {/* Brand */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#089bab] to-teal-600 flex items-center justify-center text-white shadow-md">
+                            <Shield className="w-5 h-5" />
                         </div>
                         <div>
-                            <h1 className="text-[1.3rem] font-bold text-slate-800 leading-tight">Admin Dashboard</h1>
-                            <p className="text-slate-500 text-xs">ATTR Navigator Administration</p>
+                            <h1 className="text-md font-bold text-slate-800 leading-tight">Control Panel</h1>
+                            <p className="text-slate-500 text-[10px] uppercase font-semibold tracking-wider">ATTR Navigator</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" onClick={loadDashboard} className="rounded-xl border-slate-200 text-slate-600 hover:text-[#089bab] hover:bg-slate-50 transition-all shadow-sm">
-                            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-xl border-red-200 text-red-600 hover:!bg-red-600 hover:!text-white hover:!border-red-600 transition-all shadow-sm">
+
+                    {/* Navigation */}
+                    <nav className="flex flex-col gap-2">
+                        {menuItems.map(item => {
+                            const Icon = item.icon;
+                            const isActive = activeTab === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm text-left ${
+                                        isActive 
+                                            ? 'bg-gradient-to-r from-[#089bab] to-teal-500 text-white shadow-md' 
+                                            : 'text-slate-600 hover:bg-slate-100/60 hover:text-slate-800'
+                                    }`}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {item.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
+
+                {/* Logout Footer */}
+                <Button 
+                    variant="outline" 
+                    onClick={handleLogout} 
+                    className="w-full justify-start rounded-xl border-red-100 text-red-600 hover:!bg-red-600 hover:!text-white hover:!border-red-600 transition-all shadow-sm"
+                >
+                    <LogOut className="w-4 h-4 mr-2" /> Logout
+                </Button>
+            </aside>
+
+            {/* Mobile Sidebar (Slide-out drawer) */}
+            {mobileMenuOpen && (
+                <>
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+                        onClick={() => setMobileMenuOpen(false)}
+                    />
+                    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white z-50 p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200 lg:hidden">
+                        <div className="flex flex-col gap-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#089bab] to-teal-600 flex items-center justify-center text-white shadow-sm">
+                                        <Shield className="w-4 h-4" />
+                                    </div>
+                                    <span className="font-bold text-slate-800">Control Panel</span>
+                                </div>
+                                <button 
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <nav className="flex flex-col gap-1.5">
+                                {menuItems.map(item => {
+                                    const Icon = item.icon;
+                                    const isActive = activeTab === item.id;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                setActiveTab(item.id);
+                                                setMobileMenuOpen(false);
+                                            }}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm text-left ${
+                                                isActive 
+                                                    ? 'bg-gradient-to-r from-[#089bab] to-teal-500 text-white shadow-md' 
+                                                    : 'text-slate-600 hover:bg-slate-100/60 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            <Icon className="w-4 h-4" />
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+
+                        <Button 
+                            variant="outline" 
+                            onClick={handleLogout} 
+                            className="w-full justify-start rounded-xl border-red-100 text-red-600 hover:!bg-red-600 hover:!text-white hover:!border-red-600 transition-all shadow-sm"
+                        >
                             <LogOut className="w-4 h-4 mr-2" /> Logout
+                        </Button>
+                    </aside>
+                </>
+            )}
+
+            {/* Main Content Area */}
+            <main className="flex-1 min-w-0 overflow-y-auto z-10 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full">
+                {/* Header / Top Bar */}
+                <header className="glass-card flex items-center justify-between p-4 sm:p-5">
+                    <div className="flex items-center gap-4">
+                        {/* Mobile Menu Trigger */}
+                        <button 
+                            onClick={() => setMobileMenuOpen(true)}
+                            className="p-2 rounded-xl border border-slate-200 text-slate-600 bg-white/50 hover:bg-white lg:hidden shadow-sm transition-colors"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-800 capitalize leading-tight">
+                                {menuItems.find(item => item.id === activeTab)?.label || activeTab}
+                            </h1>
+                            <p className="text-slate-500 text-xs hidden sm:block">Control Panel Management</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" onClick={loadDashboard} className="rounded-xl border-slate-200 text-slate-600 hover:text-[#089bab] hover:bg-slate-50 transition-all shadow-sm h-10 px-4">
+                            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
                         </Button>
                     </div>
                 </header>
-
-                {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="glass-card flex items-center gap-4 !p-5 hover:-translate-y-1 transition-transform">
                         <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -807,25 +928,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="glass-card !p-2 inline-flex gap-2 self-start mb-2">
-                    {(['overview', 'hospitals', 'doctors', 'reports', 'invitations'] as const).map(tab => (
-                        <Button
-                            key={tab}
-                            variant="ghost"
-                            size="sm"
-                            className={`rounded-xl capitalize transition-all ${activeTab === tab ? 'bg-gradient-to-r from-[#089bab] to-teal-500 text-white shadow-md font-medium' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'}`}
-                            onClick={() => setActiveTab(tab)}
-                        >
-                            {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-2" />}
-                            {tab === 'hospitals' && <Building2 className="w-4 h-4 mr-2" />}
-                            {tab === 'doctors' && <Stethoscope className="w-4 h-4 mr-2" />}
-                            {tab === 'reports' && <FileBarChart className="w-4 h-4 mr-2" />}
-                            {tab === 'invitations' && <UserPlus className="w-4 h-4 mr-2" />}
-                            {tab}
-                        </Button>
-                    ))}
-                </div>
 
                 {/* ── Overview Tab ── */}
                 {activeTab === 'overview' && (
@@ -1206,7 +1308,7 @@ const AdminDashboard = () => {
                         </CardContent>
                     </Card>
                 )}
-            </div>
+            </main>
         </div>
     );
 };
