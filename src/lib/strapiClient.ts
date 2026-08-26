@@ -4,6 +4,8 @@ if (!STRAPI_URL) {
     let host = window.location.hostname;
     if (host.includes('-test')) {
       host = host.replace('-test', '-api-test');
+    } else if (host === 'attrnavigator.com' || host.endsWith('.attrnavigator.com')) {
+      host = 'api.attrnavigator.com';
     } else {
       host = host.replace('.vidizayn.com', '-api.vidizayn.com');
     }
