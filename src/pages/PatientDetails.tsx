@@ -998,6 +998,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                     <SelectItem value="Diagnostic Process">Diagnostic Process</SelectItem>
                     <SelectItem value="Follow Up">Follow Up</SelectItem>
                     <SelectItem value="Amyloidosis was ruled out">Amyloidosis Ruled Out</SelectItem>
+                    <SelectItem value="Archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

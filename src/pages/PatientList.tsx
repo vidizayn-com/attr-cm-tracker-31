@@ -90,6 +90,7 @@ const PatientList = () => {
       "Diagnostic Process": "bg-orange-500 text-white",
       "Follow Up": "bg-blue-500 text-white",
       "Amyloidosis was ruled out": "bg-red-500 text-white",
+      "Archived": "bg-slate-500 text-white",
     };
     return styles[status] || "bg-gray-500 text-white";
   };
@@ -199,6 +200,8 @@ const PatientList = () => {
     // Status filter
     if (statusFilter !== "All Statuses") {
       filtered = filtered.filter((p) => safeText(p.statu) === statusFilter);
+    } else {
+      filtered = filtered.filter((p) => safeText(p.statu) !== "Archived");
     }
 
     // Search filter
@@ -466,6 +469,7 @@ const PatientList = () => {
                   <option>Diagnostic Process</option>
                   <option>Follow Up</option>
                   <option>Amyloidosis was ruled out</option>
+                  <option>Archived</option>
                 </select>
 
               <Button
