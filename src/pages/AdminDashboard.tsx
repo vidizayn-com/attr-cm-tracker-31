@@ -86,32 +86,46 @@ const ConsentReportTab = () => {
         );
     }
 
-    if (!reportData || reportData.doctors?.length === 0) {
-        return (
-            <Card className="rounded-2xl border-0 shadow-md">
-                <CardContent className="p-8 text-center">
-                    <ShieldCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">No Consent Data</h3>
-                    <p className="text-gray-400 text-sm">
-                        No doctors have granted data sharing consent yet.
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
+    if (!reportData) return null;
+
+    const consentingCount = reportData.doctors?.length || 0;
+    const totalDoctorsVal = reportData.totalDoctors || 0;
+    const nonConsentingCount = reportData.nonConsentingCount || 0;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             {/* Summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="glass-card !border-0 bg-white/70 hover:-translate-y-1 transition-transform">
                     <CardContent className="p-5 flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
                             <ShieldCheck className="w-7 h-7" />
                         </div>
                         <div>
-                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Consenting Doctors</h4>
-                            <p className="text-2xl font-bold text-emerald-600 leading-none">{reportData.doctors.length}</p>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Consenting</h4>
+                            <p className="text-2xl font-bold text-emerald-600 leading-none">{consentingCount}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70 hover:-translate-y-1 transition-transform">
+                    <CardContent className="p-5 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+                            <Shield className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Non-Consenting</h4>
+                            <p className="text-2xl font-bold text-rose-600 leading-none">{nonConsentingCount}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="glass-card !border-0 bg-white/70 hover:-translate-y-1 transition-transform">
+                    <CardContent className="p-5 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center flex-shrink-0">
+                            <Stethoscope className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Doctors</h4>
+                            <p className="text-2xl font-bold text-violet-600 leading-none">{totalDoctorsVal}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -128,8 +142,20 @@ const ConsentReportTab = () => {
                 </Card>
             </div>
 
-            {/* Doctor-Patient Cards */}
-            {reportData.doctors.map((doctor: any) => (
+            {/* Doctor-Patient Cards list / Empty state */}
+            {consentingCount === 0 ? (
+                <Card className="rounded-2xl border-slate-200 bg-white/40 border">
+                    <CardContent className="p-8 text-center">
+                        <ShieldCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-slate-700 mb-1">No Consenting Doctors</h3>
+                        <p className="text-slate-400 text-sm">
+                            No doctors have granted data sharing consent yet.
+                        </p>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="space-y-4">
+                    {reportData.doctors.map((doctor: any) => (
                 <Card key={doctor.id} className="glass-card !border-0 bg-white/50 mb-4 transition-all">
                     <CardHeader
                         className="cursor-pointer hover:bg-white/70 transition-colors rounded-t-2xl px-5 py-4"
@@ -204,6 +230,8 @@ const ConsentReportTab = () => {
                     )}
                 </Card>
             ))}
+                </div>
+            )}
         </div>
     );
 };
