@@ -500,8 +500,8 @@ const AdminDashboard = () => {
     const [docSpecialty, setDocSpecialty] = useState('Cardiology');
     const [docPhone, setDocPhone] = useState('');
     const [docEmail, setDocEmail] = useState('');
-    const [docTcNo, setDocTcNo] = useState('');
     const [docInstId, setDocInstId] = useState('');
+    const [docCanInvite, setDocCanInvite] = useState(false);
     const [savingDoctor, setSavingDoctor] = useState(false);
 
     // Edit doctor
@@ -511,7 +511,6 @@ const AdminDashboard = () => {
     const [editSpecialty, setEditSpecialty] = useState('Cardiology');
     const [editPhone, setEditPhone] = useState('');
     const [editEmail, setEditEmail] = useState('');
-    const [editTcNo, setEditTcNo] = useState('');
     const [editInstId, setEditInstId] = useState('');
     const [editCanInvite, setEditCanInvite] = useState(false);
     const [savingEdit, setSavingEdit] = useState(false);
@@ -571,8 +570,8 @@ const AdminDashboard = () => {
     };
 
     const handleCreateDoctor = async () => {
-        if (!docName || !docPhone || !docTcNo) {
-            toast.error('Name, phone and TC Kimlik No are required');
+        if (!docName || !docPhone || !docEmail) {
+            toast.error('Name, phone and email are required');
             return;
         }
         setSavingDoctor(true);
@@ -584,9 +583,9 @@ const AdminDashboard = () => {
                     fullName: docName,
                     specialty: docSpecialty,
                     phone: docPhone,
-                    email: docEmail || undefined,
-                    tcNo: docTcNo,
+                    email: docEmail,
                     institutionId: docInstId ? Number(docInstId) : undefined,
+                    canInvite: docCanInvite,
                 }),
             });
             const json = await res.json();
@@ -635,7 +634,7 @@ const AdminDashboard = () => {
 
     const resetDoctorForm = () => {
         setDocName(''); setDocPhone(''); setDocEmail('');
-        setDocSpecialty('Cardiology'); setDocTcNo(''); setDocInstId('');
+        setDocSpecialty('Cardiology'); setDocInstId(''); setDocCanInvite(false);
     };
 
     const openEditHospital = (h: Hospital) => {
@@ -684,15 +683,14 @@ const AdminDashboard = () => {
         setEditSpecialty(d.specialty);
         setEditPhone(d.phone.replace('+90', ''));
         setEditEmail(d.email || '');
-        setEditTcNo(d.tcNo || '');
         setEditInstId(d.institution ? String(d.institution.id) : '');
         setEditCanInvite(!!d.canInvite);
         setShowEditForm(true);
     };
 
     const handleUpdateDoctor = async () => {
-        if (!editDoctorId || !editName) {
-            toast.error('Name is required');
+        if (!editDoctorId || !editName || !editPhone || !editEmail) {
+            toast.error('Name, phone, and email are required');
             return;
         }
         setSavingEdit(true);
@@ -704,9 +702,8 @@ const AdminDashboard = () => {
                     doctorId: editDoctorId,
                     fullName: editName,
                     specialty: editSpecialty,
-                    phone: editPhone || undefined,
+                    phone: editPhone,
                     email: editEmail,
-                    tcNo: editTcNo || undefined,
                     institutionId: editInstId ? Number(editInstId) : null,
                     canInvite: editCanInvite,
                 }),
@@ -1123,8 +1120,7 @@ const AdminDashboard = () => {
                                                 </SelectContent>
                                             </Select>
                                             <Input placeholder="Phone (e.g. 5551234567) *" value={docPhone} onChange={e => setDocPhone(e.target.value)} />
-                                            <Input placeholder="Email" type="email" value={docEmail} onChange={e => setDocEmail(e.target.value)} />
-                                            <Input placeholder="TC Kimlik No *" type="text" maxLength={11} value={docTcNo} onChange={e => setDocTcNo(e.target.value.replace(/\D/g, ''))} />
+                                            <Input placeholder="Email *" type="email" value={docEmail} onChange={e => setDocEmail(e.target.value)} />
                                             <Select value={docInstId} onValueChange={setDocInstId}>
                                                 <SelectTrigger><SelectValue placeholder="Select Hospital" /></SelectTrigger>
                                                 <SelectContent>
@@ -1133,6 +1129,21 @@ const AdminDashboard = () => {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+                                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                                <div>
+                                                    <label className="text-sm font-medium text-slate-700">Invite Permission</label>
+                                                    <p className="text-xs text-slate-400">Allow this doctor to invite new members</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDocCanInvite(!docCanInvite)}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${docCanInvite ? 'bg-[hsl(184,58%,44%)]' : 'bg-slate-300'
+                                                        }`}
+                                                >
+                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${docCanInvite ? 'translate-x-6' : 'translate-x-1'
+                                                        }`} />
+                                                </button>
+                                            </div>
                                             <Button onClick={handleCreateDoctor} disabled={savingDoctor} className="w-full bg-[hsl(184,58%,44%)] hover:bg-[hsl(184,58%,38%)] text-white rounded-xl">
                                                 {savingDoctor ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserCheck className="w-4 h-4 mr-1" />}
                                                 Create Doctor
@@ -1227,16 +1238,12 @@ const AdminDashboard = () => {
                                             </Select>
                                         </div>
                                         <div>
-                                            <label className="text-xs text-slate-500 mb-1 block">Phone</label>
+                                            <label className="text-xs text-slate-500 mb-1 block">Phone *</label>
                                             <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-slate-500 mb-1 block">Email</label>
+                                            <label className="text-xs text-slate-500 mb-1 block">Email *</label>
                                             <Input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-slate-500 mb-1 block">New TC Kimlik No (leave empty to keep current)</label>
-                                            <Input type="text" maxLength={11} value={editTcNo} onChange={e => setEditTcNo(e.target.value.replace(/\D/g, ''))} placeholder="11 haneli TC No" />
                                         </div>
                                         <div>
                                             <label className="text-xs text-slate-500 mb-1 block">Hospital</label>
