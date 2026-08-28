@@ -1416,20 +1416,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                                     </Button>
                                   </>
                                 )}
-                                {assign.status === 'Rejected' && isWithin24Hours && (
-                                  <div className="flex flex-col items-end gap-1">
-                                    <Button
-                                      size="sm"
-                                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 h-8 shadow-sm transition-all"
-                                      onClick={() => handleApproveAssignment(assign.id)}
-                                    >
-                                      Reverse Rejection
-                                    </Button>
-                                    <span className="text-[10px] text-slate-500 italic">
-                                      Reversal window: {hours}h {minutes}m left
-                                    </span>
-                                  </div>
-                                )}
+
                                 {assign.status === 'Approved' && (
                                   <Button
                                     size="sm"
