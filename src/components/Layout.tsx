@@ -59,7 +59,7 @@ const allNavigationItems = [
   { title: 'Patients', url: '/patients', icon: Users, roles: 'all' },
   { title: 'Patient Pool', url: '/patients/pool', icon: UserCheck, roles: 'all' },
   { title: 'Resources', url: '/resources', icon: BookOpen, roles: 'all' },
-  { title: 'Report Tracker', url: '/report-tracker', icon: FileText, roles: 'all' },
+  { title: 'Report Tracker', url: '/report-tracker', icon: FileText, roles: 'Cardiology' },
 ];
 
 function AppSidebar() {

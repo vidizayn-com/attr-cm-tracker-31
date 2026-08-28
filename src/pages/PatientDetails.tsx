@@ -421,6 +421,7 @@ export default function PatientDetails() {
         nextAppointment: (draft as any).nextAppointment || undefined,
 
         reportDeadline: (draft as any).reportDeadline || undefined,
+        lastReportDate: (draft as any).lastReportDate || undefined,
 
         clinicalFindings: (draft as any).clinicalFindings ?? defaultClinicalFindings,
         redFlagSymptoms: (draft as any).redFlagSymptoms ?? defaultRedFlags,
@@ -1030,16 +1031,40 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 </div>
               )}
 
-              {/* Report Deadline - editable */}
+              {/* Last Report Date & Report Deadline - editable */}
               {safeText((draft as any).statu) === "Follow Up" && (
-                <div>
-                  <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
-                  <Input
-                    type="date"
-                    value={safeText((draft as any).reportDeadline)}
-                    disabled={!isEditing}
-                    onChange={(e) => setDraft({ ...draft, reportDeadline: e.target.value || null } as any)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Last Report Date</div>
+                    <Input
+                      type="date"
+                      value={safeText((draft as any).lastReportDate)}
+                      disabled={!isEditing}
+                      onChange={(e) => {
+                        const newDate = e.target.value || null;
+                        let newDeadline = (draft as any).reportDeadline;
+                        if (newDate) {
+                          const d = new Date(newDate);
+                          d.setMonth(d.getMonth() + 6);
+                          newDeadline = d.toISOString().split('T')[0];
+                        }
+                        setDraft({ 
+                          ...draft, 
+                          lastReportDate: newDate, 
+                          reportDeadline: newDeadline 
+                        } as any);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
+                    <Input
+                      type="date"
+                      value={safeText((draft as any).reportDeadline)}
+                      disabled={!isEditing}
+                      onChange={(e) => setDraft({ ...draft, reportDeadline: e.target.value || null } as any)}
+                    />
+                  </div>
                 </div>
               )}
 

@@ -155,17 +155,19 @@ const Dashboard = () => {
                 </div>
 
                 {/* 4. Reports Overdue */}
-                <div className="glass-card kpi-card" onClick={() => navigate('/report-tracker')}>
-                    <div className="kpi-icon rose">
-                        <AlertTriangle className="w-7 h-7" />
-                    </div>
-                    <div className="kpi-info">
-                        <h4>Reports Overdue</h4>
-                        <div className="value flex items-baseline text-red-500">
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.overdueReports ?? 0}
-                        </div>
-                    </div>
-                </div>
+                {isCardiologist && (
+                  <div className="glass-card kpi-card" onClick={() => navigate('/report-tracker')}>
+                      <div className="kpi-icon rose">
+                          <AlertTriangle className="w-7 h-7" />
+                      </div>
+                      <div className="kpi-info">
+                          <h4>Reports Overdue</h4>
+                          <div className="value flex items-baseline text-red-500">
+                              {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.overdueReports ?? 0}
+                          </div>
+                      </div>
+                  </div>
+                )}
             </div>
         </section>
 

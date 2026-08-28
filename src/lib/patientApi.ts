@@ -20,6 +20,9 @@ type CreatePatientInput = {
   clinicalFindings?: any; // JSON
   redFlagSymptoms?: any; // JSON
 
+  lastReportDate?: string | null;
+  reportDeadline?: string | null;
+
   institution?: number; // institution id
   assignedCardiologistId?: number; // doctor id (tek)
 
@@ -61,6 +64,8 @@ export async function createPatient(input: CreatePatientInput) {
 
     clinicalFindings: input.clinicalFindings ?? null,
     redFlagSymptoms: input.redFlagSymptoms ?? null,
+    lastReportDate: input.lastReportDate ?? null,
+    reportDeadline: input.reportDeadline ?? null,
   };
 
   if (input.caregiver) {

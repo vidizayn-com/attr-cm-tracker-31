@@ -9,6 +9,7 @@ import { strapiGet } from '@/lib/strapiClient';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createPatient } from '@/lib/patientApi';
+import { useUser } from '@/contexts/UserContext';
 
 type PatientData = {
   id: number;
@@ -22,6 +23,7 @@ type PatientData = {
 };
 
 const ReportTracker = () => {
+  const { currentUser, isLoading: userLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [loading, setLoading] = useState(true);
@@ -84,24 +86,24 @@ const ReportTracker = () => {
     try {
       setSubmittingAdd(true);
       const clinicalFindings = {
-        lvhValue: form.lvh ? parseFloat(form.lvh) : null,
-        ntProBnpValue: form.ntProBnp ? parseFloat(form.ntProBnp) : null,
-        efValue: form.ef ? parseFloat(form.ef) : null,
-        gfrValue: form.gfr ? parseFloat(form.gfr) : null,
+        lvh12Value: form.lvh || "",
+        ntProBnpValue: form.ntProBnp || "",
+        ef40Value: form.ef || "",
+        gfr30Value: form.gfr || "",
         lvh12: form.lvh ? parseFloat(form.lvh) > 12 : false,
         ntProBnp: form.ntProBnp ? parseFloat(form.ntProBnp) > 600 : false,
         ef40: form.ef ? parseFloat(form.ef) >= 40 : false,
         gfr30: form.gfr ? parseFloat(form.gfr) > 30 : false,
-        echoEfValue: form.echoEfValue ? parseFloat(form.echoEfValue) : null,
-        echoIvsValue: form.echoIvsValue ? parseFloat(form.echoIvsValue) : null,
-        echoPwValue: form.echoPwValue ? parseFloat(form.echoPwValue) : null,
-        echoLaValue: form.echoLaValue ? parseFloat(form.echoLaValue) : null,
-        echoSddValue: form.echoSddValue || null,
-        nmBoneScintigraphyGrade: form.nmBoneScintigraphyGrade || null,
-        geneticsAnomaly: form.geneticsAnomaly || null,
-        hemSerumImmunofixation: form.hemSerumImmunofixation || null,
-        hemUrineImmunofixation: form.hemUrineImmunofixation || null,
-        hemFreeLightChain: form.hemFreeLightChain || null,
+        echoEfValue: form.echoEfValue || "",
+        echoIvsValue: form.echoIvsValue || "",
+        echoPwValue: form.echoPwValue || "",
+        echoLaValue: form.echoLaValue || "",
+        echoSddValue: form.echoSddValue || "",
+        nmBoneScintigraphyGrade: form.nmBoneScintigraphyGrade || "",
+        geneticsAnomaly: form.geneticsAnomaly || "",
+        hemSerumImmunofixation: form.hemSerumImmunofixation || "",
+        hemUrineImmunofixation: form.hemUrineImmunofixation || "",
+        hemFreeLightChain: form.hemFreeLightChain || "",
       };
 
       const redFlagSymptoms = {
@@ -185,6 +187,14 @@ const ReportTracker = () => {
   };
 
   useEffect(() => {
+    if (!userLoading && currentUser && currentUser.role !== 'Cardiology') {
+      toast.error("Only cardiologists can access the report tracker.");
+      navigate('/patients');
+    }
+  }, [currentUser, userLoading, navigate]);
+
+  useEffect(() => {
+    if (currentUser?.role !== 'Cardiology') return;
     (async () => {
       try {
         setLoading(true);
@@ -291,6 +301,18 @@ const ReportTracker = () => {
     pending: reports.filter(r => r.status === 'Pending').length,
     overdue: reports.filter(r => r.status === 'Overdue').length,
   }), [reports]);
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-[#089bab]" />
+      </div>
+    );
+  }
+
+  if (currentUser && currentUser.role !== 'Cardiology') {
+    return null;
+  }
 
   return (
     <Layout>
