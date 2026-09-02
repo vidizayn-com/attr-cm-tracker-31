@@ -539,12 +539,13 @@ const ReportTracker = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Report Date (Son Rapor Tarihi)
+                      Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
                     </label>
                     <Input
                       type="date"
                       value={form.lastReportDate}
                       onChange={(e) => handleLastReportDateChange(e.target.value)}
+                      placeholder="dd/mm/yyyy"
                       className="rounded-xl"
                     />
                     <p className="text-xs text-slate-400 mt-1">
@@ -553,13 +554,14 @@ const ReportTracker = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Next Renewal Date (Rapor Yenilenme Tarihi) <span className="text-red-500">*</span>
+                      Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
                     </label>
                     <Input
                       required
                       type="date"
                       value={form.reportDeadline}
                       onChange={(e) => setForm(prev => ({ ...prev, reportDeadline: e.target.value }))}
+                      placeholder="dd/mm/yyyy"
                       className="rounded-xl"
                     />
                   </div>
