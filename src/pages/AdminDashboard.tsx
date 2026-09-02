@@ -618,7 +618,11 @@ const AdminDashboard = () => {
             });
             const json = await res.json();
             if (!res.ok) {
-                toast.error(json?.error?.message || 'Failed to create doctor');
+                const rawErr = json?.error?.message || json?.error || json?.message || 'Failed to create doctor';
+                const cleanMsg = typeof rawErr === 'string' && (rawErr.includes('already exists') || rawErr.includes('already has this email'))
+                    ? 'Bu e-posta adresine sahip bir hekim zaten sistemde kayıtlı.'
+                    : String(rawErr);
+                toast.error(cleanMsg);
                 return;
             }
             toast.success(`Doctor "${json.doctor.fullName}" created!`);
@@ -738,7 +742,11 @@ const AdminDashboard = () => {
             });
             const json = await res.json();
             if (!res.ok) {
-                toast.error(json?.error?.message || 'Failed to update doctor');
+                const rawErr = json?.error?.message || json?.error || json?.message || 'Failed to update doctor';
+                const cleanMsg = typeof rawErr === 'string' && (rawErr.includes('already exists') || rawErr.includes('already has this email'))
+                    ? 'Bu e-posta adresine sahip bir hekim zaten sistemde kayıtlı.'
+                    : String(rawErr);
+                toast.error(cleanMsg);
                 return;
             }
             toast.success(`Doctor "${json.doctor.fullName}" updated!`);

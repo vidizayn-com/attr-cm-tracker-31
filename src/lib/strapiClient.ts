@@ -31,6 +31,27 @@ const getHeaders = () => {
   return headers;
 };
 
+export function parseStrapiErrorMessage(text: string, status: number): string {
+  if (!text) return `Request failed (${status})`;
+  try {
+    const json = JSON.parse(text);
+    const msg = json?.error?.message || json?.message || (typeof json?.error === 'string' ? json.error : null);
+    if (typeof msg === 'string' && msg.trim()) {
+      const clean = msg.trim();
+      if (clean.includes("already exists") || clean.includes("already has this email")) {
+        return "Bu e-posta adresine sahip bir hekim zaten sistemde kayıtlı.";
+      }
+      if (clean.includes("already has this phone")) {
+        return "Bu telefon numarasına sahip bir hekim zaten sistemde kayıtlı.";
+      }
+      return clean;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return text;
+}
+
 export async function strapiPost<T = any>(path: string, body: any): Promise<T> {
   const res = await fetch(`${STRAPI_URL}${path}`, {
     method: "POST",
@@ -40,7 +61,7 @@ export async function strapiPost<T = any>(path: string, body: any): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Strapi POST failed: ${res.status} ${text}`);
+    throw new Error(parseStrapiErrorMessage(text, res.status));
   }
 
   // Handle cases where response might not be JSON or wrapped in data
@@ -63,7 +84,7 @@ export async function strapiPut<T = any>(path: string, body: any): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Strapi PUT failed: ${res.status} ${text}`);
+    throw new Error(parseStrapiErrorMessage(text, res.status));
   }
 
   const json = await res.json();
@@ -78,7 +99,7 @@ export async function strapiGet<T = any>(path: string): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Strapi GET failed: ${res.status} ${text}`);
+    throw new Error(parseStrapiErrorMessage(text, res.status));
   }
 
   const json = await res.json();
