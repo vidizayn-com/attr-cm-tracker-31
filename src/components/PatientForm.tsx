@@ -25,33 +25,44 @@ type PatientFormProps = {
 const PatientForm: React.FC<PatientFormProps> = ({
   formData,
   setFormData,
-  cardiologists,
+  cardiologists = [],
   showReportDates = false,
   onLastReportDateChange,
   disabled = false,
 }) => {
+  const safeData = formData || getDefaultPatientFormData();
+  const clinical = safeData.clinicalFindings || defaultClinicalFindings;
+  const redFlags = safeData.redFlagSymptoms || defaultRedFlags;
+  const safeCardiologists = Array.isArray(cardiologists) ? cardiologists : [];
+
   const updateField = <K extends keyof PatientFormData>(field: K, value: PatientFormData[K]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...(prev || getDefaultPatientFormData()), [field]: value }));
   };
 
   const updateClinicalFinding = (key: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      clinicalFindings: {
-        ...prev.clinicalFindings,
-        [key]: value,
-      },
-    }));
+    setFormData((prev) => {
+      const current = prev || getDefaultPatientFormData();
+      return {
+        ...current,
+        clinicalFindings: {
+          ...(current.clinicalFindings || defaultClinicalFindings),
+          [key]: value,
+        },
+      };
+    });
   };
 
   const updateRedFlag = (key: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      redFlagSymptoms: {
-        ...prev.redFlagSymptoms,
-        [key]: value,
-      },
-    }));
+    setFormData((prev) => {
+      const current = prev || getDefaultPatientFormData();
+      return {
+        ...current,
+        redFlagSymptoms: {
+          ...(current.redFlagSymptoms || defaultRedFlags),
+          [key]: value,
+        },
+      };
+    });
   };
 
   return (
@@ -72,7 +83,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               </label>
               <Input
                 disabled={disabled}
-                value={formData.firstName}
+                value={safeData.firstName}
                 onChange={(e) => updateField('firstName', e.target.value)}
                 placeholder="First Name"
                 className="h-10 sm:h-auto rounded-xl"
@@ -84,7 +95,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               </label>
               <Input
                 disabled={disabled}
-                value={formData.lastName}
+                value={safeData.lastName}
                 onChange={(e) => updateField('lastName', e.target.value)}
                 placeholder="Last Name"
                 className="h-10 sm:h-auto rounded-xl"
@@ -99,7 +110,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               </label>
               <select
                 disabled={disabled}
-                value={formData.gender}
+                value={safeData.gender}
                 onChange={(e) => updateField('gender', e.target.value)}
                 className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
               >
@@ -114,7 +125,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                 Date of Birth <span className="text-red-500">*</span>
               </label>
               <DateOfBirthSelect
-                value={formData.dateOfBirth}
+                value={safeData.dateOfBirth}
                 onChange={(val) => updateField('dateOfBirth', val)}
               />
             </div>
@@ -127,7 +138,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               </label>
               <Input
                 disabled={disabled}
-                value={formData.contactNumber}
+                value={safeData.contactNumber}
                 onChange={(e) => updateField('contactNumber', e.target.value)}
                 placeholder="(+90) --- -- -- --"
                 className="h-10 sm:h-auto rounded-xl"
@@ -140,7 +151,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <Input
                 disabled={disabled}
                 type="email"
-                value={formData.email}
+                value={safeData.email}
                 onChange={(e) => updateField('email', e.target.value)}
                 placeholder="Enter email address"
                 className="h-10 sm:h-auto rounded-xl"
@@ -154,12 +165,12 @@ const PatientForm: React.FC<PatientFormProps> = ({
             </label>
             <select
               disabled={disabled}
-              value={formData.primaryCardiologistDocId}
+              value={safeData.primaryCardiologistDocId}
               onChange={(e) => updateField('primaryCardiologistDocId', e.target.value)}
               className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
             >
               <option value="">Select a cardiologist</option>
-              {cardiologists.map((doc) => (
+              {safeCardiologists.map((doc) => (
                 <option key={doc.documentId} value={doc.documentId}>
                   {doc.fullName}
                 </option>
@@ -173,7 +184,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <Checkbox
                 disabled={disabled}
                 id="caregiverPermission"
-                checked={formData.allowCaregiver}
+                checked={safeData.allowCaregiver}
                 onCheckedChange={(checked) => updateField('allowCaregiver', Boolean(checked))}
                 className="mt-1"
               />
@@ -182,7 +193,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               </label>
             </div>
 
-            {formData.allowCaregiver && (
+            {safeData.allowCaregiver && (
               <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm">
@@ -190,7 +201,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                   </label>
                   <Input
                     disabled={disabled}
-                    value={formData.caregiverName}
+                    value={safeData.caregiverName}
                     onChange={(e) => updateField('caregiverName', e.target.value)}
                     placeholder="Enter caregiver name"
                     className="rounded-xl"
@@ -203,7 +214,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                   <Input
                     disabled={disabled}
                     type="email"
-                    value={formData.caregiverEmail}
+                    value={safeData.caregiverEmail}
                     onChange={(e) => updateField('caregiverEmail', e.target.value)}
                     placeholder="Enter caregiver email"
                     className="rounded-xl"
@@ -216,7 +227,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                   <Input
                     disabled={disabled}
                     type="tel"
-                    value={formData.caregiverPhone}
+                    value={safeData.caregiverPhone}
                     onChange={(e) => updateField('caregiverPhone', e.target.value)}
                     placeholder="Enter caregiver phone"
                     className="rounded-xl"
@@ -244,7 +255,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                   Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
                 </label>
                 <DateInputDdMmYyyy
-                  value={formData.lastReportDate}
+                  value={safeData.lastReportDate}
                   onChange={(isoVal) => {
                     updateField('lastReportDate', isoVal);
                     if (onLastReportDateChange) onLastReportDateChange(isoVal);
@@ -257,7 +268,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                   Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
                 </label>
                 <DateInputDdMmYyyy
-                  value={formData.reportDeadline}
+                  value={safeData.reportDeadline}
                   onChange={(isoVal) => updateField('reportDeadline', isoVal)}
                   className="rounded-xl"
                 />
@@ -282,7 +293,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 disabled={disabled}
                 type="checkbox"
-                checked={formData.clinicalFindings.lvh12}
+                checked={clinical.lvh12}
                 onChange={(e) => updateClinicalFinding('lvh12', e.target.checked)}
                 className="w-5 h-5 flex-shrink-0"
               />
@@ -291,7 +302,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <div className="flex items-center space-x-2 ml-8">
               <Input
                 disabled={disabled}
-                value={formData.clinicalFindings.lvh12Value}
+                value={clinical.lvh12Value}
                 onChange={(e) => updateClinicalFinding('lvh12Value', e.target.value)}
                 className="w-24 text-center h-9 rounded-xl"
                 placeholder="Value"
@@ -306,7 +317,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 disabled={disabled}
                 type="checkbox"
-                checked={formData.clinicalFindings.ntProBnp}
+                checked={clinical.ntProBnp}
                 onChange={(e) => updateClinicalFinding('ntProBnp', e.target.checked)}
                 className="w-5 h-5 flex-shrink-0 mt-1"
               />
@@ -318,7 +329,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <div className="flex items-center space-x-2">
                 <Input
                   disabled={disabled}
-                  value={formData.clinicalFindings.ntProBnpValue}
+                  value={clinical.ntProBnpValue}
                   onChange={(e) => updateClinicalFinding('ntProBnpValue', e.target.value)}
                   className="w-24 text-center h-9 rounded-xl"
                   placeholder="Value"
@@ -328,7 +339,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <div className="flex items-center space-x-2">
                 <Input
                   disabled={disabled}
-                  value={formData.clinicalFindings.bnpValue}
+                  value={clinical.bnpValue}
                   onChange={(e) => updateClinicalFinding('bnpValue', e.target.value)}
                   className="w-24 text-center h-9 rounded-xl"
                   placeholder="Value"
@@ -344,7 +355,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 disabled={disabled}
                 type="checkbox"
-                checked={formData.clinicalFindings.ef40}
+                checked={clinical.ef40}
                 onChange={(e) => updateClinicalFinding('ef40', e.target.checked)}
                 className="w-5 h-5 flex-shrink-0"
               />
@@ -353,7 +364,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <div className="flex items-center space-x-2 ml-8">
               <Input
                 disabled={disabled}
-                value={formData.clinicalFindings.ef40Value}
+                value={clinical.ef40Value}
                 onChange={(e) => updateClinicalFinding('ef40Value', e.target.value)}
                 className="w-24 text-center h-9 rounded-xl"
                 placeholder="Value"
@@ -368,7 +379,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 disabled={disabled}
                 type="checkbox"
-                checked={formData.clinicalFindings.gfr30}
+                checked={clinical.gfr30}
                 onChange={(e) => updateClinicalFinding('gfr30', e.target.checked)}
                 className="w-5 h-5 flex-shrink-0 mt-1"
               />
@@ -379,7 +390,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <div className="ml-8 flex items-center space-x-2">
               <Input
                 disabled={disabled}
-                value={formData.clinicalFindings.gfr30Value}
+                value={clinical.gfr30Value}
                 onChange={(e) => updateClinicalFinding('gfr30Value', e.target.value)}
                 className="w-24 text-center h-9 rounded-xl"
                 placeholder="Value"
@@ -394,7 +405,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 disabled={disabled}
                 type="checkbox"
-                checked={formData.clinicalFindings.age65}
+                checked={clinical.age65}
                 onChange={(e) => updateClinicalFinding('age65', e.target.checked)}
                 className="w-5 h-5 flex-shrink-0"
               />
@@ -403,7 +414,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <div className="flex items-center space-x-2 ml-8">
               <Input
                 disabled={disabled}
-                value={formData.clinicalFindings.age65Value}
+                value={clinical.age65Value}
                 onChange={(e) => updateClinicalFinding('age65Value', e.target.value)}
                 className="w-24 text-center h-9 rounded-xl"
                 placeholder="Value"
@@ -429,7 +440,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <Input
                 disabled={disabled}
                 type="number"
-                value={formData.clinicalFindings.echoEfValue || ''}
+                value={clinical.echoEfValue || ''}
                 onChange={(e) => updateClinicalFinding('echoEfValue', e.target.value)}
                 placeholder="e.g. 50"
                 className="rounded-xl"
@@ -440,7 +451,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <Input
                 disabled={disabled}
                 type="number"
-                value={formData.clinicalFindings.echoIvsValue || ''}
+                value={clinical.echoIvsValue || ''}
                 onChange={(e) => updateClinicalFinding('echoIvsValue', e.target.value)}
                 placeholder="e.g. 13"
                 className="rounded-xl"
@@ -451,7 +462,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <Input
                 disabled={disabled}
                 type="number"
-                value={formData.clinicalFindings.echoPwValue || ''}
+                value={clinical.echoPwValue || ''}
                 onChange={(e) => updateClinicalFinding('echoPwValue', e.target.value)}
                 placeholder="e.g. 12"
                 className="rounded-xl"
@@ -462,7 +473,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <Input
                 disabled={disabled}
                 type="number"
-                value={formData.clinicalFindings.echoLaValue || ''}
+                value={clinical.echoLaValue || ''}
                 onChange={(e) => updateClinicalFinding('echoLaValue', e.target.value)}
                 placeholder="e.g. 42"
                 className="rounded-xl"
@@ -472,7 +483,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block text-gray-700 font-semibold mb-1 text-sm">Echo SDD</label>
               <select
                 disabled={disabled}
-                value={formData.clinicalFindings.echoSddValue || ''}
+                value={clinical.echoSddValue || ''}
                 onChange={(e) => updateClinicalFinding('echoSddValue', e.target.value)}
                 className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
               >
@@ -501,7 +512,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block text-gray-700 font-semibold mb-1 text-sm">Bone Scintigraphy (Grade)</label>
               <select
                 disabled={disabled}
-                value={formData.clinicalFindings.nmBoneScintigraphyGrade || ''}
+                value={clinical.nmBoneScintigraphyGrade || ''}
                 onChange={(e) => updateClinicalFinding('nmBoneScintigraphyGrade', e.target.value)}
                 className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
               >
@@ -516,7 +527,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block text-gray-700 font-semibold mb-1 text-sm">Genetics Anomaly</label>
               <select
                 disabled={disabled}
-                value={formData.clinicalFindings.geneticsAnomaly || ''}
+                value={clinical.geneticsAnomaly || ''}
                 onChange={(e) => updateClinicalFinding('geneticsAnomaly', e.target.value)}
                 className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
               >
@@ -531,7 +542,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block text-gray-700 font-semibold mb-1 text-sm">Serum Immunofixation</label>
               <select
                 disabled={disabled}
-                value={formData.clinicalFindings.hemSerumImmunofixation || ''}
+                value={clinical.hemSerumImmunofixation || ''}
                 onChange={(e) => updateClinicalFinding('hemSerumImmunofixation', e.target.value)}
                 className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
               >
@@ -545,7 +556,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block text-gray-700 font-semibold mb-1 text-sm">Urine Immunofixation</label>
               <select
                 disabled={disabled}
-                value={formData.clinicalFindings.hemUrineImmunofixation || ''}
+                value={clinical.hemUrineImmunofixation || ''}
                 onChange={(e) => updateClinicalFinding('hemUrineImmunofixation', e.target.value)}
                 className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
               >
@@ -559,7 +570,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block text-gray-700 font-semibold mb-1 text-sm">Free Light Chain Analysis</label>
               <select
                 disabled={disabled}
-                value={formData.clinicalFindings.hemFreeLightChain || ''}
+                value={clinical.hemFreeLightChain || ''}
                 onChange={(e) => updateClinicalFinding('hemFreeLightChain', e.target.value)}
                 className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
               >
@@ -586,7 +597,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.ecgHypovoltage}
+              checked={redFlags.ecgHypovoltage}
               onChange={(e) => updateRedFlag('ecgHypovoltage', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -597,7 +608,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.pericardialEffusion}
+              checked={redFlags.pericardialEffusion}
               onChange={(e) => updateRedFlag('pericardialEffusion', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -608,7 +619,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.biatrialDilation}
+              checked={redFlags.biatrialDilation}
               onChange={(e) => updateRedFlag('biatrialDilation', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -619,7 +630,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.thickeningInteratrialSeptum}
+              checked={redFlags.thickeningInteratrialSeptum}
               onChange={(e) => updateRedFlag('thickeningInteratrialSeptum', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -632,7 +643,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.fiveFiveFiveFinding}
+              checked={redFlags.fiveFiveFiveFinding}
               onChange={(e) => updateRedFlag('fiveFiveFiveFinding', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -643,7 +654,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.diastolicDysfunction}
+              checked={redFlags.diastolicDysfunction}
               onChange={(e) => updateRedFlag('diastolicDysfunction', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -656,7 +667,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.intoleranceHeartFailure}
+              checked={redFlags.intoleranceHeartFailure}
               onChange={(e) => updateRedFlag('intoleranceHeartFailure', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -669,7 +680,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.spontaneousResolutionHypertension}
+              checked={redFlags.spontaneousResolutionHypertension}
               onChange={(e) => updateRedFlag('spontaneousResolutionHypertension', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -682,7 +693,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
             <input
               disabled={disabled}
               type="checkbox"
-              checked={formData.redFlagSymptoms.taviAorticStenosis}
+              checked={redFlags.taviAorticStenosis}
               onChange={(e) => updateRedFlag('taviAorticStenosis', e.target.checked)}
               className="w-5 h-5 flex-shrink-0 mt-1"
             />
@@ -694,7 +705,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 disabled={disabled}
                 type="checkbox"
-                checked={formData.redFlagSymptoms.other}
+                checked={redFlags.other}
                 onChange={(e) => updateRedFlag('other', e.target.checked)}
                 className="w-5 h-5 flex-shrink-0 mt-0.5"
               />
@@ -702,7 +713,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                 <span className="text-sm sm:text-base font-medium">Other / Doctor's Comment</span>
                 <Textarea
                   disabled={disabled}
-                  value={formData.redFlagSymptoms.otherValue}
+                  value={redFlags.otherValue}
                   onChange={(e) => updateRedFlag('otherValue', e.target.value)}
                   placeholder="Enter additional symptoms or doctor's comments"
                   className="mt-2 min-h-32 resize-none w-full rounded-xl"
