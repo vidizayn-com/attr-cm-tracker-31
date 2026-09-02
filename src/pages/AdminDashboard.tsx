@@ -13,7 +13,7 @@ import {
     Building2, Users, Stethoscope, Activity, LogOut, Plus,
     Loader2, Search, RefreshCw, Microscope, Atom, Dna, Shield,
     TrendingUp, UserCheck, ClipboardList, Pencil, Save, FileBarChart,
-    ChevronDown, ChevronUp, ShieldCheck, UserPlus, Menu, X
+    ChevronDown, ChevronUp, ShieldCheck, UserPlus, Menu, X, Trash2
 } from 'lucide-react';
 
 import { STRAPI_URL } from '@/lib/strapiClient';
@@ -760,6 +760,28 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleDeleteDoctor = async (d: Doctor) => {
+        if (!window.confirm(`Are you sure you want to delete doctor "${d.fullName}"?`)) {
+            return;
+        }
+        try {
+            const res = await fetch(`${STRAPI_URL}/api/auth/panel/doctors`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+                body: JSON.stringify({ doctorId: d.id }),
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                toast.error(json?.error?.message || json?.message || 'Failed to delete doctor');
+                return;
+            }
+            toast.success(`Doctor "${d.fullName}" deleted successfully`);
+            loadDashboard();
+        } catch (e: any) {
+            toast.error(e?.message || 'Error deleting doctor');
+        }
+    };
+
     const filteredDoctors = useMemo(() => {
         if (!data) return [];
         if (!searchTerm) return data.doctors;
@@ -1203,6 +1225,7 @@ const AdminDashboard = () => {
                                             <TableHead className="text-center">Joined via Invitation</TableHead>
                                             <TableHead className="text-center w-20">Invite</TableHead>
                                             <TableHead className="text-center w-16">Edit</TableHead>
+                                            <TableHead className="text-center w-16">Delete</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1248,6 +1271,11 @@ const AdminDashboard = () => {
                                                 <TableCell className="text-center">
                                                     <Button variant="ghost" size="sm" onClick={() => openEditDoctor(d)} className="h-8 w-8 p-0 hover:bg-teal-50">
                                                         <Pencil className="w-3.5 h-3.5 text-[hsl(184,58%,44%)]" />
+                                                    </Button>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteDoctor(d)} className="h-8 w-8 p-0 hover:bg-red-50 text-red-500" title="Delete Doctor">
+                                                        <Trash2 className="w-3.5 h-3.5" />
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
