@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createPatient } from '@/lib/patientApi';
 import { useUser } from '@/contexts/UserContext';
-import DateInputDdMmYyyy from '@/components/DateInputDdMmYyyy';
+import DateInputDdMmYyyy, { isoToDdMmYyyy } from '@/components/DateInputDdMmYyyy';
 
 type PatientData = {
   id: number;
@@ -126,6 +126,8 @@ const ReportTracker = () => {
         statu: "Follow Up",
         lastReportDate: form.lastReportDate || null,
         reportDeadline: form.reportDeadline,
+        lastVisit: form.lastReportDate || new Date().toISOString().split('T')[0],
+        nextAppointment: form.reportDeadline || null,
         clinicalFindings,
         redFlagSymptoms,
       });
@@ -255,8 +257,8 @@ const ReportTracker = () => {
         reportType: 'Diagnosis Report',
         status,
         assignedTo: p.primary_cardiologist?.fullName || 'Atanmamış (HATA)',
-        dueDate: p.reportDeadline ? new Date(p.reportDeadline).toLocaleDateString('tr-TR') : 'Not Set',
-        createdDate: p.lastReportDate ? new Date(p.lastReportDate).toLocaleDateString('tr-TR') : 'None',
+        dueDate: p.reportDeadline ? isoToDdMmYyyy(p.reportDeadline) : 'Not Set',
+        createdDate: p.lastReportDate ? isoToDdMmYyyy(p.lastReportDate) : (p.createdAt ? isoToDdMmYyyy(p.createdAt.split('T')[0]) : 'None'),
         priority,
         diffDays
       };
@@ -725,8 +727,9 @@ const ReportTracker = () => {
                       className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
                     >
                       <option value="">Select Anomaly</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
+                      <option value="ATTRv">ATTRv</option>
+                      <option value="ATTRwt">ATTRwt</option>
+                      <option value="None">None</option>
                       <option value="Pending">Pending</option>
                     </select>
                   </div>
