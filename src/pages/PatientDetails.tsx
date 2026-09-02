@@ -359,19 +359,28 @@ export default function PatientDetails() {
     setIsEditing(false);
   };
 
+  const [showValidationDialog, setShowValidationDialog] = useState(false);
+  const [validationMissingFields, setValidationMissingFields] = useState<string[]>([]);
+
   const save = async () => {
     try {
       if (!id) throw new Error("Patient id missing.");
       if (!draft) throw new Error("Draft missing.");
       if (!patient) throw new Error("Patient missing.");
 
+      const fn = (draft.firstName ?? "").trim();
+      const ln = (draft.lastName ?? "").trim();
+      const gd = (draft.gender ?? "").trim();
+      const em = (draft.email ?? "").trim();
+      const cn = (draft.contactNumber ?? "").trim();
+
       const formValidationData: PatientFormData = {
-        firstName: draft.firstName ?? "",
-        lastName: draft.lastName ?? "",
-        gender: draft.gender ?? "",
+        firstName: fn,
+        lastName: ln,
+        gender: gd,
         dateOfBirth: draft.dateOfBirth ?? "",
-        contactNumber: draft.contactNumber ?? "",
-        email: draft.email ?? "",
+        contactNumber: cn,
+        email: em,
         address: draft.address ?? "",
         primaryCardiologistDocId: selectedCardiologistDocId ?? "",
         statu: draft.statu ?? "New",
@@ -389,12 +398,18 @@ export default function PatientDetails() {
 
       const validation = validatePatientFormData(formValidationData);
       if (!validation.isValid) {
-        toast.error(validation.errorMessage);
+        if (validation.missingFields && validation.missingFields.length > 0) {
+          setValidationMissingFields(validation.missingFields);
+          setShowValidationDialog(true);
+        } else {
+          toast.error(validation.errorMessage);
+        }
         return;
       }
 
       if (!selectedCardiologistDocId || selectedCardiologistDocId === "__none") {
-        toast.error("Primary Cardiologist alanı tüm hastalar için dolu olmalı ve boş geçilemez.");
+        setValidationMissingFields(["Birincil Kardiyolog (Primary Cardiologist)"]);
+        setShowValidationDialog(true);
         return;
       }
 
@@ -1651,6 +1666,37 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
             </div>
           </CardContent>
         </Card>
+
+        {/* Missing Required Fields Validation Dialog */}
+        <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+          <DialogContent className="max-w-md bg-white rounded-3xl p-6 shadow-xl border-0">
+            <DialogHeader>
+              <DialogTitle className="text-red-600 font-bold text-lg flex items-center gap-2">
+                ⚠️ Kaydetme İşlemi Tamamlanamadı
+              </DialogTitle>
+              <DialogDescription className="text-slate-600 mt-2 text-sm leading-relaxed">
+                Kardiyoloji hekimi tarafından doldurulması gereken bazı bilgiler eksik. Lütfen zorunlu alanları kontrol edip tekrar kaydedin.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 space-y-2">
+              <span className="font-semibold text-slate-800 text-sm">Eksik Zorunlu Alanlar:</span>
+              <ul className="list-disc ml-5 space-y-1 text-sm bg-red-50 text-red-800 p-4 rounded-xl border border-red-200 font-medium">
+                {validationMissingFields.map((field, i) => (
+                  <li key={i}>{field}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex justify-end mt-6">
+              <Button
+                style={{ backgroundColor: '#056a75' }}
+                className="text-white rounded-xl px-5 hover:opacity-90 font-semibold"
+                onClick={() => setShowValidationDialog(false)}
+              >
+                Anladım, Düzenle
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Missing Report Fields Dialog */}
         <Dialog open={showMissingReportDialog} onOpenChange={setShowMissingReportDialog}>
