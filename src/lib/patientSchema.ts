@@ -104,6 +104,29 @@ export const defaultRedFlags: RedFlagSymptoms = {
   otherValue: "",
 };
 
+export function calculateAgeFromDob(dobString?: string | null): number | null {
+  if (!dobString) return null;
+  const cleanStr = String(dobString).trim().split('T')[0];
+  const parts = cleanStr.split('-');
+  if (parts.length !== 3) return null;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  const monthDiff = today.getMonth() - month;
+  const dayDiff = today.getDate() - day;
+
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age--;
+  }
+
+  return age >= 0 ? age : null;
+}
+
 export function getDefaultPatientFormData(overrides?: Partial<PatientFormData>): PatientFormData {
   return {
     firstName: "",

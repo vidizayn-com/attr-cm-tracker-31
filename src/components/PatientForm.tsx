@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 import DateInputDdMmYyyy from '@/components/DateInputDdMmYyyy';
-import { PatientFormData } from '@/lib/patientSchema';
+import { getDefaultPatientFormData, defaultClinicalFindings, defaultRedFlags, PatientFormData, calculateAgeFromDob } from '@/lib/patientSchema';
 
 export type DoctorOption = {
   documentId: string;
@@ -35,8 +35,57 @@ const PatientForm: React.FC<PatientFormProps> = ({
   const redFlags = safeData.redFlagSymptoms || defaultRedFlags;
   const safeCardiologists = Array.isArray(cardiologists) ? cardiologists : [];
 
+  const calculatedAge = calculateAgeFromDob(safeData.dateOfBirth);
+
+  React.useEffect(() => {
+    if (safeData.dateOfBirth) {
+      const calcAge = calculateAgeFromDob(safeData.dateOfBirth);
+      if (calcAge !== null && (!clinical.age65Value || clinical.age65Value === "")) {
+        setFormData((prev) => {
+          const current = prev || getDefaultPatientFormData();
+          const currentClinical = current.clinicalFindings || defaultClinicalFindings;
+          if (!currentClinical.age65Value) {
+            return {
+              ...current,
+              clinicalFindings: {
+                ...currentClinical,
+                age65: currentClinical.age65 ?? (calcAge >= 65),
+                age65Value: String(calcAge),
+              },
+            };
+          }
+          return current;
+        });
+      }
+    }
+  }, [safeData.dateOfBirth]);
+
   const updateField = <K extends keyof PatientFormData>(field: K, value: PatientFormData[K]) => {
     setFormData((prev) => ({ ...(prev || getDefaultPatientFormData()), [field]: value }));
+  };
+
+  const handleDateOfBirthChange = (newDob: string) => {
+    const calcAge = calculateAgeFromDob(newDob);
+    setFormData((prev) => {
+      const current = prev || getDefaultPatientFormData();
+      const currentClinical = current.clinicalFindings || defaultClinicalFindings;
+      if (calcAge !== null) {
+        const isAge65OrMore = calcAge >= 65;
+        return {
+          ...current,
+          dateOfBirth: newDob,
+          clinicalFindings: {
+            ...currentClinical,
+            age65: isAge65OrMore,
+            age65Value: String(calcAge),
+          },
+        };
+      }
+      return {
+        ...current,
+        dateOfBirth: newDob,
+      };
+    });
   };
 
   const updateClinicalFinding = (key: string, value: any) => {
@@ -121,12 +170,18 @@ const PatientForm: React.FC<PatientFormProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
-                Date of Birth <span className="text-red-500">*</span>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base flex items-center justify-between">
+                <span>Date of Birth <span className="text-red-500">*</span></span>
+                {calculatedAge !== null && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-[#089bab] border border-cyan-200">
+                    Age: {calculatedAge}
+                  </span>
+                )}
               </label>
               <DateOfBirthSelect
+                disabled={disabled}
                 value={safeData.dateOfBirth}
-                onChange={(val) => updateField('dateOfBirth', val)}
+                onChange={handleDateOfBirthChange}
               />
             </div>
           </div>
@@ -401,15 +456,22 @@ const PatientForm: React.FC<PatientFormProps> = ({
 
           {/* Age >= 65 */}
           <div className="p-3 bg-gray-50 rounded-xl">
-            <div className="flex items-center space-x-3 mb-2">
-              <input
-                disabled={disabled}
-                type="checkbox"
-                checked={clinical.age65}
-                onChange={(e) => updateClinicalFinding('age65', e.target.checked)}
-                className="w-5 h-5 flex-shrink-0"
-              />
-              <span className="font-semibold text-sm sm:text-base">Age &gt;= 65</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-3">
+                <input
+                  disabled={disabled}
+                  type="checkbox"
+                  checked={clinical.age65}
+                  onChange={(e) => updateClinicalFinding('age65', e.target.checked)}
+                  className="w-5 h-5 flex-shrink-0 cursor-pointer"
+                />
+                <span className="font-semibold text-sm sm:text-base">Age &gt;= 65</span>
+              </div>
+              {calculatedAge !== null && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-[#056a75] border border-teal-200">
+                  Calculated Age: {calculatedAge}
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-2 ml-8">
               <Input
