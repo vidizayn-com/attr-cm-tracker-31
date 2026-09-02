@@ -13,7 +13,7 @@ import { useUser } from '@/contexts/UserContext';
 import DateInputDdMmYyyy, { isoToDdMmYyyy } from '@/components/DateInputDdMmYyyy';
 
 import PatientForm, { DoctorOption } from '@/components/PatientForm';
-import { getDefaultPatientFormData, validatePatientFormData, PatientFormData } from '@/lib/patientSchema';
+import { getDefaultPatientFormData, validatePatientFormData, PatientFormData, calculateReportPriority } from '@/lib/patientSchema';
 
 type PatientData = {
   id: number;
@@ -171,31 +171,16 @@ const ReportTracker = () => {
   }, []);
 
   const reports = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     return patients.map(p => {
+      const { priority, diffDays } = calculateReportPriority(p.reportDeadline);
+
       let status = "Completed";
-      let priority = "Low";
-      
-      const lastReport = p.lastReportDate ? new Date(p.lastReportDate) : null;
-      const deadline = p.reportDeadline ? new Date(p.reportDeadline) : null;
-
-      let diffDays = 999;
-      if (deadline) {
-        const diffMs = deadline.getTime() - today.getTime();
-        diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      }
-
-      if (!deadline || !lastReport) {
+      if (!p.reportDeadline || !p.lastReportDate) {
         status = "Pending";
-        priority = "High";
       } else if (diffDays < 0) {
         status = "Overdue";
-        priority = "High";
       } else if (diffDays <= 20) {
         status = "Pending";
-        priority = "Medium";
       }
 
       return {
@@ -215,7 +200,13 @@ const ReportTracker = () => {
   const filteredReports = useMemo(() => {
     return reports.filter(r => {
       if (statusFilter !== 'All Statuses') {
-        if (statusFilter === 'Renewal Impending (< 20 Days)') {
+        if (statusFilter === 'High Priority (≤ 20 Days)') {
+          if (r.priority !== 'High') return false;
+        } else if (statusFilter === 'Mid Priority (21-30 Days)') {
+          if (r.priority !== 'Mid') return false;
+        } else if (statusFilter === 'Low Priority (> 30 Days)') {
+          if (r.priority !== 'Low') return false;
+        } else if (statusFilter === 'Renewal Impending (≤ 20 Days)') {
           if (r.diffDays > 20 || r.diffDays < 0) return false;
         } else if (r.status !== statusFilter) {
           return false;
@@ -239,7 +230,7 @@ const ReportTracker = () => {
   const getPriorityBadge = (priority: string) => {
     const styles: Record<string, string> = {
       'High': 'bg-red-100 text-red-800 border-red-200',
-      'Medium': 'bg-amber-100 text-amber-800 border-amber-200',
+      'Mid': 'bg-amber-100 text-amber-800 border-amber-200',
       'Low': 'bg-emerald-100 text-emerald-800 border-emerald-200'
     };
     return styles[priority] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -247,6 +238,9 @@ const ReportTracker = () => {
 
   const stats = useMemo(() => ({
     total: reports.length,
+    high: reports.filter(r => r.priority === 'High').length,
+    mid: reports.filter(r => r.priority === 'Mid').length,
+    low: reports.filter(r => r.priority === 'Low').length,
     completed: reports.filter(r => r.status === 'Completed').length,
     pending: reports.filter(r => r.status === 'Pending').length,
     overdue: reports.filter(r => r.status === 'Overdue').length,
@@ -345,11 +339,13 @@ const ReportTracker = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="h-11 px-4 rounded-xl bg-white/50 border border-gray-200 focus:bg-white transition-colors w-full sm:w-auto outline-none"
             >
-              <option>All Statuses</option>
-              <option>Completed</option>
-              <option>Pending</option>
-              <option>{"Renewal Impending (< 20 Days)"}</option>
-              <option>Overdue</option>
+              <option value="All Statuses">All Statuses & Priorities</option>
+              <option value="High Priority (≤ 20 Days)">High Priority (≤ 20 Days)</option>
+              <option value="Mid Priority (21-30 Days)">Mid Priority (21-30 Days)</option>
+              <option value="Low Priority (> 30 Days)">Low Priority (&gt; 30 Days)</option>
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="Overdue">Overdue</option>
             </select>
           </div>
         </div>
@@ -371,11 +367,11 @@ const ReportTracker = () => {
               <Card 
                 key={report.id} 
                 className={`glass-card cursor-pointer border-y-0 border-r-0 border-l-4 transition-all duration-300 ${
-                  report.diffDays < 0 
-                    ? "border-l-red-500 bg-red-50/20 hover:bg-red-50/30" 
-                    : report.diffDays <= 20 
+                  report.priority === 'High' 
+                    ? "border-l-red-500 bg-red-50/20 hover:bg-red-50/30 shadow-red-50/40 shadow-sm" 
+                    : report.priority === 'Mid' 
                       ? "border-l-amber-500 bg-amber-50/20 hover:bg-amber-50/30 shadow-amber-50/40 shadow-sm" 
-                      : "border-l-transparent hover:bg-white/80"
+                      : "border-l-emerald-500 bg-emerald-50/10 hover:bg-white/80"
                 }`}
                 onClick={() => navigate(`/patients/${report.id}`)}
               >

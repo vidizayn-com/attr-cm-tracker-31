@@ -104,6 +104,48 @@ export const defaultRedFlags: RedFlagSymptoms = {
   otherValue: "",
 };
 
+export type ReportPriority = "High" | "Mid" | "Low";
+
+export function calculateReportPriority(reportDeadline?: string | null): {
+  priority: ReportPriority;
+  diffDays: number;
+} {
+  if (!reportDeadline) {
+    return { priority: "High", diffDays: 0 };
+  }
+
+  const cleanStr = String(reportDeadline).trim().split('T')[0];
+  const parts = cleanStr.split('-');
+  if (parts.length !== 3) {
+    return { priority: "High", diffDays: 0 };
+  }
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    return { priority: "High", diffDays: 0 };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const deadline = new Date(year, month, day);
+  deadline.setHours(0, 0, 0, 0);
+
+  const diffMs = deadline.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 20) {
+    return { priority: "High", diffDays };
+  } else if (diffDays <= 30) {
+    return { priority: "Mid", diffDays };
+  } else {
+    return { priority: "Low", diffDays };
+  }
+}
+
 export function calculateAgeFromDob(dobString?: string | null): number | null {
   if (!dobString) return null;
   const cleanStr = String(dobString).trim().split('T')[0];
