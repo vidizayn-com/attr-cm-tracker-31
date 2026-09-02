@@ -3,9 +3,10 @@ import { Input } from '@/components/ui/input';
 import { Calendar } from 'lucide-react';
 
 interface DateInputDdMmYyyyProps {
-  value: string; // Expected format: ISO 'YYYY-MM-DD'
-  onChange: (isoValue: string) => void;
+  value: string; // Expected format: ISO 'YYYY-MM-DD' or 'DD/MM/YYYY'
+  onChange?: (isoValue: string) => void;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
   placeholder?: string;
   id?: string;
@@ -13,10 +14,17 @@ interface DateInputDdMmYyyyProps {
 
 // Convert YYYY-MM-DD -> DD/MM/YYYY
 export const isoToDdMmYyyy = (iso: string): string => {
-  if (!iso || iso.length < 10) return '';
-  const [y, m, d] = iso.split('-');
-  if (!y || !m || !d) return '';
-  return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+  if (!iso) return '';
+  if (iso.includes('/')) return iso;
+  const cleanIso = iso.includes('T') ? iso.split('T')[0] : iso;
+  const parts = cleanIso.split('-');
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    if (y.length === 4) {
+      return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+  }
+  return iso;
 };
 
 // Convert DD/MM/YYYY -> YYYY-MM-DD
@@ -48,6 +56,7 @@ const DateInputDdMmYyyy: React.FC<DateInputDdMmYyyyProps> = ({
   value,
   onChange,
   required = false,
+  disabled = false,
   className = '',
   placeholder = 'dd/mm/yyyy',
   id,
@@ -60,20 +69,24 @@ const DateInputDdMmYyyy: React.FC<DateInputDdMmYyyyProps> = ({
   }, [value]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const formatted = formatAsDdMmYyyy(e.target.value);
     setDisplayText(formatted);
 
     const iso = ddMmYyyyToIso(formatted);
-    if (iso) {
-      onChange(iso);
-    } else if (formatted === '') {
-      onChange('');
+    if (onChange) {
+      if (iso) {
+        onChange(iso);
+      } else if (formatted === '') {
+        onChange('');
+      }
     }
   };
 
   const handleNativePickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const iso = e.target.value;
-    if (iso) {
+    if (iso && onChange) {
       onChange(iso);
       setDisplayText(isoToDdMmYyyy(iso));
     }
@@ -97,12 +110,15 @@ const DateInputDdMmYyyy: React.FC<DateInputDdMmYyyyProps> = ({
         onBlur={handleBlur}
         placeholder={placeholder}
         required={required}
+        disabled={disabled}
         maxLength={10}
         className={`pr-10 ${className}`}
       />
       <button
         type="button"
+        disabled={disabled}
         onClick={() => {
+          if (disabled) return;
           if (hiddenDateRef.current) {
             if (typeof hiddenDateRef.current.showPicker === 'function') {
               hiddenDateRef.current.showPicker();
@@ -111,7 +127,7 @@ const DateInputDdMmYyyy: React.FC<DateInputDdMmYyyyProps> = ({
             }
           }
         }}
-        className="absolute right-3 p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+        className={`absolute right-3 p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         title="Open calendar"
       >
         <Calendar className="w-4 h-4" />
@@ -121,6 +137,7 @@ const DateInputDdMmYyyy: React.FC<DateInputDdMmYyyyProps> = ({
         type="date"
         value={value || ''}
         onChange={handleNativePickerChange}
+        disabled={disabled}
         className="sr-only opacity-0 w-0 h-0 absolute pointer-events-none"
         tabIndex={-1}
       />

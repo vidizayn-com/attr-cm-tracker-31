@@ -8,6 +8,8 @@ import Layout from '@/components/Layout';
 import { ArrowLeft, Upload, User, FileText, AlertTriangle, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import DateInputDdMmYyyy from '@/components/DateInputDdMmYyyy';
+
 const ReportDetails = () => {
   const navigate = useNavigate();
   const [files, setFiles] = useState({
@@ -58,7 +60,7 @@ const ReportDetails = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                <Input type="date" className="rounded-xl" />
+                <DateInputDdMmYyyy value="" onChange={() => {}} className="rounded-xl" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>

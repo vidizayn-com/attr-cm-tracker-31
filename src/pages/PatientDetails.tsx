@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft, ArrowLeftRight } from "lucide-react";
+import DateInputDdMmYyyy from "@/components/DateInputDdMmYyyy";
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
 import CombinedExaminations from "@/components/CombinedExaminations";
@@ -910,20 +911,18 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Last Visit <span className="text-red-500">*</span></div>
-                  <Input
-                    type="date"
+                  <DateInputDdMmYyyy
                     value={safeText((draft as any).lastVisit)}
                     disabled={!isEditing}
-                    onChange={(e) => setDraft({ ...draft, lastVisit: e.target.value } as any)}
+                    onChange={(isoVal) => setDraft({ ...draft, lastVisit: isoVal } as any)}
                   />
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Next Appointment <span className="text-red-500">*</span></div>
-                  <Input
-                    type="date"
+                  <DateInputDdMmYyyy
                     value={safeText((draft as any).nextAppointment)}
                     disabled={!isEditing}
-                    onChange={(e) => setDraft({ ...draft, nextAppointment: e.target.value || null } as any)}
+                    onChange={(isoVal) => setDraft({ ...draft, nextAppointment: isoVal || null } as any)}
                   />
                 </div>
               </div>
@@ -975,11 +974,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 mb-1">KVKK Consent At</div>
-                  <Input
-                    type="date"
+                  <DateInputDdMmYyyy
                     value={safeText((draft as any).kvkkConsentAt)}
                     disabled={!isEditing}
-                    onChange={(e) => setDraft({ ...draft, kvkkConsentAt: e.target.value || null } as any)}
+                    onChange={(isoVal) => setDraft({ ...draft, kvkkConsentAt: isoVal || null } as any)}
                   />
                 </div>
               </div>
@@ -1036,21 +1034,21 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-slate-500 mb-1">Last Report Date</div>
-                    <Input
-                      type="date"
+                    <DateInputDdMmYyyy
                       value={safeText((draft as any).lastReportDate)}
                       disabled={!isEditing}
-                      onChange={(e) => {
-                        const newDate = e.target.value || null;
+                      onChange={(newDate) => {
                         let newDeadline = (draft as any).reportDeadline;
                         if (newDate) {
                           const d = new Date(newDate);
-                          d.setMonth(d.getMonth() + 6);
-                          newDeadline = d.toISOString().split('T')[0];
+                          if (!isNaN(d.getTime())) {
+                            d.setMonth(d.getMonth() + 6);
+                            newDeadline = d.toISOString().split('T')[0];
+                          }
                         }
                         setDraft({ 
                           ...draft, 
-                          lastReportDate: newDate, 
+                          lastReportDate: newDate || null, 
                           reportDeadline: newDeadline 
                         } as any);
                       }}
@@ -1058,11 +1056,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   </div>
                   <div>
                     <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
-                    <Input
-                      type="date"
+                    <DateInputDdMmYyyy
                       value={safeText((draft as any).reportDeadline)}
                       disabled={!isEditing}
-                      onChange={(e) => setDraft({ ...draft, reportDeadline: e.target.value || null } as any)}
+                      onChange={(isoVal) => setDraft({ ...draft, reportDeadline: isoVal || null } as any)}
                     />
                   </div>
                 </div>
