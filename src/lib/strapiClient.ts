@@ -32,10 +32,11 @@ const getHeaders = () => {
 };
 
 export function parseStrapiErrorMessage(text: string, status: number): string {
-  if (!text) return `Request failed (${status})`;
+  if (!text) return `İşlem başarısız oldu (${status})`;
   try {
-    const json = JSON.parse(text);
-    const msg = json?.error?.message || json?.message || (typeof json?.error === 'string' ? json.error : null);
+    const json = typeof text === 'string' ? JSON.parse(text) : text;
+    let msg = json?.error?.message || json?.message || (typeof json?.error === 'string' ? json.error : null);
+    
     if (typeof msg === 'string' && msg.trim()) {
       const clean = msg.trim();
       if (clean.includes("already exists") || clean.includes("already has this email")) {
@@ -47,8 +48,19 @@ export function parseStrapiErrorMessage(text: string, status: number): string {
       return clean;
     }
   } catch (e) {
-    // ignore
+    // text is not JSON
   }
+
+  // If text contains JSON or error string, extract or return clean Turkish message
+  if (typeof text === 'string') {
+    if (text.includes("already exists") || text.includes("already has this email")) {
+      return "Bu e-posta adresine sahip bir hekim zaten sistemde kayıtlı.";
+    }
+    if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+      return "İşlem gerçekleştirilemedi. Lütfen girilen bilgileri kontrol edin.";
+    }
+  }
+
   return text;
 }
 
