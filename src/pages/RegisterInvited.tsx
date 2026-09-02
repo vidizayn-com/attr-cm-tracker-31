@@ -77,6 +77,24 @@ const RegisterInvited = () => {
     Genetics: 'Genetics',
   };
 
+  const normalizeName = (str: string) =>
+    str
+      .toLowerCase()
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]/g, '');
+
+  const suggestedHospital = React.useMemo(() => {
+    if (selectedHospitalId !== 'OTHER' || !customHospitalName.trim()) return null;
+    const normInput = normalizeName(customHospitalName);
+    if (normInput.length < 3) return null;
+    return hospitals.find((h) => normalizeName(h.name) === normInput) || null;
+  }, [selectedHospitalId, customHospitalName, hospitals]);
+
   const handleSubmit = async () => {
     const cleanPhoneDigits = phone.replace(/\D/g, '');
     if (!cleanPhoneDigits) {
@@ -274,7 +292,7 @@ const RegisterInvited = () => {
 
                 {/* Custom Hospital Input */}
                 {selectedHospitalId === 'OTHER' && (
-                  <div>
+                  <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
                       New Hospital Name <span className="text-red-500">*</span>
                     </label>
@@ -288,6 +306,27 @@ const RegisterInvited = () => {
                         placeholder="e.g. City Central Hospital *"
                       />
                     </div>
+
+                    {suggestedHospital && (
+                      <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-xl text-xs text-slate-700 flex flex-col gap-2">
+                        <div className="font-semibold text-[#089bab]">
+                          💡 Eşleşen Hastane Bulundu: "{suggestedHospital.name}"
+                        </div>
+                        <p>Tekrar duplicate hospital kaydı oluşturulmaması için mevcut hastaneyi seçebilirsiniz.</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 border-cyan-300 text-[#089bab] hover:bg-cyan-100 rounded-lg text-xs font-semibold"
+                          onClick={() => {
+                            setSelectedHospitalId(String(suggestedHospital.id));
+                            setCustomHospitalName('');
+                          }}
+                        >
+                          "{suggestedHospital.name}" Seç ve Devam Et
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 
