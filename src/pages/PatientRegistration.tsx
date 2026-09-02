@@ -1,32 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Upload, FileText, Image, Trash2, Eye, TrendingUp } from 'lucide-react';
-import DateOfBirthSelect from '@/components/DateOfBirthSelect';
-
-// ✅ NEW: Strapi API helpers
+import { Upload, FileText, Image, Trash2, Eye } from 'lucide-react';
+import PatientForm, { DoctorOption } from '@/components/PatientForm';
+import { getDefaultPatientFormData, validatePatientFormData, PatientFormData } from '@/lib/patientSchema';
 import { createPatient } from '@/lib/patientApi';
 import { strapiGet } from '@/lib/strapiClient';
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
-  const [showNtProBnpChart, setShowNtProBnpChart] = useState(false);
-  const [showGfrChart, setShowGfrChart] = useState(false);
 
-  // ✅ NEW: prevent double submit
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [cardiologists, setCardiologists] = useState<any[]>([]);
+  const [cardiologists, setCardiologists] = useState<DoctorOption[]>([]);
+  const [formData, setFormData] = useState<PatientFormData>(getDefaultPatientFormData());
 
-  React.useEffect(() => {
+  const [fileUploadData, setFileUploadData] = useState({
+    fileName: '',
+    category: 'General',
+  });
+
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([
+    {
+      id: 1,
+      name: 'Initial_Assessment.pdf',
+      type: 'pdf',
+      size: '1.2 MB',
+      uploadDate: '2024-12-17',
+      category: 'Assessment'
+    },
+    {
+      id: 2,
+      name: 'Patient_ID_Copy.jpg',
+      type: 'image',
+      size: '320 KB',
+      uploadDate: '2024-12-17',
+      category: 'Identification'
+    }
+  ]);
+
+  const [reviewFile, setReviewFile] = useState<any | null>(null);
+
+  useEffect(() => {
     (async () => {
       try {
         const docs = await strapiGet<any[]>("/api/auth/doctor/all-doctors?specialty=Cardiology");
@@ -37,106 +55,13 @@ const PatientRegistration = () => {
     })();
   }, []);
 
-  // Historical chart data for demonstration
-  const ntProBnpChartData = [
-    { date: '2024-08-28', value: 650, normal: 600 },
-    { date: '2024-09-22', value: 680, normal: 600 },
-    { date: '2024-10-18', value: 720, normal: 600 },
-    { date: '2024-11-12', value: 780, normal: 600 },
-    { date: '2024-12-08', value: 850, normal: 600 }
-  ];
-
-  const gfrChartData = [
-    { date: '2024-09-12', value: 72, normal: 30 },
-    { date: '2024-10-10', value: 70, normal: 30 },
-    { date: '2024-11-05', value: 68, normal: 30 },
-    { date: '2024-12-01', value: 65, normal: 30 }
-  ];
-
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    gender: '',
-    dateOfBirth: '',
-    contactNumber: '',
-    email: '',
-    primaryCardiologist: '',
-    caregiverPermission: false,
-    caregiverName: '',
-    caregiverEmail: '',
-    caregiverPhone: '',
-    clinicalFindings: {
-      lvh12: false,
-      lvh12Value: '',
-      ntProBnp: false,
-      ntProBnpValue: '',
-      bnpValue: '',
-      ef40: false,
-      ef40Value: '',
-      gfr30: false,
-      gfr30Value: '',
-      age65: false,
-      age65Value: ''
-    },
-    redFlagSymptoms: {
-      ecgHypovoltage: false,
-      pericardialEffusion: false,
-      biatrialDilation: false,
-      thickeningInteratrialSeptum: false,
-      fiveFiveFiveFinding: false,
-      diastolicDysfunction: false,
-      intoleranceHeartFailure: false,
-      spontaneousResolutionHypertension: false,
-      taviAorticStenosis: false,
-      other: false,
-      otherValue: ''
-    },
-    uploadedFiles: [
-      {
-        id: 1,
-        name: 'Initial_Assessment.pdf',
-        type: 'pdf',
-        size: '1.2 MB',
-        uploadDate: '2024-12-17',
-        category: 'Assessment'
-      },
-      {
-        id: 2,
-        name: 'Patient_ID_Copy.jpg',
-        type: 'image',
-        size: '320 KB',
-        uploadDate: '2024-12-17',
-        category: 'Identification'
-      }
-    ],
-    fileUploadData: {
-      fileName: '',
-      category: 'General'
-    }
-  });
-
-  // ✅ UPDATED: Submit now writes to Strapi
-  // ✅ UPDATED: Submit now writes to Strapi with strict validation
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    // Strict front-end validation for all required fields
-    const missingFields: string[] = [];
-
-    if (!formData.firstName.trim()) missingFields.push("Ad (First Name)");
-    if (!formData.lastName.trim()) missingFields.push("Soyad (Last Name)");
-    if (!formData.gender) missingFields.push("Cinsiyet (Gender)");
-    if (!formData.dateOfBirth) missingFields.push("Doğum Tarihi (Date of Birth)");
-    if (!formData.contactNumber.trim()) missingFields.push("İletişim Numarası (Contact Number)");
-    if (!formData.primaryCardiologist) missingFields.push("Birincil Kardiyolog (Primary Cardiologist)");
-
-    if (formData.caregiverPermission) {
-      if (!formData.caregiverName.trim()) missingFields.push("Hasta Yakını Adı (Caregiver Name)");
-      if (!formData.caregiverPhone.trim()) missingFields.push("Hasta Yakını Telefonu (Caregiver Phone)");
-    }
-
-    if (missingFields.length > 0) {
-      toast.error(`Lütfen zorunlu alanları doldurun: ${missingFields.join(", ")}`);
+    // Strict validation using shared schema validator
+    const validation = validatePatientFormData(formData);
+    if (!validation.isValid) {
+      toast.error(validation.errorMessage);
       return;
     }
 
@@ -149,8 +74,7 @@ const PatientRegistration = () => {
     setIsSubmitting(true);
 
     try {
-      // 1) Patient create
-      const createdPatient: any = await createPatient({
+      await createPatient({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
 
@@ -159,26 +83,19 @@ const PatientRegistration = () => {
           : undefined,
 
         dateOfBirth: formData.dateOfBirth || undefined,
-
-        // UI alanın: contactNumber
         contactNumber: formData.contactNumber.trim(),
-
-        // Strapi’de required "phone" varsa bunu da dolduralım
         phone: formData.contactNumber.trim(),
-
         email: formData.email?.trim() || undefined,
-
-        allowCaregiver: formData.caregiverPermission,
-
-        // Strapi alanın "statu"
-        statu: "New",
+        address: formData.address?.trim() || undefined,
+        allowCaregiver: formData.allowCaregiver,
+        statu: formData.statu || "New",
 
         clinicalFindings: formData.clinicalFindings,
         redFlagSymptoms: formData.redFlagSymptoms,
 
-        assignedCardiologistDocId: formData.primaryCardiologist || undefined,
+        assignedCardiologistDocId: formData.primaryCardiologistDocId || undefined,
 
-        caregiver: formData.caregiverPermission ? {
+        caregiver: formData.allowCaregiver ? {
           fullName: formData.caregiverName?.trim() || undefined,
           phone: formData.caregiverPhone.trim(),
           email: formData.caregiverEmail?.trim() || undefined,
@@ -200,51 +117,37 @@ const PatientRegistration = () => {
     }
   };
 
-
   const handleCancel = () => {
     navigate('/patients');
   };
 
-  // Handle file upload (mock)
+  // Handle file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files && formData.fileUploadData.fileName.trim()) {
+    if (files && fileUploadData.fileName.trim()) {
       Array.from(files).forEach(file => {
         const newFile = {
           id: Date.now() + Math.random(),
-          name: formData.fileUploadData.fileName || file.name,
+          name: fileUploadData.fileName || file.name,
           type: file.type.includes('image') ? 'image' : 'pdf',
           size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
           uploadDate: new Date().toISOString().split('T')[0],
-          category: formData.fileUploadData.category,
+          category: fileUploadData.category,
           url: URL.createObjectURL(file)
         };
-        setFormData(prev => ({
-          ...prev,
-          uploadedFiles: [...prev.uploadedFiles, newFile],
-          fileUploadData: { fileName: '', category: 'General' }
-        }));
+        setUploadedFiles(prev => [...prev, newFile]);
+        setFileUploadData({ fileName: '', category: 'General' });
       });
       toast.success(`${files.length} file(s) uploaded successfully!`);
-    } else if (files && !formData.fileUploadData.fileName.trim()) {
+    } else if (files && !fileUploadData.fileName.trim()) {
       toast.error('Please enter a file name before uploading.');
     }
   };
 
   // Handle file deletion
   const handleFileDelete = (fileId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      uploadedFiles: prev.uploadedFiles.filter(file => file.id !== fileId)
-    }));
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
     toast.success('File deleted successfully!');
-  };
-
-  const [reviewFile, setReviewFile] = useState<any | null>(null);
-
-  // Handle file view
-  const handleFileView = (file: any) => {
-    setReviewFile(file);
   };
 
   return (
@@ -252,494 +155,19 @@ const PatientRegistration = () => {
       <div className="container mx-auto p-4 sm:p-6">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center sm:text-left" style={{ color: '#29a8b6' }}>ATTR-CM Patient Registration</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center sm:text-left" style={{ color: '#29a8b6' }}>
+            ATTR-CM Patient Registration
+          </h1>
         </div>
 
-        {/* Mobile-First Responsive Layout */}
-        <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 mb-6 sm:mb-8">
-          {/* Patient Information */}
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-                <span className="text-xl sm:text-2xl">👤</span>
-                <span>Patient Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">First Name <span className="text-red-500">*</span></label>
-                  <Input
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="First Name"
-                    className="h-10 sm:h-auto"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Last Name <span className="text-red-500">*</span></label>
-                  <Input
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="Last Name"
-                    className="h-10 sm:h-auto"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Gender <span className="text-red-500">*</span></label>
-                  <select
-                    value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full h-10 px-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Date of Birth <span className="text-red-500">*</span></label>
-                  <DateOfBirthSelect
-                    value={formData.dateOfBirth}
-                    onChange={(val) => setFormData({ ...formData, dateOfBirth: val })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Contact Number <span className="text-red-500">*</span></label>
-                  <Input
-                    value={formData.contactNumber}
-                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                    placeholder="(+90) --- -- -- --"
-                    className="h-10 sm:h-auto"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Email</label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter email address"
-                  className="h-10 sm:h-auto"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Primary Cardiologist <span className="text-red-500">*</span></label>
-                <select
-                  value={formData.primaryCardiologist}
-                  onChange={(e) => setFormData({ ...formData, primaryCardiologist: e.target.value })}
-                  className="w-full h-10 px-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                >
-                  <option value="">Select a cardiologist</option>
-                  {cardiologists.map((doc: any) => (
-                    <option key={doc.documentId} value={doc.documentId}>{doc.fullName}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Caregiver Permission Checkbox */}
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Checkbox
-                    id="caregiverPermission"
-                    checked={formData.caregiverPermission}
-                    onCheckedChange={(checked) => setFormData({ ...formData, caregiverPermission: checked as boolean })}
-                    className="mt-1"
-                  />
-                  <label htmlFor="caregiverPermission" className="text-gray-700 font-semibold text-sm sm:text-base leading-relaxed">
-                    Permission to share caregiver information received
-                  </label>
-                </div>
-
-                {/* Caregiver Information Fields - only show when checkbox is checked */}
-                {formData.caregiverPermission && (
-                  <div className="space-y-4 ml-3 sm:ml-6 p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Name <span className="text-red-500">*</span></label>
-                      <Input
-                        value={formData.caregiverName}
-                        onChange={(e) => setFormData({ ...formData, caregiverName: e.target.value })}
-                        placeholder="Enter caregiver name"
-                        className="h-10 sm:h-auto"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Email</label>
-                      <Input
-                        type="email"
-                        value={formData.caregiverEmail}
-                        onChange={(e) => setFormData({ ...formData, caregiverEmail: e.target.value })}
-                        placeholder="Enter caregiver email"
-                        className="h-10 sm:h-auto"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Phone <span className="text-red-500">*</span></label>
-                      <Input
-                        type="tel"
-                        value={formData.caregiverPhone}
-                        onChange={(e) => setFormData({ ...formData, caregiverPhone: e.target.value })}
-                        placeholder="Enter caregiver phone"
-                        className="h-10 sm:h-auto"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Clinical Findings */}
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-                <span className="text-xl sm:text-2xl">📋</span>
-                <span>Clinical Findings</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* LVH>12 */}
-              <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-center space-x-3 mb-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.clinicalFindings.lvh12}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, lvh12: e.target.checked }
-                    })}
-                    className="w-5 h-5 flex-shrink-0"
-                  />
-                  <span className="font-semibold text-sm sm:text-base">LVH&gt;12</span>
-                </div>
-                <div className="flex items-center space-x-2 ml-8">
-                  <Input
-                    value={formData.clinicalFindings.lvh12Value}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, lvh12Value: e.target.value }
-                    })}
-                    className="w-20 text-center h-8 sm:h-10"
-                    placeholder="Value"
-                  />
-                  <span className="text-sm">mm</span>
-                </div>
-              </div>
-
-              {/* NT-proBNP */}
-              <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-start space-x-3 mb-3">
-                  <input
-                    type="checkbox"
-                    checked={formData.clinicalFindings.ntProBnp}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, ntProBnp: e.target.checked }
-                    })}
-                    className="w-5 h-5 flex-shrink-0 mt-1"
-                  />
-                  <span className="font-semibold text-sm sm:text-base leading-tight">NT-proBNP &gt;600 (or) BNP &gt;150</span>
-                  <button
-                    onClick={() => setShowNtProBnpChart(true)}
-                    className="ml-auto px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
-                    title="View NT-proBNP trend"
-                    type="button"
-                  >
-                    <TrendingUp className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="ml-8 space-y-3">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        value={formData.clinicalFindings.ntProBnpValue}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          clinicalFindings: { ...formData.clinicalFindings, ntProBnpValue: e.target.value }
-                        })}
-                        className="w-20 text-center h-8 sm:h-10"
-                        placeholder="Value"
-                      />
-                      <span className="text-sm">pg/mL (NT-proBNP)</span>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        value={formData.clinicalFindings.bnpValue}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          clinicalFindings: { ...formData.clinicalFindings, bnpValue: e.target.value }
-                        })}
-                        className="w-20 text-center h-8 sm:h-10"
-                        placeholder="Value"
-                      />
-                      <span className="text-sm">pg/mL (BNP)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* EF >= 40 */}
-              <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-center space-x-3 mb-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.clinicalFindings.ef40}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, ef40: e.target.checked }
-                    })}
-                    className="w-5 h-5 flex-shrink-0"
-                  />
-                  <span className="font-semibold text-sm sm:text-base">EF &gt;= 40</span>
-                </div>
-                <div className="flex items-center space-x-2 ml-8">
-                  <Input
-                    value={formData.clinicalFindings.ef40Value}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, ef40Value: e.target.value }
-                    })}
-                    className="w-20 text-center h-8 sm:h-10"
-                    placeholder="Value"
-                  />
-                  <span className="text-sm">%</span>
-                </div>
-              </div>
-
-              {/* GFR > 30 */}
-              <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-start space-x-3 mb-3">
-                  <input
-                    type="checkbox"
-                    checked={formData.clinicalFindings.gfr30}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, gfr30: e.target.checked }
-                    })}
-                    className="w-5 h-5 flex-shrink-0 mt-1"
-                  />
-                  <span className="font-semibold text-sm sm:text-base leading-tight">GFR &gt; 30 ml/min/1.72 m²</span>
-                  <button
-                    onClick={() => setShowGfrChart(true)}
-                    className="ml-auto px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
-                    title="View GFR trend"
-                    type="button"
-                  >
-                    <TrendingUp className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="ml-8">
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      value={formData.clinicalFindings.gfr30Value}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        clinicalFindings: { ...formData.clinicalFindings, gfr30Value: e.target.value }
-                      })}
-                      className="w-20 text-center h-8 sm:h-10"
-                      placeholder="Value"
-                    />
-                    <span className="text-xs sm:text-sm">ml/min/1.72 m²</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Age >= 65 */}
-              <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-center space-x-3 mb-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.clinicalFindings.age65}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, age65: e.target.checked }
-                    })}
-                    className="w-5 h-5 flex-shrink-0"
-                  />
-                  <span className="font-semibold text-sm sm:text-base">Age &gt;= 65</span>
-                </div>
-                <div className="flex items-center space-x-2 ml-8">
-                  <Input
-                    value={formData.clinicalFindings.age65Value}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      clinicalFindings: { ...formData.clinicalFindings, age65Value: e.target.value }
-                    })}
-                    className="w-20 text-center h-8 sm:h-10"
-                    placeholder="Value"
-                  />
-                  <span className="text-sm">years</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Red Flag Symptoms */}
-          <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-                <span className="text-xl sm:text-2xl">⚠️</span>
-                <span>Red Flag Symptoms</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.ecgHypovoltage}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, ecgHypovoltage: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">ECG Hypovoltage</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.pericardialEffusion}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, pericardialEffusion: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">Pericardial Effusion</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.biatrialDilation}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, biatrialDilation: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">Biatrial Dilation</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.thickeningInteratrialSeptum}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, thickeningInteratrialSeptum: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">Thickening of the Interatrial Septum and Valves</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.fiveFiveFiveFinding}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, fiveFiveFiveFinding: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">5-5-5 Finding</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.diastolicDysfunction}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, diastolicDysfunction: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">Diastolic Dysfunction with Increased Left Ventricular Filling Pressure</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.intoleranceHeartFailure}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, intoleranceHeartFailure: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">Intolerance to Standard Heart Failure Treatment</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.spontaneousResolutionHypertension}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, spontaneousResolutionHypertension: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">Spontaneous Resolution of Hypertension</span>
-              </div>
-
-              <div className="flex items-start space-x-3 p-2">
-                <input
-                  type="checkbox"
-                  checked={formData.redFlagSymptoms.taviAorticStenosis}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    redFlagSymptoms: { ...formData.redFlagSymptoms, taviAorticStenosis: e.target.checked }
-                  })}
-                  className="w-5 h-5 flex-shrink-0 mt-1"
-                />
-                <span className="text-sm sm:text-base leading-relaxed">TAVI / Aortic Stenosis</span>
-              </div>
-
-              <div className="p-2">
-                <div className="flex items-start space-x-3 mb-3">
-                  <input
-                    type="checkbox"
-                    checked={formData.redFlagSymptoms.other}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      redFlagSymptoms: { ...formData.redFlagSymptoms, other: e.target.checked }
-                    })}
-                    className="w-5 h-5 flex-shrink-0 mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <span className="text-sm sm:text-base">Other / Doctor's Comment</span>
-                    <Textarea
-                      value={formData.redFlagSymptoms.otherValue}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        redFlagSymptoms: { ...formData.redFlagSymptoms, otherValue: e.target.value }
-                      })}
-                      placeholder="Enter additional symptoms or doctor's comments"
-                      className="mt-2 min-h-40 resize-none w-full"
-                      rows={10}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Render Unified Shared PatientForm Component */}
+        <div className="mb-6 sm:mb-8">
+          <PatientForm
+            formData={formData}
+            setFormData={setFormData}
+            cardiologists={cardiologists}
+            disabled={isSubmitting}
+          />
         </div>
 
         {/* Action Buttons */}
@@ -760,26 +188,22 @@ const PatientRegistration = () => {
               <div className="space-y-4 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">File Name <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      File Name <span className="text-red-500">*</span>
+                    </label>
                     <Input
-                      value={formData.fileUploadData.fileName}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        fileUploadData: { ...prev.fileUploadData, fileName: e.target.value }
-                      }))}
+                      value={fileUploadData.fileName}
+                      onChange={(e) => setFileUploadData(prev => ({ ...prev, fileName: e.target.value }))}
                       placeholder="Enter file name"
-                      className="w-full"
+                      className="w-full rounded-xl"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                     <select
-                      value={formData.fileUploadData.category}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        fileUploadData: { ...prev.fileUploadData, category: e.target.value }
-                      }))}
-                      className="w-full h-10 px-3 border border-gray-300 rounded-md"
+                      value={fileUploadData.category}
+                      onChange={(e) => setFileUploadData(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full h-10 px-3 border border-gray-300 rounded-xl bg-white"
                     >
                       <option value="General">General</option>
                       <option value="Lab Results">Lab Results</option>
@@ -793,8 +217,7 @@ const PatientRegistration = () => {
                   </div>
                 </div>
 
-                {/* File Upload Section */}
-                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                <div className="p-4 border-2 border-dashed border-gray-300 rounded-xl">
                   <input
                     type="file"
                     multiple
@@ -814,7 +237,7 @@ const PatientRegistration = () => {
               </div>
 
               {/* Uploaded Files List */}
-              <div className="max-h-96 overflow-y-auto border rounded-lg">
+              <div className="max-h-96 overflow-y-auto border rounded-xl">
                 <Table>
                   <TableHeader className="sticky top-0 bg-white">
                     <TableRow>
@@ -827,7 +250,7 @@ const PatientRegistration = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {formData.uploadedFiles.map((file) => (
+                    {uploadedFiles.map((file) => (
                       <TableRow key={file.id} className="hover:bg-gray-50">
                         <TableCell className="flex items-center space-x-2">
                           {file.type === 'image' ? (
@@ -838,8 +261,7 @@ const PatientRegistration = () => {
                           <span>{file.name}</span>
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${file.type === 'image' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-                            }`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${file.type === 'image' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
                             {file.type.toUpperCase()}
                           </span>
                         </TableCell>
@@ -851,7 +273,7 @@ const PatientRegistration = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleFileView(file)}
+                              onClick={() => setReviewFile(file)}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -867,7 +289,7 @@ const PatientRegistration = () => {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {formData.uploadedFiles.length === 0 && (
+                    {uploadedFiles.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                           No files uploaded yet
@@ -896,114 +318,6 @@ const PatientRegistration = () => {
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
-
-        {/* NT-proBNP Chart Dialog */}
-        <Dialog open={showNtProBnpChart} onOpenChange={setShowNtProBnpChart}>
-          <DialogContent className="max-w-4xl max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <span>NT-proBNP Trend Analysis</span>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={ntProBnpChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip
-                      formatter={(value, name) => [
-                        `${value} pg/mL`,
-                        name === 'value' ? 'NT-proBNP' : 'Normal Threshold'
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#2563eb"
-                      strokeWidth={3}
-                      dot={{ fill: '#2563eb', strokeWidth: 2, r: 6 }}
-                      name="NT-proBNP"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="normal"
-                      stroke="#dc2626"
-                      strokeWidth={2}
-                      strokeDasharray="5 5"
-                      dot={false}
-                      name="Normal Threshold (600 pg/mL)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">Trend Analysis</h4>
-                <p className="text-blue-800 text-sm">
-                  NT-proBNP levels show an upward trend over the past 4 months, increasing from 650 pg/mL to 850 pg/mL.
-                  All values remain above the threshold of 600 pg/mL, indicating persistent elevation requiring continued monitoring.
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* GFR Chart Dialog */}
-        <Dialog open={showGfrChart} onOpenChange={setShowGfrChart}>
-          <DialogContent className="max-w-4xl max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <span>GFR Trend Analysis</span>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={gfrChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip
-                      formatter={(value, name) => [
-                        `${value} ml/min/1.73m²`,
-                        name === 'value' ? 'GFR' : 'Minimum Threshold'
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#16a34a"
-                      strokeWidth={3}
-                      dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
-                      name="GFR"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="normal"
-                      stroke="#dc2626"
-                      strokeWidth={2}
-                      strokeDasharray="5 5"
-                      dot={false}
-                      name="Minimum Threshold (30 ml/min/1.73m²)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-green-900 mb-2">Trend Analysis</h4>
-                <p className="text-green-800 text-sm">
-                  GFR shows a gradual decline from 72 to 65 ml/min/1.73m² over 3 months.
-                  Values remain well above the minimum threshold of 30 ml/min/1.73m², indicating acceptable kidney function.
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* File Review Modal */}
         <Dialog open={reviewFile !== null} onOpenChange={(open) => !open && setReviewFile(null)}>
@@ -1042,7 +356,7 @@ const PatientRegistration = () => {
                     <FileText className="w-16 h-16 mx-auto text-red-400" />
                     <h3 className="font-semibold text-lg text-slate-800">{reviewFile?.name}</h3>
                     <p className="text-sm text-slate-500">
-                      This is a pre-configured sample document. Click the button below to download the sample file.
+                      Sample document preview.
                     </p>
                   </div>
                 )
@@ -1052,28 +366,6 @@ const PatientRegistration = () => {
               <Button variant="outline" onClick={() => setReviewFile(null)}>
                 Close
               </Button>
-              {reviewFile?.url ? (
-                <Button asChild style={{ backgroundColor: '#29a8b6' }}>
-                  <a href={reviewFile.url} download={reviewFile.name}>
-                    Download
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  style={{ backgroundColor: '#29a8b6' }}
-                  onClick={() => {
-                    const element = document.createElement("a");
-                    const fileBlob = new Blob(["Sample file contents of: " + (reviewFile?.name || "")], { type: 'text/plain' });
-                    element.href = URL.createObjectURL(fileBlob);
-                    element.download = reviewFile?.name || "file.txt";
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                  }}
-                >
-                  Download Sample
-                </Button>
-              )}
             </div>
           </DialogContent>
         </Dialog>

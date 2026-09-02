@@ -12,6 +12,9 @@ import { createPatient } from '@/lib/patientApi';
 import { useUser } from '@/contexts/UserContext';
 import DateInputDdMmYyyy, { isoToDdMmYyyy } from '@/components/DateInputDdMmYyyy';
 
+import PatientForm, { DoctorOption } from '@/components/PatientForm';
+import { getDefaultPatientFormData, validatePatientFormData, PatientFormData } from '@/lib/patientSchema';
+
 type PatientData = {
   id: number;
   documentId: string;
@@ -33,40 +36,19 @@ const ReportTracker = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [submittingAdd, setSubmittingAdd] = useState(false);
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    gender: 'Male',
-    contactNumber: '',
-    lastReportDate: '',
-    reportDeadline: '',
-    ntProBnp: '',
-    gfr: '',
-    ef: '',
-    lvh: '',
-    echoEfValue: '',
-    echoIvsValue: '',
-    echoPwValue: '',
-    echoLaValue: '',
-    echoSddValue: '',
-    nmBoneScintigraphyGrade: '',
-    geneticsAnomaly: '',
-    hemSerumImmunofixation: '',
-    hemUrineImmunofixation: '',
-    hemFreeLightChain: '',
-    symptoms: {
-      ecgHypovoltage: false,
-      pericardialEffusion: false,
-      biatrialDilation: false,
-      thickeningInteratrialSeptum: false,
-      fiveFiveFiveFinding: false,
-      diastolicDysfunction: false,
-      intoleranceHeartFailure: false,
-      spontaneousResolutionHypertension: false,
-      taviAorticStenosis: false,
-    }
-  });
+  const [cardiologists, setCardiologists] = useState<DoctorOption[]>([]);
+  const [form, setForm] = useState<PatientFormData>(getDefaultPatientFormData({ statu: "Follow Up" }));
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const docs = await strapiGet<any[]>("/api/auth/doctor/all-doctors?specialty=Cardiology");
+        setCardiologists(Array.isArray(docs) ? docs : []);
+      } catch (e) {
+        console.warn("Failed to load cardiologists", e);
+      }
+    })();
+  }, []);
 
   const handleLastReportDateChange = (val: string) => {
     setForm(prev => {
@@ -82,104 +64,52 @@ const ReportTracker = () => {
 
   const handleAddPatientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.firstName.trim() || !form.lastName.trim() || !form.reportDeadline) {
-      toast.error("Please fill in all required fields (*).");
+
+    // Strict validation using shared patient schema
+    const validation = validatePatientFormData(form, { isReportTracker: true });
+    if (!validation.isValid) {
+      toast.error(validation.errorMessage);
       return;
     }
 
     try {
       setSubmittingAdd(true);
-      const clinicalFindings = {
-        lvh12Value: form.lvh || "",
-        ntProBnpValue: form.ntProBnp || "",
-        ef40Value: form.ef || "",
-        gfr30Value: form.gfr || "",
-        lvh12: form.lvh ? parseFloat(form.lvh) > 12 : false,
-        ntProBnp: form.ntProBnp ? parseFloat(form.ntProBnp) > 600 : false,
-        ef40: form.ef ? parseFloat(form.ef) >= 40 : false,
-        gfr30: form.gfr ? parseFloat(form.gfr) > 30 : false,
-        echoEfValue: form.echoEfValue || "",
-        echoIvsValue: form.echoIvsValue || "",
-        echoPwValue: form.echoPwValue || "",
-        echoLaValue: form.echoLaValue || "",
-        echoSddValue: form.echoSddValue || "",
-        nmBoneScintigraphyGrade: form.nmBoneScintigraphyGrade || "",
-        geneticsAnomaly: form.geneticsAnomaly || "",
-        hemSerumImmunofixation: form.hemSerumImmunofixation || "",
-        hemUrineImmunofixation: form.hemUrineImmunofixation || "",
-        hemFreeLightChain: form.hemFreeLightChain || "",
-      };
-
-      const redFlagSymptoms = {
-        ecgHypovoltage: form.symptoms.ecgHypovoltage,
-        pericardialEffusion: form.symptoms.pericardialEffusion,
-        biatrialDilation: form.symptoms.biatrialDilation,
-        thickeningInteratrialSeptum: form.symptoms.thickeningInteratrialSeptum,
-        fiveFiveFiveFinding: form.symptoms.fiveFiveFiveFinding,
-        diastolicDysfunction: form.symptoms.diastolicDysfunction,
-        intoleranceHeartFailure: form.symptoms.intoleranceHeartFailure,
-        spontaneousResolutionHypertension: form.symptoms.spontaneousResolutionHypertension,
-        taviAorticStenosis: form.symptoms.taviAorticStenosis,
-      };
-
-      const cleanFirstName = form.firstName.trim();
-      const cleanLastName = form.lastName.trim();
-      const generatedEmail = form.email.trim() || `${cleanFirstName.toLowerCase().replace(/\s+/g, '')}.${cleanLastName.toLowerCase().replace(/\s+/g, '')}@patient.local`;
-      const contactNo = form.contactNumber.trim() || "Report Only";
 
       await createPatient({
-        firstName: cleanFirstName,
-        lastName: cleanLastName,
-        email: generatedEmail,
-        gender: form.gender || "Male",
-        contactNumber: contactNo,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        gender: form.gender
+          ? form.gender.charAt(0).toUpperCase() + form.gender.slice(1)
+          : undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        contactNumber: form.contactNumber.trim(),
+        phone: form.contactNumber.trim(),
+        email: form.email?.trim() || undefined,
+        address: form.address?.trim() || undefined,
+        allowCaregiver: form.allowCaregiver,
         statu: "Follow Up",
+
         lastReportDate: form.lastReportDate || null,
-        reportDeadline: form.reportDeadline,
+        reportDeadline: form.reportDeadline || null,
         lastVisit: form.lastReportDate || new Date().toISOString().split('T')[0],
         nextAppointment: form.reportDeadline || null,
-        clinicalFindings,
-        redFlagSymptoms,
+
+        clinicalFindings: form.clinicalFindings,
+        redFlagSymptoms: form.redFlagSymptoms,
+
+        assignedCardiologistDocId: form.primaryCardiologistDocId || undefined,
+
+        caregiver: form.allowCaregiver ? {
+          fullName: form.caregiverName?.trim() || undefined,
+          phone: form.caregiverPhone.trim(),
+          email: form.caregiverEmail?.trim() || undefined,
+          relationToPatient: "Caregiver",
+        } : undefined,
       });
 
-      toast.success("Patient added for report tracking successfully!");
+      toast.success("Hasta rapor takibi için başarıyla eklendi!");
       setIsAddModalOpen(false);
-      
-      // Reset form
-      setForm({
-        firstName: '',
-        lastName: '',
-        email: '',
-        gender: 'Male',
-        contactNumber: '',
-        lastReportDate: '',
-        reportDeadline: '',
-        ntProBnp: '',
-        gfr: '',
-        ef: '',
-        lvh: '',
-        echoEfValue: '',
-        echoIvsValue: '',
-        echoPwValue: '',
-        echoLaValue: '',
-        echoSddValue: '',
-        nmBoneScintigraphyGrade: '',
-        geneticsAnomaly: '',
-        hemSerumImmunofixation: '',
-        hemUrineImmunofixation: '',
-        hemFreeLightChain: '',
-        symptoms: {
-          ecgHypovoltage: false,
-          pericardialEffusion: false,
-          biatrialDilation: false,
-          thickeningInteratrialSeptum: false,
-          fiveFiveFiveFinding: false,
-          diastolicDysfunction: false,
-          intoleranceHeartFailure: false,
-          spontaneousResolutionHypertension: false,
-          taviAorticStenosis: false,
-        }
-      });
+      setForm(getDefaultPatientFormData({ statu: "Follow Up" }));
 
       // Reload patient list
       setLoading(true);
@@ -195,7 +125,11 @@ const ReportTracker = () => {
       setPatients(Array.from(map.values()));
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Failed to create patient.");
+      let errorMsg = err?.message || "";
+      if (!errorMsg || errorMsg.includes("Failed to fetch") || errorMsg.includes("TypeError")) {
+        errorMsg = "Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.";
+      }
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
       setSubmittingAdd(false);
@@ -518,357 +452,14 @@ const ReportTracker = () => {
             </DialogHeader>
 
             <form onSubmit={handleAddPatientSubmit} className="space-y-6">
-              {/* Section 1: Patient Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-800 border-b pb-1">Patient Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      required
-                      value={form.firstName}
-                      onChange={(e) => setForm(prev => ({ ...prev, firstName: e.target.value }))}
-                      placeholder="Enter first name"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      required
-                      value={form.lastName}
-                      onChange={(e) => setForm(prev => ({ ...prev, lastName: e.target.value }))}
-                      placeholder="Enter last name"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="e.g. patient@example.com"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gender <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={form.gender}
-                      onChange={(e) => setForm(prev => ({ ...prev, gender: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Contact Number
-                    </label>
-                    <Input
-                      value={form.contactNumber}
-                      onChange={(e) => setForm(prev => ({ ...prev, contactNumber: e.target.value }))}
-                      placeholder="e.g. +90 555 123 4567"
-                      className="rounded-xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Report Dates */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-800 border-b pb-1">Report Deadlines</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
-                    </label>
-                    <DateInputDdMmYyyy
-                      value={form.lastReportDate}
-                      onChange={(isoVal) => handleLastReportDateChange(isoVal)}
-                      className="rounded-xl"
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Selecting this date will auto-calculate standard +6 months for the next renewal.
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
-                    </label>
-                    <DateInputDdMmYyyy
-                      required
-                      value={form.reportDeadline}
-                      onChange={(isoVal) => setForm(prev => ({ ...prev, reportDeadline: isoVal }))}
-                      className="rounded-xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Clinical Findings */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-800 border-b pb-1">Clinical Findings</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      LVH Value (mm)
-                    </label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={form.lvh}
-                      onChange={(e) => setForm(prev => ({ ...prev, lvh: e.target.value }))}
-                      placeholder="e.g. 14"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      NT-proBNP (pg/mL)
-                    </label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={form.ntProBnp}
-                      onChange={(e) => setForm(prev => ({ ...prev, ntProBnp: e.target.value }))}
-                      placeholder="e.g. 650"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      EF Value (%)
-                    </label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={form.ef}
-                      onChange={(e) => setForm(prev => ({ ...prev, ef: e.target.value }))}
-                      placeholder="e.g. 45"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      GFR (mL/min/1.73m²)
-                    </label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={form.gfr}
-                      onChange={(e) => setForm(prev => ({ ...prev, gfr: e.target.value }))}
-                      placeholder="e.g. 68"
-                      className="rounded-xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section: Echocardiography (Cardiology) */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-800 border-b pb-1">Echocardiography Findings</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Echo EF (%)
-                    </label>
-                    <Input
-                      type="number"
-                      value={form.echoEfValue}
-                      onChange={(e) => setForm(prev => ({ ...prev, echoEfValue: e.target.value }))}
-                      placeholder="e.g. 50"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Echo IVS (mm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={form.echoIvsValue}
-                      onChange={(e) => setForm(prev => ({ ...prev, echoIvsValue: e.target.value }))}
-                      placeholder="e.g. 13"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Echo PW (mm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={form.echoPwValue}
-                      onChange={(e) => setForm(prev => ({ ...prev, echoPwValue: e.target.value }))}
-                      placeholder="e.g. 12"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Echo LA (mm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={form.echoLaValue}
-                      onChange={(e) => setForm(prev => ({ ...prev, echoLaValue: e.target.value }))}
-                      placeholder="e.g. 42"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Echo SDD
-                    </label>
-                    <select
-                      value={form.echoSddValue}
-                      onChange={(e) => setForm(prev => ({ ...prev, echoSddValue: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="">Select SDD</option>
-                      <option value="Normal">Normal</option>
-                      <option value="Grade I">Grade I</option>
-                      <option value="Grade II">Grade II</option>
-                      <option value="Grade III">Grade III</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section: Other Specialty Findings */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-800 border-b pb-1">Specialty Findings</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bone Scintigraphy (Grade)
-                    </label>
-                    <select
-                      value={form.nmBoneScintigraphyGrade}
-                      onChange={(e) => setForm(prev => ({ ...prev, nmBoneScintigraphyGrade: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="">Select Grade</option>
-                      <option value="Grade 0">Grade 0</option>
-                      <option value="Grade 1">Grade 1</option>
-                      <option value="Grade 2">Grade 2</option>
-                      <option value="Grade 3">Grade 3</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Genetics Anomaly
-                    </label>
-                    <select
-                      value={form.geneticsAnomaly}
-                      onChange={(e) => setForm(prev => ({ ...prev, geneticsAnomaly: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="">Select Anomaly</option>
-                      <option value="ATTRv">ATTRv</option>
-                      <option value="ATTRwt">ATTRwt</option>
-                      <option value="None">None</option>
-                      <option value="Pending">Pending</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Serum Immunofixation
-                    </label>
-                    <select
-                      value={form.hemSerumImmunofixation}
-                      onChange={(e) => setForm(prev => ({ ...prev, hemSerumImmunofixation: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="">Select Status</option>
-                      <option value="Normal">Normal</option>
-                      <option value="Abnormal">Abnormal</option>
-                      <option value="Not Done">Not Done</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Urine Immunofixation
-                    </label>
-                    <select
-                      value={form.hemUrineImmunofixation}
-                      onChange={(e) => setForm(prev => ({ ...prev, hemUrineImmunofixation: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="">Select Status</option>
-                      <option value="Normal">Normal</option>
-                      <option value="Abnormal">Abnormal</option>
-                      <option value="Not Done">Not Done</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Free Light Chain
-                    </label>
-                    <select
-                      value={form.hemFreeLightChain}
-                      onChange={(e) => setForm(prev => ({ ...prev, hemFreeLightChain: e.target.value }))}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
-                    >
-                      <option value="">Select Status</option>
-                      <option value="Normal">Normal</option>
-                      <option value="Abnormal">Abnormal</option>
-                      <option value="Not Done">Not Done</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 4: Red Flag Symptoms */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-800 border-b pb-1">Red Flag Symptoms</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    { key: 'ecgHypovoltage', label: 'ECG Hypovoltage' },
-                    { key: 'pericardialEffusion', label: 'Pericardial Effusion' },
-                    { key: 'biatrialDilation', label: 'Biatrial Dilation' },
-                    { key: 'thickeningInteratrialSeptum', label: 'Thickening Interatrial Septum' },
-                    { key: 'fiveFiveFiveFinding', label: '5-5-5 Finding' },
-                    { key: 'diastolicDysfunction', label: 'Diastolic Dysfunction' },
-                    { key: 'intoleranceHeartFailure', label: 'Intolerance Heart Failure' },
-                    { key: 'spontaneousResolutionHypertension', label: 'Spontaneous Resolution Hypertension' },
-                    { key: 'taviAorticStenosis', label: 'TAVI Aortic Stenosis' }
-                  ].map((symptom) => (
-                    <div key={symptom.key} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`symptom-${symptom.key}`}
-                        checked={form.symptoms[symptom.key as keyof typeof form.symptoms]}
-                        onChange={(e) => setForm(prev => ({
-                          ...prev,
-                          symptoms: {
-                            ...prev.symptoms,
-                            [symptom.key]: e.target.checked
-                          }
-                        }))}
-                        className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
-                      />
-                      <label htmlFor={`symptom-${symptom.key}`} className="text-sm text-gray-700 cursor-pointer">
-                        {symptom.label}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <PatientForm
+                formData={form}
+                setFormData={setForm}
+                cardiologists={cardiologists}
+                showReportDates={true}
+                onLastReportDateChange={handleLastReportDateChange}
+                disabled={submittingAdd}
+              />
 
               {/* Form Actions */}
               <div className="flex justify-end gap-3 border-t pt-4">

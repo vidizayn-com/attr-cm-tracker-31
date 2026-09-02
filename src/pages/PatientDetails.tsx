@@ -21,6 +21,8 @@ import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pen
 import DateInputDdMmYyyy from "@/components/DateInputDdMmYyyy";
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
+import { validatePatientFormData, PatientFormData, defaultClinicalFindings, defaultRedFlags } from "@/lib/patientSchema";
+
 import CombinedExaminations from "@/components/CombinedExaminations";
 
 import {
@@ -363,34 +365,31 @@ export default function PatientDetails() {
       if (!draft) throw new Error("Draft missing.");
       if (!patient) throw new Error("Patient missing.");
 
-      // Required alan kontrolü
-      const requiredMissing: string[] = [];
+      const formValidationData: PatientFormData = {
+        firstName: draft.firstName ?? "",
+        lastName: draft.lastName ?? "",
+        gender: draft.gender ?? "",
+        dateOfBirth: draft.dateOfBirth ?? "",
+        contactNumber: draft.contactNumber ?? "",
+        email: draft.email ?? "",
+        address: draft.address ?? "",
+        primaryCardiologistDocId: selectedCardiologistDocId ?? "",
+        statu: draft.statu ?? "New",
+        allowCaregiver: Boolean(draft.allowCaregiver),
+        caregiverName: (draft as any).caregiver?.fullName ?? (draft as any).caregiverName ?? "",
+        caregiverEmail: (draft as any).caregiver?.email ?? (draft as any).caregiverEmail ?? "",
+        caregiverPhone: (draft as any).caregiver?.phone ?? (draft as any).caregiverPhone ?? "",
+        lastVisit: (draft as any).lastVisit ?? "",
+        nextAppointment: (draft as any).nextAppointment ?? "",
+        lastReportDate: (draft as any).lastReportDate ?? "",
+        reportDeadline: (draft as any).reportDeadline ?? "",
+        clinicalFindings: (draft as any).clinicalFindings ?? defaultClinicalFindings,
+        redFlagSymptoms: (draft as any).redFlagSymptoms ?? defaultRedFlags,
+      };
 
-      const fn = (draft.firstName ?? "").trim();
-      const ln = (draft.lastName ?? "").trim();
-      const gd = (draft.gender ?? "").trim();
-      const em = (draft.email ?? "").trim();
-      const cn = (draft.contactNumber ?? "").trim();
-      const lv = ((draft as any).lastVisit ?? "").toString().trim();
-      const na = ((draft as any).nextAppointment ?? "").toString().trim();
-
-      if (!fn) requiredMissing.push("First Name");
-      if (!ln) requiredMissing.push("Last Name");
-      if (!gd) requiredMissing.push("Gender");
-      if (!em) requiredMissing.push("Email");
-      if (!cn) requiredMissing.push("Contact Number");
-      if (!selectedCardiologistDocId) requiredMissing.push("Primary Cardiologist");
-      if (!lv) requiredMissing.push("Last Visit");
-      if (!na) requiredMissing.push("Next Appointment");
-
-      if (requiredMissing.length) {
-        toast.error(`Lütfen zorunlu alanları doldurun: ${requiredMissing.join(", ")}`);
-        return;
-      }
-
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
-      if (!emailOk) {
-        toast.error("Email formatı geçersiz.");
+      const validation = validatePatientFormData(formValidationData);
+      if (!validation.isValid) {
+        toast.error(validation.errorMessage);
         return;
       }
 
