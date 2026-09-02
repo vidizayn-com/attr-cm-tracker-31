@@ -140,7 +140,10 @@ function sanitizePatientPayload(payload: Partial<Patient>) {
   setIfDefined("lastVisit", payload.lastVisit ?? undefined);
   setIfDefined("nextAppointment", payload.nextAppointment ?? undefined);
   setIfDefined("lastReportDate", payload.lastReportDate ?? undefined);
-  setIfDefined("reportDeadline", payload.reportDeadline ?? undefined);
+  if (payload.reportDeadline !== undefined) {
+    clean["report_deadline"] = payload.reportDeadline;
+    clean["reportDeadline"] = payload.reportDeadline;
+  }
 
   if (payload.statu === "Amyloidosis was ruled out") {
     setIfDefined("cancellationReason", payload.cancellationReason ?? "");

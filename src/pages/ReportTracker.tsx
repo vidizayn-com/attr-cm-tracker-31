@@ -36,6 +36,9 @@ const ReportTracker = () => {
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
+    email: '',
+    gender: 'Male',
+    contactNumber: '',
     lastReportDate: '',
     reportDeadline: '',
     ntProBnp: '',
@@ -119,10 +122,17 @@ const ReportTracker = () => {
         taviAorticStenosis: form.symptoms.taviAorticStenosis,
       };
 
+      const cleanFirstName = form.firstName.trim();
+      const cleanLastName = form.lastName.trim();
+      const generatedEmail = form.email.trim() || `${cleanFirstName.toLowerCase().replace(/\s+/g, '')}.${cleanLastName.toLowerCase().replace(/\s+/g, '')}@patient.local`;
+      const contactNo = form.contactNumber.trim() || "Report Only";
+
       await createPatient({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        contactNumber: "Report Only",
+        firstName: cleanFirstName,
+        lastName: cleanLastName,
+        email: generatedEmail,
+        gender: form.gender || "Male",
+        contactNumber: contactNo,
         statu: "Follow Up",
         lastReportDate: form.lastReportDate || null,
         reportDeadline: form.reportDeadline,
@@ -139,6 +149,9 @@ const ReportTracker = () => {
       setForm({
         firstName: '',
         lastName: '',
+        email: '',
+        gender: 'Male',
+        contactNumber: '',
         lastReportDate: '',
         reportDeadline: '',
         ntProBnp: '',
@@ -530,6 +543,43 @@ const ReportTracker = () => {
                       value={form.lastName}
                       onChange={(e) => setForm(prev => ({ ...prev, lastName: e.target.value }))}
                       placeholder="Enter last name"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <Input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="e.g. patient@example.com"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Gender <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={form.gender}
+                      onChange={(e) => setForm(prev => ({ ...prev, gender: e.target.value }))}
+                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 focus:bg-white w-full outline-none text-sm"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Number
+                    </label>
+                    <Input
+                      value={form.contactNumber}
+                      onChange={(e) => setForm(prev => ({ ...prev, contactNumber: e.target.value }))}
+                      placeholder="e.g. +90 555 123 4567"
                       className="rounded-xl"
                     />
                   </div>

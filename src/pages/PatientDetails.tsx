@@ -853,7 +853,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">First Name</div>
+                  <div className="text-xs text-slate-500 mb-1">First Name <span className="text-red-500">*</span></div>
                   <Input
                     value={safeText(draft.firstName)}
                     disabled={!isEditing}
@@ -861,7 +861,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">Last Name</div>
+                  <div className="text-xs text-slate-500 mb-1">Last Name <span className="text-red-500">*</span></div>
                   <Input
                     value={safeText(draft.lastName)}
                     disabled={!isEditing}
@@ -871,7 +871,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               </div>
 
               <div>
-                <div className="text-xs text-slate-500 mb-1">Gender</div>
+                <div className="text-xs text-slate-500 mb-1">Gender <span className="text-red-500">*</span></div>
                 <Select
                   value={safeText((draft as any).gender) || "unspecified"}
                   onValueChange={(v) => setDraft({ ...draft, gender: v === "unspecified" ? null : v } as any)}
@@ -899,7 +899,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">Contact Number</div>
+                  <div className="text-xs text-slate-500 mb-1">Contact Number <span className="text-red-500">*</span></div>
                   <Input
                     value={safeText((draft as any).contactNumber)}
                     disabled={!isEditing}
@@ -928,7 +928,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               </div>
 
               <div>
-                <div className="text-xs text-slate-500 mb-1">Email</div>
+                <div className="text-xs text-slate-500 mb-1">Email <span className="text-red-500">*</span></div>
                 <Input
                   value={safeText((draft as any).email)}
                   disabled={!isEditing}
