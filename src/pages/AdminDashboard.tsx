@@ -27,7 +27,7 @@ type Hospital = {
 
 type Doctor = {
     id: number; documentId: string; fullName: string; specialty: string;
-    phone: string; email: string | null; canInvite: boolean;
+    phone: string | null; email: string | null; canInvite: boolean;
     institution: { id: number; name: string } | null;
 };
 
@@ -707,9 +707,9 @@ const AdminDashboard = () => {
 
     const openEditDoctor = (d: Doctor) => {
         setEditDoctorId(d.id);
-        setEditName(d.fullName);
-        setEditSpecialty(d.specialty);
-        setEditPhone(d.phone.replace('+90', ''));
+        setEditName(d.fullName || '');
+        setEditSpecialty(d.specialty || 'Cardiology');
+        setEditPhone(d.phone ? String(d.phone).replace('+90', '') : '');
         setEditEmail(d.email || '');
         setEditInstId(d.institution ? String(d.institution.id) : '');
         setEditCanInvite(!!d.canInvite);
@@ -717,8 +717,8 @@ const AdminDashboard = () => {
     };
 
     const handleUpdateDoctor = async () => {
-        if (!editDoctorId || !editName || !editPhone || !editEmail) {
-            toast.error('Name, phone, and email are required');
+        if (!editDoctorId || !editName || !editEmail) {
+            toast.error('Name and email are required');
             return;
         }
         setSavingEdit(true);
@@ -730,7 +730,7 @@ const AdminDashboard = () => {
                     doctorId: editDoctorId,
                     fullName: editName,
                     specialty: editSpecialty,
-                    phone: editPhone,
+                    phone: editPhone || undefined,
                     email: editEmail,
                     institutionId: editInstId ? Number(editInstId) : null,
                     canInvite: editCanInvite,
@@ -756,10 +756,10 @@ const AdminDashboard = () => {
         if (!searchTerm) return data.doctors;
         const term = searchTerm.toLowerCase();
         return data.doctors.filter(d =>
-            d.fullName.toLowerCase().includes(term) ||
-            d.specialty.toLowerCase().includes(term) ||
-            d.phone.includes(term) ||
-            d.institution?.name.toLowerCase().includes(term)
+            (d.fullName || '').toLowerCase().includes(term) ||
+            (d.specialty || '').toLowerCase().includes(term) ||
+            (d.phone ? String(d.phone).includes(term) : false) ||
+            (d.institution?.name || '').toLowerCase().includes(term)
         );
     }, [data, searchTerm]);
 
