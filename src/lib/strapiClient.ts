@@ -33,6 +33,9 @@ const getHeaders = () => {
 
 export function parseStrapiErrorMessage(text: string, status: number): string {
   if (!text) return `İşlem başarısız oldu (${status})`;
+  if (typeof text === 'string' && (text.includes("Failed to fetch") || text.includes("TypeError") || text.includes("NetworkError"))) {
+    return "Sunucuya bağlanılamadı. Lütfen internet bağlantınızı ve sunucunun erişilebilirliğini kontrol edin.";
+  }
   try {
     const json = typeof text === 'string' ? JSON.parse(text) : text;
     let msg = json?.error?.message || json?.message || (typeof json?.error === 'string' ? json.error : null);
@@ -40,10 +43,13 @@ export function parseStrapiErrorMessage(text: string, status: number): string {
     if (typeof msg === 'string' && msg.trim()) {
       const clean = msg.trim();
       if (clean.includes("already exists") || clean.includes("already has this email")) {
-        return "Bu e-posta adresine sahip bir hekim zaten sistemde kayıtlı.";
+        return "Bu e-posta adresine sahip bir hekim veya hasta zaten sistemde kayıtlı.";
       }
       if (clean.includes("already has this phone")) {
-        return "Bu telefon numarasına sahip bir hekim zaten sistemde kayıtlı.";
+        return "Bu telefon numarasına sahip bir hekim veya hasta zaten sistemde kayıtlı.";
+      }
+      if (clean.includes("Failed to fetch")) {
+        return "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
       }
       return clean;
     }
@@ -54,7 +60,7 @@ export function parseStrapiErrorMessage(text: string, status: number): string {
   // If text contains JSON or error string, extract or return clean Turkish message
   if (typeof text === 'string') {
     if (text.includes("already exists") || text.includes("already has this email")) {
-      return "Bu e-posta adresine sahip bir hekim zaten sistemde kayıtlı.";
+      return "Bu e-posta adresine sahip bir hekim veya hasta zaten sistemde kayıtlı.";
     }
     if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
       return "İşlem gerçekleştirilemedi. Lütfen girilen bilgileri kontrol edin.";

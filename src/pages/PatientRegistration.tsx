@@ -116,31 +116,33 @@ const PatientRegistration = () => {
   });
 
   // ✅ UPDATED: Submit now writes to Strapi
+  // ✅ UPDATED: Submit now writes to Strapi with strict validation
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    // Basic front-end checks (çok hafif doğrulama)
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.contactNumber.trim()) {
-      toast.error("Please fill First Name, Last Name, and Contact Number.");
-      return;
-    }
+    // Strict front-end validation for all required fields
+    const missingFields: string[] = [];
 
-    // Caregiver checked ise temel info isteyelim (MVP)
+    if (!formData.firstName.trim()) missingFields.push("Ad (First Name)");
+    if (!formData.lastName.trim()) missingFields.push("Soyad (Last Name)");
+    if (!formData.gender) missingFields.push("Cinsiyet (Gender)");
+    if (!formData.dateOfBirth) missingFields.push("Doğum Tarihi (Date of Birth)");
+    if (!formData.contactNumber.trim()) missingFields.push("İletişim Numarası (Contact Number)");
+    if (!formData.primaryCardiologist) missingFields.push("Birincil Kardiyolog (Primary Cardiologist)");
+
     if (formData.caregiverPermission) {
-      if (!formData.caregiverPhone.trim()) {
-        toast.error("Please fill Caregiver Phone.");
-        return;
-      }
+      if (!formData.caregiverName.trim()) missingFields.push("Hasta Yakını Adı (Caregiver Name)");
+      if (!formData.caregiverPhone.trim()) missingFields.push("Hasta Yakını Telefonu (Caregiver Phone)");
     }
 
-    if (!formData.primaryCardiologist) {
-      toast.error("Primary Cardiologist alanı tüm hastalar için dolu olmalı ve boş geçilemez.");
+    if (missingFields.length > 0) {
+      toast.error(`Lütfen zorunlu alanları doldurun: ${missingFields.join(", ")}`);
       return;
     }
 
     const doctorToken = localStorage.getItem("doctor_token");
     if (!doctorToken) {
-      toast.error("Please log in as a doctor first.");
+      toast.error("Lütfen önce hekim olarak giriş yapın.");
       return;
     }
 
@@ -174,6 +176,8 @@ const PatientRegistration = () => {
         clinicalFindings: formData.clinicalFindings,
         redFlagSymptoms: formData.redFlagSymptoms,
 
+        assignedCardiologistDocId: formData.primaryCardiologist || undefined,
+
         caregiver: formData.caregiverPermission ? {
           fullName: formData.caregiverName?.trim() || undefined,
           phone: formData.caregiverPhone.trim(),
@@ -182,11 +186,15 @@ const PatientRegistration = () => {
         } : undefined,
       });
 
-      toast.success("Patient registered successfully!");
+      toast.success("Hasta başarıyla kaydedildi!");
       navigate("/patients");
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.message || "Patient registration failed.");
+      let errorMsg = e?.message || "";
+      if (!errorMsg || errorMsg.includes("Failed to fetch") || errorMsg.includes("TypeError")) {
+        errorMsg = "Sunucuya bağlanılamadı. Lütfen sunucunun açık ve erişilebilir olduğundan emin olun.";
+      }
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -260,7 +268,7 @@ const PatientRegistration = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">First Name</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">First Name <span className="text-red-500">*</span></label>
                   <Input
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
@@ -269,7 +277,7 @@ const PatientRegistration = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Last Name</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Last Name <span className="text-red-500">*</span></label>
                   <Input
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -281,7 +289,7 @@ const PatientRegistration = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Gender</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Gender <span className="text-red-500">*</span></label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
@@ -294,7 +302,7 @@ const PatientRegistration = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Date of Birth</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Date of Birth <span className="text-red-500">*</span></label>
                   <DateOfBirthSelect
                     value={formData.dateOfBirth}
                     onChange={(val) => setFormData({ ...formData, dateOfBirth: val })}
@@ -304,7 +312,7 @@ const PatientRegistration = () => {
 
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Contact Number</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Contact Number <span className="text-red-500">*</span></label>
                   <Input
                     value={formData.contactNumber}
                     onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
@@ -357,7 +365,7 @@ const PatientRegistration = () => {
                 {formData.caregiverPermission && (
                   <div className="space-y-4 ml-3 sm:ml-6 p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Name</label>
+                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Name <span className="text-red-500">*</span></label>
                       <Input
                         value={formData.caregiverName}
                         onChange={(e) => setFormData({ ...formData, caregiverName: e.target.value })}
@@ -376,7 +384,7 @@ const PatientRegistration = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Phone</label>
+                      <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">Caregiver Phone <span className="text-red-500">*</span></label>
                       <Input
                         type="tel"
                         value={formData.caregiverPhone}
