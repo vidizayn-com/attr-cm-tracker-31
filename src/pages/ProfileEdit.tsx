@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
-import { Shield, ShieldCheck, ShieldX, Loader2, User, Phone, Building2, Save, ArrowLeft } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldX, Loader2, User, Phone, Building2, Save, ArrowLeft, Mail } from 'lucide-react';
 import { strapiGet } from '@/lib/strapiClient';
 
 
@@ -158,6 +158,22 @@ const ProfileEdit = () => {
               <p className="text-xs text-gray-400 mt-1">Contact admin to change your name</p>
             </div>
 
+            {/* Email Address (Disabled / Read-only) */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Email Address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                </div>
+                <Input
+                  value={currentUser.email || ''}
+                  disabled
+                  className="pl-10 h-12 text-base bg-gray-50 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Contact admin to change your email address</p>
+            </div>
+
             {/* Specialty */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">Specialty</label>
@@ -264,7 +280,7 @@ const ProfileEdit = () => {
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
               <p className="text-sm text-gray-700 mb-3">
                 By granting consent, your patient statistics will be transparently shared with the
-                Dika Cardio Association and will be visible in the admin panel.
+                Digital Cardiology Association and will be visible in the admin panel.
               </p>
               <p className="text-xs text-gray-500 italic">
                 You can change this setting at any time.

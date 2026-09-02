@@ -64,7 +64,7 @@ const ConsentDialog = () => {
                             <p>
                                 We request your permission to transparently share statistical information
                                 about the patient data you record on the ATTR Navigator platform with the
-                                Dika Cardio Association.
+                                Digital Cardiology Association.
                             </p>
                             <p>
                                 This sharing includes:
