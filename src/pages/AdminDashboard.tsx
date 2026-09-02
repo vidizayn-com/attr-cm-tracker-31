@@ -765,8 +765,8 @@ const AdminDashboard = () => {
             return;
         }
         try {
-            const res = await fetch(`${STRAPI_URL}/api/auth/panel/doctors`, {
-                method: 'DELETE',
+            const res = await fetch(`${STRAPI_URL}/api/auth/panel/delete-doctor`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
                 body: JSON.stringify({ doctorId: d.id }),
             });
