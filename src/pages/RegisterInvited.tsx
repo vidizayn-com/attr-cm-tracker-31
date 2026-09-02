@@ -2,17 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Building2, Phone } from 'lucide-react';
 
 import { STRAPI_URL } from '@/lib/strapiClient';
+
+interface HospitalItem {
+  id: number;
+  documentId?: string;
+  name: string;
+}
 
 interface InvitationInfo {
   fullName: string;
   email: string;
   specialty: string;
   status: string;
+  institutions?: HospitalItem[];
 }
 
 const RegisterInvited = () => {
@@ -23,11 +31,12 @@ const RegisterInvited = () => {
   const [info, setInfo] = useState<InvitationInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [licenseNo, setLicenseNo] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string>('');
+  const [customHospitalName, setCustomHospitalName] = useState<string>('');
+  const [hospitals, setHospitals] = useState<HospitalItem[]>([]);
+
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -41,6 +50,9 @@ const RegisterInvited = () => {
           setError(data?.error?.message || data?.message || 'Invalid invitation link');
         } else {
           setInfo(data);
+          if (data.institutions && Array.isArray(data.institutions)) {
+            setHospitals(data.institutions);
+          }
         }
       } catch (e: any) {
         setError('Failed to load invitation info');
@@ -66,16 +78,23 @@ const RegisterInvited = () => {
   };
 
   const handleSubmit = async () => {
-    if (!password) {
-      toast.error('Please enter a password');
+    const cleanPhoneDigits = phone.replace(/\D/g, '');
+    if (!cleanPhoneDigits) {
+      toast.error('Phone number is required');
       return;
     }
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (cleanPhoneDigits.length < 10) {
+      toast.error('Please enter a valid phone number (min 10 digits)');
       return;
     }
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+
+    if (!selectedHospitalId) {
+      toast.error('Please select or enter your hospital');
+      return;
+    }
+
+    if (selectedHospitalId === 'OTHER' && !customHospitalName.trim()) {
+      toast.error('Please enter your hospital name');
       return;
     }
 
@@ -86,9 +105,10 @@ const RegisterInvited = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token,
-          password,
-          phone: phone.replace(/\D/g, '') || undefined,
+          phone: cleanPhoneDigits,
           licenseNo: licenseNo || undefined,
+          institutionId: selectedHospitalId !== 'OTHER' ? Number(selectedHospitalId) : undefined,
+          hospitalName: selectedHospitalId === 'OTHER' ? customHospitalName.trim() : undefined,
         }),
       });
 
@@ -212,56 +232,64 @@ const RegisterInvited = () => {
 
               {/* Form */}
               <div className="space-y-4">
-                {/* Password */}
+                {/* Phone (required) */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Password <span className="text-red-500">*</span>
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-11 rounded-xl pr-10"
-                      placeholder="Min 6 characters"
+                      type="tel"
+                      value={formatPhone(phone)}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                      className="h-11 rounded-xl pl-10"
+                      placeholder="0555 111 22 33 *"
+                      maxLength={15}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
                   </div>
                 </div>
 
-                {/* Confirm Password */}
+                {/* Hospital / Institution (required) */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Confirm Password <span className="text-red-500">*</span>
+                    Hospital / Institution <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="h-11 rounded-xl"
-                    placeholder="Re-enter password"
-                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                  />
+                  <Select value={selectedHospitalId} onValueChange={setSelectedHospitalId}>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue placeholder="Select hospital..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white max-h-60">
+                      {hospitals.map((h) => (
+                        <SelectItem key={h.id} value={String(h.id)}>
+                          {h.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="OTHER" className="font-semibold text-[#089bab]">
+                        + Enter new hospital name...
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Phone (optional) */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
-                  <Input
-                    type="tel"
-                    value={formatPhone(phone)}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                    className="h-11 rounded-xl"
-                    placeholder="0555 111 22 33 (optional)"
-                    maxLength={15}
-                  />
-                </div>
+                {/* Custom Hospital Input */}
+                {selectedHospitalId === 'OTHER' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      New Hospital Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        value={customHospitalName}
+                        onChange={(e) => setCustomHospitalName(e.target.value)}
+                        className="h-11 rounded-xl pl-10"
+                        placeholder="e.g. City Central Hospital *"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* License No (optional) */}
                 <div>
@@ -312,7 +340,7 @@ const RegisterInvited = () => {
 
           {/* Footer */}
           <div className="text-center mt-6 text-xs text-gray-400">
-            ©2025 Dika Cardio or its affiliates. All rights reserved.
+            ©2025 Digital Cardiology Association. All rights reserved.
           </div>
         </div>
       </div>

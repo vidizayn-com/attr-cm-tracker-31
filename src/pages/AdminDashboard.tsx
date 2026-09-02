@@ -28,6 +28,7 @@ type Hospital = {
 type Doctor = {
     id: number; documentId: string; fullName: string; specialty: string;
     phone: string | null; email: string | null; canInvite: boolean;
+    joinedViaInvitation?: boolean;
     institution: { id: number; name: string } | null;
 };
 
@@ -1199,6 +1200,7 @@ const AdminDashboard = () => {
                                             <TableHead>Phone</TableHead>
                                             <TableHead>Email</TableHead>
                                             <TableHead>Hospital</TableHead>
+                                            <TableHead className="text-center">Joined via Invitation</TableHead>
                                             <TableHead className="text-center w-20">Invite</TableHead>
                                             <TableHead className="text-center w-16">Edit</TableHead>
                                         </TableRow>
@@ -1212,7 +1214,7 @@ const AdminDashboard = () => {
                                                         {specialtyIcons[d.specialty]} {d.specialty}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-sm font-mono text-slate-600">{d.phone}</TableCell>
+                                                <TableCell className="text-sm font-mono text-slate-600">{d.phone || '—'}</TableCell>
                                                 <TableCell className="text-sm text-slate-500">{d.email || '-'}</TableCell>
                                                 <TableCell>
                                                     {d.institution ? (
@@ -1221,6 +1223,17 @@ const AdminDashboard = () => {
                                                         </Badge>
                                                     ) : (
                                                         <span className="text-xs text-slate-400">—</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {d.joinedViaInvitation ? (
+                                                        <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 text-xs font-semibold">
+                                                            Yes
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="text-slate-500 border-slate-200 text-xs">
+                                                            No
+                                                        </Badge>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-center">
