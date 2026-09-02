@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createPatient } from '@/lib/patientApi';
 import { useUser } from '@/contexts/UserContext';
+import DateInputDdMmYyyy from '@/components/DateInputDdMmYyyy';
 
 type PatientData = {
   id: number;
@@ -541,11 +542,9 @@ const ReportTracker = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
                     </label>
-                    <Input
-                      type="date"
+                    <DateInputDdMmYyyy
                       value={form.lastReportDate}
-                      onChange={(e) => handleLastReportDateChange(e.target.value)}
-                      placeholder="dd/mm/yyyy"
+                      onChange={(isoVal) => handleLastReportDateChange(isoVal)}
                       className="rounded-xl"
                     />
                     <p className="text-xs text-slate-400 mt-1">
@@ -556,12 +555,10 @@ const ReportTracker = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
                     </label>
-                    <Input
+                    <DateInputDdMmYyyy
                       required
-                      type="date"
                       value={form.reportDeadline}
-                      onChange={(e) => setForm(prev => ({ ...prev, reportDeadline: e.target.value }))}
-                      placeholder="dd/mm/yyyy"
+                      onChange={(isoVal) => setForm(prev => ({ ...prev, reportDeadline: isoVal }))}
                       className="rounded-xl"
                     />
                   </div>
