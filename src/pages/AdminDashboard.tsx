@@ -320,6 +320,7 @@ const InvitationsTab = () => {
             case 'Not Started': return 'bg-gray-100 text-gray-800 border-gray-200';
             case 'In Progress': return 'bg-blue-100 text-blue-800 border-blue-200';
             case 'Completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
             default: return 'bg-slate-100 text-slate-800 border-slate-200';
         }
     };
@@ -418,6 +419,7 @@ const InvitationsTab = () => {
                             <SelectItem value="Not Started">Not Started</SelectItem>
                             <SelectItem value="In Progress">In Progress</SelectItem>
                             <SelectItem value="Completed">Completed</SelectItem>
+                            <SelectItem value="Cancelled">Cancelled</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
