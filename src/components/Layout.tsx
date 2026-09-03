@@ -84,7 +84,9 @@ function AppSidebar() {
     (async () => {
       try {
         const data = await strapiGet<any>('/api/auth/doctor/my-patients');
-        const allPatients = [...(data.primaryPatients || []), ...(data.consultingPatients || [])];
+        const primary = Array.isArray(data?.primaryPatients) ? data.primaryPatients : [];
+        const consulting = Array.isArray(data?.consultingPatients) ? data.consultingPatients : [];
+        const allPatients = [...primary, ...consulting];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -92,7 +94,7 @@ function AppSidebar() {
         const seenIds = new Set<number>();
 
         for (const p of allPatients) {
-          if (!p.reportDeadline || p.statu !== 'Follow Up' || seenIds.has(p.id)) continue;
+          if (!p || !p.reportDeadline || p.statu !== 'Follow Up' || seenIds.has(p.id)) continue;
           seenIds.add(p.id);
 
           const deadline = new Date(p.reportDeadline);
@@ -114,7 +116,7 @@ function AppSidebar() {
         // Sort: overdue first, then by closest deadline
         deadlines.sort((a, b) => a.daysLeft - b.daysLeft);
         setDeadlineNotifications(deadlines);
-        setRejectionNotifications(data.rejectionNotifications || []);
+        setRejectionNotifications(Array.isArray(data?.rejectionNotifications) ? data.rejectionNotifications : []);
       } catch (e) {
         console.warn('Failed to load deadline notifications:', e);
       }

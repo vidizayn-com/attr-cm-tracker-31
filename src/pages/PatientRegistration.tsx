@@ -289,7 +289,17 @@ const PatientRegistration = () => {
                           </span>
                         </TableCell>
                         <TableCell>{file.size}</TableCell>
-                        <TableCell>{new Date(file.uploadDate).toLocaleDateString('tr-TR')}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            if (!file?.uploadDate) return "-";
+                            try {
+                              const d = new Date(file.uploadDate);
+                              return isNaN(d.getTime()) ? String(file.uploadDate) : d.toLocaleDateString('tr-TR');
+                            } catch {
+                              return String(file.uploadDate);
+                            }
+                          })()}
+                        </TableCell>
                         <TableCell>{file.category}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
@@ -397,56 +407,4 @@ const PatientRegistration = () => {
   );
 };
 
-// React Error Boundary Class for Patient Registration
-class PatientRegistrationErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("PatientRegistration error caught by boundary:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Layout>
-          <div className="container mx-auto p-6 text-center py-16">
-            <div className="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-xl border border-slate-200">
-              <h2 className="text-2xl font-bold text-slate-800 mb-3">Hasta Kayıt Formu</h2>
-              <p className="text-slate-500 text-sm mb-6">
-                Sayfa yüklenirken bir güncelleme oluştu. Yenile butonuna basarak hasta kayıt formunu yükleyebilirsiniz.
-              </p>
-              <Button
-                onClick={() => {
-                  this.setState({ hasError: false, error: null });
-                  window.location.reload();
-                }}
-                className="bg-[#089bab] hover:bg-[#06767f] text-white rounded-xl px-6 h-11"
-              >
-                Sayfayı Yenile
-              </Button>
-            </div>
-          </div>
-        </Layout>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-export default function PatientRegistrationWrapped() {
-  return (
-    <PatientRegistrationErrorBoundary>
-      <PatientRegistration />
-    </PatientRegistrationErrorBoundary>
-  );
-}
+export default PatientRegistration;
