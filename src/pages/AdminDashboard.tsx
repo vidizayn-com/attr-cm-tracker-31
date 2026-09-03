@@ -13,7 +13,7 @@ import {
     Building2, Users, Stethoscope, Activity, LogOut, Plus,
     Loader2, Search, RefreshCw, Microscope, Atom, Dna, Shield,
     TrendingUp, UserCheck, ClipboardList, Pencil, Save, FileBarChart,
-    ChevronDown, ChevronUp, ShieldCheck, UserPlus, Menu, X, Trash2
+    ChevronDown, ChevronUp, ShieldCheck, UserPlus, Menu, X, Trash2, Send
 } from 'lucide-react';
 
 import { STRAPI_URL } from '@/lib/strapiClient';
