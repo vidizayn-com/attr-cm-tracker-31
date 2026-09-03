@@ -9,16 +9,23 @@ type FetchFromStrapiOptions = {
 };
 
 async function fetchFromStrapi<T>(path: string, opts: FetchFromStrapiOptions = {}): Promise<T> {
-  if (!STRAPI_URL) throw new Error("VITE_STRAPI_URL is not set.");
-
-  // Strapi 5 deep populate syntax with 'on' or standard v4 populate
-  // Here we use standard object notation or wildcard if simple.
-  // For deep fields: populate[primary_cardiologist][fields][0]=name&populate[primary_cardiologist][fields][1]=role
-  // We'll use a helper or simple wildcard for now if permissions allowed.
-  // Let's stick to standard URL if we can, or just use * if it works for relations.
-  // "populate=*" usually creates 1-level deep. If we need deeply nested (like doctor's hospital), we need query builder.
-  // For now, let's keep it robust.
-  const url = `${STRAPI_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  let resolvedUrl = STRAPI_URL;
+  if (!resolvedUrl) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      let host = window.location.hostname;
+      if (host.includes('-test')) {
+        host = host.replace('-test', '-api-test');
+      } else if (host === 'attrnavigator.com' || host.endsWith('.attrnavigator.com')) {
+        host = 'api.attrnavigator.com';
+      } else {
+        host = host.replace('.vidizayn.com', '-api.vidizayn.com');
+      }
+      resolvedUrl = `https://${host}`;
+    } else {
+      resolvedUrl = 'https://attr-cm-tracker-api-test.vidizayn.com';
+    }
+  }
+  const url = `${resolvedUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
   const token = typeof localStorage !== "undefined" ? localStorage.getItem("doctor_token") : null;
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
