@@ -24,7 +24,7 @@ const getHeaders = () => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const token = localStorage.getItem("doctor_token");
+  const token = localStorage.getItem("doctor_token") || localStorage.getItem("admin_token");
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }

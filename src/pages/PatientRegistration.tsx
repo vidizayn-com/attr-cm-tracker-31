@@ -88,9 +88,9 @@ const PatientRegistration = () => {
       return;
     }
 
-    const doctorToken = localStorage.getItem("doctor_token");
-    if (!doctorToken) {
-      toast.error("Lütfen önce hekim olarak giriş yapın.");
+    const hasToken = localStorage.getItem("doctor_token") || localStorage.getItem("admin_token");
+    if (!hasToken) {
+      toast.error("Lütfen önce giriş yapın.");
       return;
     }
 
