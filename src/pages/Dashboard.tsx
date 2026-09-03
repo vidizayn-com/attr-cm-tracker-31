@@ -322,21 +322,25 @@ const Dashboard = () => {
                 ) : expiringPatients.length ? (
                   <div className="space-y-2">
                     {expiringPatients.map(p => (
-                      <div key={p.id} className="flex justify-between items-center p-2 bg-red-50 rounded-lg">
-                        <span className="text-sm font-medium">Patient: {p.name}</span>
-                        <span className="text-xs text-red-600">{p.medicationReport?.daysLeft ?? '—'} days</span>
+                      <div 
+                        key={p.id} 
+                        onClick={() => navigate(p.documentId ? `/patients/${p.documentId}` : '/report-tracker')}
+                        className="flex justify-between items-center p-2.5 bg-red-50 hover:bg-red-100/80 rounded-xl cursor-pointer transition-colors"
+                      >
+                        <span className="text-sm font-medium text-slate-800">Patient: {p.name}</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">{p.medicationReport?.daysLeft ?? '—'} days left</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center">No medication reports expiring soon.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No medication reports expiring soon (in less than 20 days).</p>
                 )}
               </CardContent>
             </Card>
 
             <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl text-yellow-600">Data Entry Assignment Needed</CardTitle>
+                <CardTitle className="text-lg sm:text-xl text-amber-600">Data Entry Assignment Needed</CardTitle>
               </CardHeader>
               <CardContent>
                 {sectionsLoading ? (
@@ -344,21 +348,25 @@ const Dashboard = () => {
                 ) : diagnosisPatients.length ? (
                   <div className="space-y-2">
                     {diagnosisPatients.map(p => (
-                      <div key={p.id} className="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
-                        <span className="text-sm font-medium">Patient: {p.name}</span>
-                        <span className="text-xs text-yellow-600">{p.missingSpecialties?.length ? `Missing: ${p.missingSpecialties.join(', ')}` : 'Pending'}</span>
+                      <div 
+                        key={p.id} 
+                        onClick={() => navigate(p.documentId ? `/patients/${p.documentId}` : '/patients?statu=New')}
+                        className="flex justify-between items-center p-2.5 bg-amber-50 hover:bg-amber-100/80 rounded-xl cursor-pointer transition-colors"
+                      >
+                        <span className="text-sm font-medium text-slate-800">Patient: {p.name}</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">New</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center">No patients need diagnostic data entry right now.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No new status patients right now.</p>
                 )}
               </CardContent>
             </Card>
 
             <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl text-green-600">Recently Created Reports</CardTitle>
+                <CardTitle className="text-lg sm:text-xl text-emerald-600">Recently Created Reports</CardTitle>
               </CardHeader>
               <CardContent>
                 {sectionsLoading ? (
@@ -366,14 +374,18 @@ const Dashboard = () => {
                 ) : recentReports.length ? (
                   <div className="space-y-2">
                     {recentReports.map(p => (
-                      <div key={p.id} className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                        <span className="text-sm font-medium">Patient: {p.patient?.name || p.name}</span>
-                        <span className="text-xs text-green-600">{p.createdAt ? formatDistanceToNow(new Date(p.createdAt), {addSuffix: true}) : 'Recently'}</span>
+                      <div 
+                        key={p.id} 
+                        onClick={() => navigate(p.patientDocumentId || p.documentId ? `/patients/${p.patientDocumentId || p.documentId}` : '/patients')}
+                        className="flex justify-between items-center p-2.5 bg-emerald-50 hover:bg-emerald-100/80 rounded-xl cursor-pointer transition-colors"
+                      >
+                        <span className="text-sm font-medium text-slate-800">Patient: {p.patient?.name || p.name}</span>
+                        <span className="text-xs font-medium text-emerald-700">{p.createdAt ? formatDistanceToNow(new Date(p.createdAt), {addSuffix: true}) : 'Recently'}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center">No recently created reports.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No recently created reports.</p>
                 )}
               </CardContent>
             </Card>
