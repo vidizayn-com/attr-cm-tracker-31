@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { strapiGet, strapiPost } from '@/lib/strapiClient';
+import { formatPatientSaveError } from '@/utils/errorUtils';
 import {
     Loader2, FileText, Upload, CheckCircle2, Clock,
     Stethoscope, Microscope, Atom, Dna, Paperclip, ExternalLink,
@@ -255,7 +256,9 @@ export default function CombinedExaminations({ patientDocumentId, historyRows }:
             resetForm();
             await loadNotes();
         } catch (e: any) {
-            toast.error(e?.message || 'Failed to save note');
+            console.error('[CombinedExaminations Save Error]:', e);
+            const formatted = formatPatientSaveError(e, "CombinedExaminationsSave");
+            toast.error(formatted.userMessage);
         } finally {
             setSaving(false);
         }

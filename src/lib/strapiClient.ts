@@ -71,18 +71,23 @@ export function parseStrapiErrorMessage(text: string, status: number): string {
 }
 
 export async function strapiPost<T = any>(path: string, body: any): Promise<T> {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${STRAPI_URL}${path}`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
+  } catch (netErr: any) {
+    console.error(`[strapiPost Network Error] POST ${path}:`, netErr);
+    throw new Error("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı ve sunucunun erişilebilirliğini kontrol edin.");
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(parseStrapiErrorMessage(text, res.status));
   }
 
-  // Handle cases where response might not be JSON or wrapped in data
   let json;
   try {
     json = await res.json();
@@ -90,15 +95,21 @@ export async function strapiPost<T = any>(path: string, body: any): Promise<T> {
     return {} as T;
   }
 
-  return json.data || json; // Support both { data: ... } and direct object
+  return json.data || json;
 }
 
 export async function strapiPut<T = any>(path: string, body: any): Promise<T> {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
-    method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${STRAPI_URL}${path}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
+  } catch (netErr: any) {
+    console.error(`[strapiPut Network Error] PUT ${path}:`, netErr);
+    throw new Error("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı ve sunucunun erişilebilirliğini kontrol edin.");
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -110,10 +121,16 @@ export async function strapiPut<T = any>(path: string, body: any): Promise<T> {
 }
 
 export async function strapiGet<T = any>(path: string): Promise<T> {
-  const res = await fetch(`${STRAPI_URL}${path}`, {
-    method: "GET",
-    headers: getHeaders(),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${STRAPI_URL}${path}`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+  } catch (netErr: any) {
+    console.error(`[strapiGet Network Error] GET ${path}:`, netErr);
+    throw new Error("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı ve sunucunun erişilebilirliğini kontrol edin.");
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");

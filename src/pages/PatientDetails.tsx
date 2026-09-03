@@ -22,6 +22,7 @@ import DateInputDdMmYyyy from "@/components/DateInputDdMmYyyy";
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 
 import { validatePatientFormData, PatientFormData, defaultClinicalFindings, defaultRedFlags } from "@/lib/patientSchema";
+import { formatPatientSaveError, getResponsibleRoleForField, FormattedErrorResult } from "@/utils/errorUtils";
 
 import CombinedExaminations from "@/components/CombinedExaminations";
 
@@ -402,7 +403,7 @@ export default function PatientDetails() {
           setValidationMissingFields(validation.missingFields);
           setShowValidationDialog(true);
         } else {
-          toast.error(validation.errorMessage);
+          toast.error(validation.errorMessage || "Eksik veya geçersiz alanlar bulunmaktadır.");
         }
         return;
       }
@@ -570,11 +571,16 @@ export default function PatientDetails() {
       setSelectedCardiologistDocId((merged as any).primary_cardiologist?.documentId || "");
       setIsEditing(false);
 
-      // 5) Graph/table will reflect the state because we removed the manual load.
-      toast.success("Saved!");
+      toast.success("Hasta kaydı başarıyla güncellendi.");
     } catch (e: any) {
-      toast.error(e?.message || "Save failed");
-      console.error(e);
+      console.error("[PatientDetails Save Error]:", e);
+      const formatted = formatPatientSaveError(e, "PatientDetailsSave");
+      if (formatted.missingFields && formatted.missingFields.length > 0) {
+        setValidationMissingFields(formatted.missingFields.map(m => m.field));
+        setShowValidationDialog(true);
+      } else {
+        toast.error(formatted.userMessage);
+      }
     }
   };
 
@@ -1672,19 +1678,37 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
           <DialogContent className="max-w-md bg-white rounded-3xl p-6 shadow-xl border-0">
             <DialogHeader>
               <DialogTitle className="text-red-600 font-bold text-lg flex items-center gap-2">
-                ⚠️ Kaydetme İşlemi Tamamlanamadı
+                ⚠️ Hasta Kaydı Güncellenemedi
               </DialogTitle>
               <DialogDescription className="text-slate-600 mt-2 text-sm leading-relaxed">
-                Kardiyoloji hekimi tarafından doldurulması gereken bazı bilgiler eksik. Lütfen zorunlu alanları kontrol edip tekrar kaydedin.
+                Kaydetme işleminin tamamlanabilmesi için aşağıdaki bilgilerin tamamlanması gerekmektedir.
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-4 space-y-2">
-              <span className="font-semibold text-slate-800 text-sm">Eksik Zorunlu Alanlar:</span>
-              <ul className="list-disc ml-5 space-y-1 text-sm bg-red-50 text-red-800 p-4 rounded-xl border border-red-200 font-medium">
-                {validationMissingFields.map((field, i) => (
-                  <li key={i}>{field}</li>
-                ))}
+            <div className="mt-4 space-y-3">
+              <span className="font-semibold text-slate-800 text-xs uppercase tracking-wider">Eksik / Geçersiz Bilgiler:</span>
+              <ul className="space-y-2 bg-red-50/80 text-red-900 p-4 rounded-xl border border-red-200 text-xs font-medium">
+                {validationMissingFields.map((field, i) => {
+                  const role = getResponsibleRoleForField(field);
+                  return (
+                    <li key={i} className="flex flex-col gap-0.5 border-b border-red-100 last:border-0 pb-1.5 last:pb-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-900">• {field}</span>
+                        <Badge variant="outline" className="text-[10px] bg-red-100/70 text-red-800 border-red-300 font-semibold shrink-0">
+                          {role}
+                        </Badge>
+                      </div>
+                      <span className="text-[11px] text-red-700 italic ml-3">
+                        Bu bilgi {role} tarafından tamamlanmalıdır.
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <span className="text-xs text-amber-900 font-medium block">
+                  💡 <strong>Ne Yapmalısınız?</strong> Lütfen yukarıda belirtilen alanları tamamlayıp tekrar kaydedin.
+                </span>
+              </div>
             </div>
             <div className="flex justify-end mt-6">
               <Button

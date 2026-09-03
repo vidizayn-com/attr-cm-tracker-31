@@ -23,18 +23,24 @@ async function fetchFromStrapi<T>(path: string, opts: FetchFromStrapiOptions = {
   const token = typeof localStorage !== "undefined" ? localStorage.getItem("doctor_token") : null;
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const res = await fetch(url, {
-    method: opts.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders,
-      ...(opts.headers ?? {}),
-    },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: opts.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+        ...(opts.headers ?? {}),
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch (netErr: any) {
+    console.error(`[fetchFromStrapi Network Error] ${opts.method ?? "GET"} ${path}:`, netErr);
+    throw new Error("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı ve sunucunun erişilebilirliğini kontrol edin.");
+  }
 
   if (!res.ok) {
-    const text = await res.text();
+    const text = await res.text().catch(() => "");
 
     let parsed: any = null;
     try {
@@ -43,7 +49,6 @@ async function fetchFromStrapi<T>(path: string, opts: FetchFromStrapiOptions = {
       // ignore
     }
 
-    // Strapi validation errors -> okunur hale getir
     const details =
       parsed?.error?.details?.errors?.map((x: any) => `${(x.path ?? []).join(".")}: ${x.message}`).join(" | ") || "";
 
@@ -51,9 +56,9 @@ async function fetchFromStrapi<T>(path: string, opts: FetchFromStrapiOptions = {
       parsed?.error?.message ||
       parsed?.message ||
       details ||
-      (typeof text === "string" && text.length < 800 ? text : "Unknown error");
+      (typeof text === "string" && text.length < 300 && !text.includes("<html") ? text : "İşlem gerçekleştirilemedi.");
 
-    throw new Error(`Strapi request failed (${res.status}): ${msg}`);
+    throw new Error(msg);
   }
 
   return (await res.json()) as T;
