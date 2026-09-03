@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { FileSpreadsheet, Loader2, Users, UserCheck, ArrowLeftRight, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import Layout from "@/components/Layout";
-import { exportPatientsToExcel } from "@/utils/excelExport";
+import { generateExcelTableFile } from "@/utils/excelExport";
 import { strapiGet, strapiPost } from "@/lib/strapiClient";
 import { toast } from "sonner";
 
@@ -253,11 +253,32 @@ const PatientList = () => {
     ? filteredPrimary.length + filteredConsulting.length
     : filteredConsulting.length;
 
-  const handleExcelExport = () => {
-    const allPatients = isCardiologist
-      ? [...filteredPrimary, ...filteredConsulting]
-      : filteredConsulting;
-    exportPatientsToExcel(allPatients as any);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExcelExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    toast.info("Generating complete patient Excel export...");
+    try {
+      const response = await strapiPost<any>("/api/auth/doctor/export-patients", {
+        searchTerm,
+        statusFilter,
+      });
+
+      const exportRows = response?.data || [];
+      if (!exportRows.length) {
+        toast.warning("No patients match your search/filter parameters.");
+        return;
+      }
+
+      await generateExcelTableFile(exportRows, "ATTR_Patient_List_Export");
+      toast.success(`Successfully exported ${exportRows.length} patient record(s)!`);
+    } catch (e: any) {
+      console.error("Excel export error", e);
+      toast.error(e?.message || "Failed to generate Excel export");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const renderPatientCard = (patient: StrapiPatient, sectionType: 'primary' | 'consulting') => {
@@ -474,10 +495,20 @@ const PatientList = () => {
 
               <Button
                 onClick={handleExcelExport}
-                className="h-12 bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 w-full sm:w-auto"
+                disabled={exporting}
+                className="h-12 bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 w-full sm:w-auto font-semibold shadow-sm transition-all"
               >
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Excel Export
+                {exporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Excel Export
+                  </>
+                )}
               </Button>
 
               {/* Add Patient - only for Cardiologists */}
