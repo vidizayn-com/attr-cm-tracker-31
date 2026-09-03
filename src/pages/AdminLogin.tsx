@@ -40,7 +40,11 @@ const AdminLogin = () => {
             toast.success('Welcome, Admin!');
             navigate('/admin/dashboard', { replace: true });
         } catch (e: any) {
-            toast.error(e?.message || 'Login failed');
+            let errorMsg = e?.message || 'Giriş başarısız';
+            if (!errorMsg || errorMsg.includes("Failed to fetch") || errorMsg.includes("TypeError")) {
+                errorMsg = "Sunucuya bağlanılamadı. Lütfen internet bağlantınızı ve sunucunun erişilebilirliğini kontrol edin.";
+            }
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
