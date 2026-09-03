@@ -51,7 +51,17 @@ const RegisterInvited = () => {
         } else {
           setInfo(data);
           if (data.institutions && Array.isArray(data.institutions)) {
-            setHospitals(data.institutions);
+            const seen = new Set<string>();
+            const uniqueInsts: HospitalItem[] = [];
+            for (const inst of data.institutions) {
+              if (!inst.name) continue;
+              const norm = normalizeName(inst.name);
+              if (!seen.has(norm)) {
+                seen.add(norm);
+                uniqueInsts.push(inst);
+              }
+            }
+            setHospitals(uniqueInsts);
           }
         }
       } catch (e: any) {
