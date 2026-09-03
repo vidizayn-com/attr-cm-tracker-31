@@ -23,10 +23,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         );
     }
 
-    // If not authenticated, check if valid doctor or admin token exists before redirecting
-    const hasToken = !!localStorage.getItem("doctor_token") || !!localStorage.getItem("admin_token");
-
-    if (!currentUser && !hasToken) {
+    // If not authenticated, redirect to login
+    if (!currentUser) {
         return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
 

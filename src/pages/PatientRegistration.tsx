@@ -49,8 +49,15 @@ const PatientRegistration = () => {
   useEffect(() => {
     (async () => {
       try {
-        const docs = await strapiGet<any>("/api/auth/doctor/all-doctors?specialty=Cardiology");
-        const list = Array.isArray(docs) ? docs : (docs?.doctors || docs?.data || []);
+        let docs = await strapiGet<any>("/api/auth/doctor/all-doctors?specialty=Cardiology").catch(() => null);
+        let list = Array.isArray(docs) ? docs : (docs?.doctors || docs?.data || []);
+        
+        // Fallback: If no Cardiology filtered doctors returned, load all doctors
+        if (list.length === 0) {
+          docs = await strapiGet<any>("/api/auth/doctor/all-doctors").catch(() => []);
+          list = Array.isArray(docs) ? docs : (docs?.doctors || docs?.data || []);
+        }
+
         setCardiologists(list);
 
         if (currentUser && (currentUser.role === 'Cardiology' || currentUser.role === 'Cardiologist')) {
@@ -59,9 +66,10 @@ const PatientRegistration = () => {
             primaryCardiologistDocId: prev.primaryCardiologistDocId || currentUser.documentId || String(currentUser.id)
           }));
         } else if (list.length > 0) {
+          const firstVal = list[0].documentId || (list[0].id ? String(list[0].id) : '');
           setFormData(prev => ({
             ...prev,
-            primaryCardiologistDocId: prev.primaryCardiologistDocId || list[0].documentId || String(list[0].id)
+            primaryCardiologistDocId: prev.primaryCardiologistDocId || firstVal
           }));
         }
       } catch (e) {
@@ -389,4 +397,56 @@ const PatientRegistration = () => {
   );
 };
 
-export default PatientRegistration;
+// React Error Boundary Class for Patient Registration
+class PatientRegistrationErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("PatientRegistration error caught by boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Layout>
+          <div className="container mx-auto p-6 text-center py-16">
+            <div className="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-xl border border-slate-200">
+              <h2 className="text-2xl font-bold text-slate-800 mb-3">Hasta Kayıt Formu</h2>
+              <p className="text-slate-500 text-sm mb-6">
+                Sayfa yüklenirken bir güncelleme oluştu. Yenile butonuna basarak hasta kayıt formunu yükleyebilirsiniz.
+              </p>
+              <Button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                className="bg-[#089bab] hover:bg-[#06767f] text-white rounded-xl px-6 h-11"
+              >
+                Sayfayı Yenile
+              </Button>
+            </div>
+          </div>
+        </Layout>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function PatientRegistrationWrapped() {
+  return (
+    <PatientRegistrationErrorBoundary>
+      <PatientRegistration />
+    </PatientRegistrationErrorBoundary>
+  );
+}

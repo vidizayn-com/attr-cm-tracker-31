@@ -37,28 +37,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
 
   const calculatedAge = calculateAgeFromDob(safeData.dateOfBirth);
 
-  React.useEffect(() => {
-    if (safeData.dateOfBirth) {
-      const calcAge = calculateAgeFromDob(safeData.dateOfBirth);
-      if (calcAge !== null && (!clinical.age65Value || clinical.age65Value === "")) {
-        setFormData((prev) => {
-          const current = prev || getDefaultPatientFormData();
-          const currentClinical = current.clinicalFindings || defaultClinicalFindings;
-          if (!currentClinical.age65Value) {
-            return {
-              ...current,
-              clinicalFindings: {
-                ...currentClinical,
-                age65: currentClinical.age65 ?? (calcAge >= 65),
-                age65Value: String(calcAge),
-              },
-            };
-          }
-          return current;
-        });
-      }
-    }
-  }, [safeData.dateOfBirth]);
+
 
   const updateField = <K extends keyof PatientFormData>(field: K, value: PatientFormData[K]) => {
     setFormData((prev) => ({ ...(prev || getDefaultPatientFormData()), [field]: value }));
