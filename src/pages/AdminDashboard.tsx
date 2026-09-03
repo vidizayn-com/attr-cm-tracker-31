@@ -280,6 +280,44 @@ const InvitationsTab = () => {
         }
     };
 
+    const [reinvitingId, setReinvitingId] = useState<number | null>(null);
+
+    const handleReinvite = async (inv: any) => {
+        if (inv.registrationStatus === 'Completed') {
+            toast.error("Bu hekim zaten sistemde kayıtlıdır. Kayıtlı hekimlere yeniden davet gönderilemez.");
+            return;
+        }
+
+        setReinvitingId(inv.id);
+        try {
+            const adminToken = localStorage.getItem('admin_token');
+            const res = await fetch(`${STRAPI_URL}/api/auth/doctor/invite`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${adminToken}`,
+                },
+                body: JSON.stringify({
+                    fullName: inv.invitedPhysician,
+                    email: inv.emailAddress,
+                    specialty: inv.specialty || 'Cardiology',
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.error?.message || data?.message || "Davet gönderilemedi");
+            }
+
+            toast.success(`Yeni davet ${inv.emailAddress} adresine başarıyla gönderildi`);
+            await loadInvitations();
+        } catch (err: any) {
+            toast.error(err.message || "Davet gönderilemedi");
+        } finally {
+            setReinvitingId(null);
+        }
+    };
+
     const handleSort = (field: string) => {
         if (sortField === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -471,6 +509,9 @@ const InvitationsTab = () => {
                                 <TableHead className="cursor-pointer select-none text-xs font-semibold text-slate-500 uppercase py-3" onClick={() => handleSort('lastActivity')}>
                                     Last Activity {sortField === 'lastActivity' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
                                 </TableHead>
+                                <TableHead className="text-center w-28 text-xs font-semibold text-slate-500 uppercase py-3">
+                                    Action
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -492,11 +533,37 @@ const InvitationsTab = () => {
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-500">{formatDateTime(inv.registrationCompletedAt)}</TableCell>
                                     <TableCell className="text-sm text-slate-500">{formatDateTime(inv.lastActivity)}</TableCell>
+                                    <TableCell className="text-center">
+                                        {inv.invitationStatus === 'Declined' || inv.invitationStatus === 'Expired' ? (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={reinvitingId === inv.id}
+                                                onClick={() => handleReinvite(inv)}
+                                                className="h-7 px-2.5 text-xs rounded-lg border-teal-200 text-teal-700 hover:bg-teal-50 shadow-sm"
+                                                title="Yeniden Davet Gönder"
+                                            >
+                                                {reinvitingId === inv.id ? (
+                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <Send className="w-3 h-3 mr-1" /> Re-invite
+                                                    </>
+                                                )}
+                                            </Button>
+                                        ) : inv.registrationStatus === 'Completed' ? (
+                                            <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed" title="Kayıtlı hekimlere yeniden davet gönderilemez">
+                                                Registered
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-xs text-slate-400">—</span>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                             {sortedInvitations.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-slate-400 py-8">
+                                    <TableCell colSpan={9} className="text-center text-slate-400 py-8">
                                         No invitations found
                                     </TableCell>
                                 </TableRow>
