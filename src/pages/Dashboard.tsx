@@ -94,13 +94,13 @@ const Dashboard = () => {
     const fetchSections = async () => {
       try {
         const [exp, diag, recent] = await Promise.all([
-          strapiGet<any[]>("/dashboard/expiring-medication"),
-          strapiGet<any[]>("/dashboard/diagnosis-patients"),
-          strapiGet<any[]>("/dashboard/recent-reports"),
+          strapiGet<any[]>("/api/doctors/expiring-medication"),
+          strapiGet<any[]>("/api/doctors/diagnosis-patients"),
+          strapiGet<any[]>("/api/doctors/recent-reports"),
         ]);
-        setExpiringPatients(exp);
-        setDiagnosisPatients(diag);
-        setRecentReports(recent);
+        setExpiringPatients(Array.isArray(exp) ? exp : []);
+        setDiagnosisPatients(Array.isArray(diag) ? diag : []);
+        setRecentReports(Array.isArray(recent) ? recent : []);
       } catch (e) {
         console.error("Failed to fetch dashboard sections:", e);
       } finally {
