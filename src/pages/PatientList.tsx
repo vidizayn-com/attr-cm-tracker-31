@@ -3,7 +3,7 @@ import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { FileSpreadsheet, Loader2, Users, UserCheck, ArrowLeftRight, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import Layout from "@/components/Layout";
 import { generateExcelTableFile } from "@/utils/excelExport";
@@ -64,9 +64,18 @@ interface MyPatientsResponse {
 
 const PatientList = () => {
   const { currentUser } = useUser();
+  const [searchParams] = useSearchParams();
+  const urlStatu = searchParams.get("statu");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("Sort by: A-Z");
-  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [statusFilter, setStatusFilter] = useState(urlStatu || "All Statuses");
+
+  useEffect(() => {
+    if (urlStatu) {
+      setStatusFilter(urlStatu);
+    }
+  }, [urlStatu]);
 
   const [primaryPatients, setPrimaryPatients] = useState<StrapiPatient[]>([]);
   const [consultingPatients, setConsultingPatients] = useState<StrapiPatient[]>([]);

@@ -20,8 +20,18 @@ const chartConfig = {
 interface DashboardStats {
   totalPatients: number;
   newPatients: number;
-  assignedPatients: number;
+  diagnosticProcessCount: number;
+  followUpCount: number;
+  completedCount: number;
+  ruledOutCount: number;
   overdueReports: number;
+  statusCounts?: {
+    new: number;
+    diagnosticProcess: number;
+    followUp: number;
+    completed: number;
+    ruledOut: number;
+  };
 }
 
 interface ChartDataPoint {
@@ -63,7 +73,7 @@ const Dashboard = () => {
         setStats(data);
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
-        setStats({ totalPatients: 0, newPatients: 0, assignedPatients: 0, overdueReports: 0 });
+        setStats({ totalPatients: 0, newPatients: 0, diagnosticProcessCount: 0, followUpCount: 0, completedCount: 0, ruledOutCount: 0, overdueReports: 0 });
       } finally {
         setLoading(false);
       }
@@ -116,7 +126,7 @@ const Dashboard = () => {
         <section className="dashboard-grid">
             <div className="kpi-row">
                 {/* 1. Total Assigned */}
-                <div className="glass-card kpi-card" onClick={() => navigate('/patients')}>
+                <div className="glass-card kpi-card cursor-pointer hover:shadow-md transition-all" onClick={() => navigate('/patients')}>
                     <div className="kpi-icon blue">
                         <Users className="w-7 h-7" />
                     </div>
@@ -129,34 +139,34 @@ const Dashboard = () => {
                 </div>
 
                 {/* 2. Diagnostic Process */}
-                <div className="glass-card kpi-card" onClick={() => navigate('/patients')}>
+                <div className="glass-card kpi-card cursor-pointer hover:shadow-md transition-all" onClick={() => navigate('/patients?statu=Diagnostic Process')}>
                     <div className="kpi-icon teal">
                         <CheckCircle2 className="w-7 h-7" />
                     </div>
                     <div className="kpi-info">
                         <h4>Diagnostic Process</h4>
                         <div className="value flex items-baseline">
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.assignedPatients ?? 0}
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.diagnosticProcessCount ?? 0}
                         </div>
                     </div>
                 </div>
 
                 {/* 3. Follow Up Tracking */}
-                <div className="glass-card kpi-card" onClick={() => navigate('/patients')}>
+                <div className="glass-card kpi-card cursor-pointer hover:shadow-md transition-all" onClick={() => navigate('/patients?statu=Follow Up')}>
                     <div className="kpi-icon amber">
                         <Clock className="w-7 h-7" />
                     </div>
                     <div className="kpi-info">
                         <h4>Follow Up Tracking</h4>
                         <div className="value flex items-baseline">
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.totalPatients ?? 0}
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : stats?.followUpCount ?? 0}
                         </div>
                     </div>
                 </div>
 
                 {/* 4. Reports Overdue */}
                 {isCardiologist && (
-                  <div className="glass-card kpi-card" onClick={() => navigate('/report-tracker')}>
+                  <div className="glass-card kpi-card cursor-pointer hover:shadow-md transition-all" onClick={() => navigate('/report-tracker')}>
                       <div className="kpi-icon rose">
                           <AlertTriangle className="w-7 h-7" />
                       </div>
@@ -170,6 +180,87 @@ const Dashboard = () => {
                 )}
             </div>
         </section>
+
+        {/* Follow-up Tracking: Status Breakdown Grid */}
+        <div className="mt-6 sm:mt-8">
+          <h3 className="text-lg sm:text-xl font-bold mb-1 text-slate-800 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-teal-600" />
+            Follow-up Tracking &amp; Patient Status Overview
+          </h3>
+          <p className="text-slate-500 text-xs sm:text-sm mb-4">Statü bazlı hasta sayıları (Kartlara tıklayarak filtreli hasta listesine erişebilirsiniz)</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {/* New Status Card */}
+            <Card 
+              className="glass-card cursor-pointer hover:shadow-md transition-all border-l-4 border-l-emerald-500 bg-white/80"
+              onClick={() => navigate('/patients?statu=New')}
+            >
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">New</span>
+                <div className="text-2xl font-extrabold text-slate-800 mt-2">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (stats?.newPatients ?? 0)}
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1">Yeni hastalar</span>
+              </CardContent>
+            </Card>
+
+            {/* Diagnostic Process Status Card */}
+            <Card 
+              className="glass-card cursor-pointer hover:shadow-md transition-all border-l-4 border-l-amber-500 bg-white/80"
+              onClick={() => navigate('/patients?statu=Diagnostic Process')}
+            >
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Diagnostic Process</span>
+                <div className="text-2xl font-extrabold text-slate-800 mt-2">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (stats?.diagnosticProcessCount ?? 0)}
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1">Tanı sürecinde</span>
+              </CardContent>
+            </Card>
+
+            {/* Follow Up Status Card */}
+            <Card 
+              className="glass-card cursor-pointer hover:shadow-md transition-all border-l-4 border-l-blue-500 bg-white/80"
+              onClick={() => navigate('/patients?statu=Follow Up')}
+            >
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Follow Up</span>
+                <div className="text-2xl font-extrabold text-slate-800 mt-2">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (stats?.followUpCount ?? 0)}
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1">Takipteki hastalar</span>
+              </CardContent>
+            </Card>
+
+            {/* Completed Status Card */}
+            <Card 
+              className="glass-card cursor-pointer hover:shadow-md transition-all border-l-4 border-l-purple-500 bg-white/80"
+              onClick={() => navigate('/patients?statu=Completed')}
+            >
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-700">Completed</span>
+                <div className="text-2xl font-extrabold text-slate-800 mt-2">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (stats?.completedCount ?? 0)}
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1">Tamamlanan hastalar</span>
+              </CardContent>
+            </Card>
+
+            {/* Ruled Out Status Card */}
+            <Card 
+              className="glass-card cursor-pointer hover:shadow-md transition-all border-l-4 border-l-rose-500 bg-white/80"
+              onClick={() => navigate('/patients?statu=Amyloidosis was ruled out')}
+            >
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Ruled Out</span>
+                <div className="text-2xl font-extrabold text-slate-800 mt-2">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (stats?.ruledOutCount ?? 0)}
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1">Ekarte edilen hastalar</span>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         <div className="mt-6 sm:mt-8">
           <Card className="glass-card border-none shadow-lg">
