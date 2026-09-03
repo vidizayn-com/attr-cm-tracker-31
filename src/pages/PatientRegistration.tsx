@@ -10,9 +10,11 @@ import PatientForm, { DoctorOption } from '@/components/PatientForm';
 import { getDefaultPatientFormData, validatePatientFormData, PatientFormData } from '@/lib/patientSchema';
 import { createPatient } from '@/lib/patientApi';
 import { strapiGet } from '@/lib/strapiClient';
+import { useUser } from '@/contexts/UserContext';
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
+  const { currentUser } = useUser();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardiologists, setCardiologists] = useState<DoctorOption[]>([]);
@@ -47,13 +49,26 @@ const PatientRegistration = () => {
   useEffect(() => {
     (async () => {
       try {
-        const docs = await strapiGet<any[]>("/api/auth/doctor/all-doctors?specialty=Cardiology");
-        setCardiologists(Array.isArray(docs) ? docs : []);
+        const docs = await strapiGet<any>("/api/auth/doctor/all-doctors?specialty=Cardiology");
+        const list = Array.isArray(docs) ? docs : (docs?.doctors || docs?.data || []);
+        setCardiologists(list);
+
+        if (currentUser && (currentUser.role === 'Cardiology' || currentUser.role === 'Cardiologist')) {
+          setFormData(prev => ({
+            ...prev,
+            primaryCardiologistDocId: prev.primaryCardiologistDocId || currentUser.documentId || String(currentUser.id)
+          }));
+        } else if (list.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            primaryCardiologistDocId: prev.primaryCardiologistDocId || list[0].documentId || String(list[0].id)
+          }));
+        }
       } catch (e) {
         console.warn("Failed to load cardiologists", e);
       }
     })();
-  }, []);
+  }, [currentUser]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;

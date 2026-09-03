@@ -225,11 +225,15 @@ const PatientForm: React.FC<PatientFormProps> = ({
               className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
             >
               <option value="">Select a cardiologist</option>
-              {safeCardiologists.map((doc) => (
-                <option key={doc.documentId} value={doc.documentId}>
-                  {doc.fullName}
-                </option>
-              ))}
+              {safeCardiologists.map((doc, idx) => {
+                const docVal = doc.documentId || (doc.id ? String(doc.id) : '');
+                const docKey = docVal || `cardio-${idx}`;
+                return (
+                  <option key={docKey} value={docVal}>
+                    {doc.fullName || `Doctor #${doc.id || idx + 1}`}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

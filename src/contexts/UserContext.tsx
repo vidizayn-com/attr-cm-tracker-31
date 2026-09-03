@@ -75,6 +75,38 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const fetchMe = async () => {
         try {
             const token = localStorage.getItem("doctor_token");
+            const adminToken = localStorage.getItem("admin_token");
+
+            if (!token && adminToken) {
+                const adminInfoRaw = localStorage.getItem("admin_info");
+                let adminName = "System Administrator";
+                let adminEmail = "admin@attr.com";
+                try {
+                    if (adminInfoRaw) {
+                        const parsed = JSON.parse(adminInfoRaw);
+                        if (parsed.name) adminName = parsed.name;
+                        if (parsed.email) adminEmail = parsed.email;
+                    }
+                } catch { }
+
+                setCurrentUser({
+                    id: "admin",
+                    documentId: "admin",
+                    name: adminName,
+                    role: "Admin",
+                    phone: "",
+                    email: adminEmail,
+                    hospital: "System Administration",
+                    hospitalData: null,
+                    avatarFallback: "SA",
+                    dataSharingConsent: true,
+                    consentAsked: true,
+                    canInvite: true,
+                });
+                setIsLoading(false);
+                return;
+            }
+
             if (!token) {
                 setIsLoading(false);
                 return;
@@ -97,8 +129,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             });
         } catch (error) {
             console.error("Failed to fetch user:", error);
-            localStorage.removeItem("doctor_token");
-            setCurrentUser(null);
+            const adminToken = localStorage.getItem("admin_token");
+            if (adminToken) {
+                setCurrentUser({
+                    id: "admin",
+                    documentId: "admin",
+                    name: "System Administrator",
+                    role: "Admin",
+                    phone: "",
+                    email: "admin@attr.com",
+                    hospital: "System Administration",
+                    hospitalData: null,
+                    avatarFallback: "SA",
+                    dataSharingConsent: true,
+                    consentAsked: true,
+                    canInvite: true,
+                });
+            } else {
+                localStorage.removeItem("doctor_token");
+                setCurrentUser(null);
+            }
         } finally {
             setIsLoading(false);
         }
