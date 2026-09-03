@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { jsPDF } from "jspdf";
+import { generatePatientDiagnosisPdf } from "@/lib/pdfGenerator";
 import { toast } from "sonner";
 import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft, ArrowLeftRight } from "lucide-react";
 import DateInputDdMmYyyy from "@/components/DateInputDdMmYyyy";
@@ -687,24 +688,33 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
   };
 
   const handleGeneratePDF = () => {
-    const missing = getMissingReportFields(draft ?? patient);
+    const targetPatient = draft ?? patient;
+    if (!targetPatient) return;
+
+    const missing = getMissingReportFields(targetPatient);
     if (missing.length > 0) {
       setMissingFieldsList(missing);
       setShowMissingReportDialog(true);
       return;
     }
+
     try {
-      const text = generateDiagnosisSummary(draft ?? patient);
-      const doc = new jsPDF();
-      doc.setFont("helvetica");
-      doc.setFontSize(16);
-      doc.text("PATIENT DIAGNOSIS REPORT", 105, 20, { align: "center" });
-      
-      doc.setFontSize(10);
-      const lines = doc.splitTextToSize(text.replace("PATIENT DIAGNOSIS SUMMARY", ""), 180);
-      doc.text(lines, 15, 30);
-      
-      doc.save(`Report_${patient.firstName}_${patient.lastName}.pdf`);
+      generatePatientDiagnosisPdf({
+        id: targetPatient.id,
+        documentId: targetPatient.documentId,
+        firstName: targetPatient.firstName,
+        lastName: targetPatient.lastName,
+        gender: targetPatient.gender,
+        dateOfBirth: targetPatient.dateOfBirth,
+        contactNumber: targetPatient.contactNumber,
+        email: targetPatient.email,
+        statu: targetPatient.statu,
+        institutionName: institutionName || (targetPatient as any).hospital?.name || undefined,
+        primaryCardiologistName: (targetPatient as any).primary_cardiologist?.fullName || undefined,
+        clinicalFindings: (targetPatient as any).clinicalFindings,
+        redFlagSymptoms: (targetPatient as any).redFlagSymptoms,
+      });
+
       toast.success("PDF Raporu başarıyla oluşturuldu!");
 
       const today = new Date();
@@ -717,7 +727,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
         statu: "Follow Up",
       };
 
-      updatePatientByAnyId(String(patient.id), payload).then((updated) => {
+      updatePatientByAnyId(String(targetPatient.id), payload).then((updated) => {
         if (updated) {
            toast.success("Rapor başarıyla kaydedildi! Hasta Rapor Takibine (Follow Up) aktarıldı.");
            if (draft) {
