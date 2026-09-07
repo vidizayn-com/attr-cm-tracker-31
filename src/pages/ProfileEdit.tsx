@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
-import { Shield, ShieldCheck, ShieldX, Loader2, User, Phone, Building2, Save, ArrowLeft, Mail } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldX, Loader2, User, Phone, Building2, Save, ArrowLeft, Mail, Bell, BellOff } from 'lucide-react';
 import { strapiGet } from '@/lib/strapiClient';
 
 
@@ -21,9 +21,11 @@ interface Hospital {
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
-  const { currentUser, updateConsent, updateProfile, refreshUser } = useUser();
+  const { currentUser, updateConsent, updateEmailNotifications, updateProfile, refreshUser } = useUser();
   const [consentToggle, setConsentToggle] = useState(false);
   const [savingConsent, setSavingConsent] = useState(false);
+  const [emailNotifToggle, setEmailNotifToggle] = useState(true);
+  const [savingEmailNotif, setSavingEmailNotif] = useState(false);
   const [saving, setSaving] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>('');
@@ -33,6 +35,7 @@ const ProfileEdit = () => {
   useEffect(() => {
     if (currentUser) {
       setConsentToggle(currentUser.dataSharingConsent);
+      setEmailNotifToggle(currentUser.emailNotificationsEnabled);
       setPhoneNumber(currentUser.phone || '');
       setSelectedHospitalId(currentUser.hospitalData?.id?.toString() || '');
     }
@@ -115,6 +118,16 @@ const ProfileEdit = () => {
       toast.success(checked ? "Data sharing consent granted." : "Data sharing consent revoked.");
     }
     setSavingConsent(false);
+  };
+
+  const handleEmailNotifChange = async (checked: boolean) => {
+    setSavingEmailNotif(true);
+    const success = await updateEmailNotifications(checked);
+    if (success) {
+      setEmailNotifToggle(checked);
+      toast.success(checked ? "Email notifications enabled." : "Email notifications disabled.");
+    }
+    setSavingEmailNotif(false);
   };
 
   if (!currentUser) {
@@ -314,6 +327,60 @@ const ProfileEdit = () => {
                 ) : (
                   <div className="flex items-center gap-1 text-gray-400">
                     <ShieldX className="w-5 h-5" />
+                    <span className="text-xs font-medium">Inactive</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Email Notifications Section */}
+        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Bell className="w-6 h-6 text-cyan-600" />
+              <span>Email Notifications</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <p className="text-sm text-gray-700 mb-3">
+                Receive an email whenever a patient is assigned to you or an assignment you made is rejected.
+                This does not affect your login verification code emails — those are always sent.
+              </p>
+              <p className="text-xs text-gray-500 italic">
+                You can change this setting at any time.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="emailNotifications"
+                  checked={emailNotifToggle}
+                  onCheckedChange={(checked) => handleEmailNotifChange(checked as boolean)}
+                  disabled={savingEmailNotif}
+                  className="mt-1"
+                />
+                <label htmlFor="emailNotifications" className="cursor-pointer">
+                  <div className="font-semibold text-gray-800">
+                    I want to receive patient notification emails
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Patient assignment and rejection notifications only
+                  </div>
+                </label>
+              </div>
+              <div className="flex-shrink-0 ml-4">
+                {emailNotifToggle ? (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <Bell className="w-5 h-5" />
+                    <span className="text-xs font-medium">Active</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <BellOff className="w-5 h-5" />
                     <span className="text-xs font-medium">Inactive</span>
                   </div>
                 )}

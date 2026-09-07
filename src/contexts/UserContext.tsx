@@ -23,6 +23,7 @@ export interface User {
     dataSharingConsent: boolean;
     consentAsked: boolean;
     canInvite: boolean;
+    emailNotificationsEnabled: boolean;
 }
 
 interface LoginResponse {
@@ -43,6 +44,7 @@ interface UserContextType {
     verifyLogin: (email: string, otp: string) => Promise<boolean>;
     logout: () => void;
     updateConsent: (consent: boolean) => Promise<boolean>;
+    updateEmailNotifications: (enabled: boolean) => Promise<boolean>;
     updateProfile: (data: { phone?: string; hospitalId?: number }) => Promise<boolean>;
     refreshUser: () => Promise<void>;
 }
@@ -55,6 +57,7 @@ const UserContext = createContext<UserContextType>({
     verifyLogin: async () => false,
     logout: () => { },
     updateConsent: async () => false,
+    updateEmailNotifications: async () => false,
     updateProfile: async () => false,
     refreshUser: async () => { },
 });
@@ -102,6 +105,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     dataSharingConsent: true,
                     consentAsked: true,
                     canInvite: true,
+                    emailNotificationsEnabled: true,
                 });
                 setIsLoading(false);
                 return;
@@ -126,6 +130,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 dataSharingConsent: !!data.dataSharingConsent,
                 consentAsked: !!data.consentAsked,
                 canInvite: !!data.canInvite,
+                emailNotificationsEnabled: data.emailNotificationsEnabled !== false,
             });
         } catch (error) {
             console.error("Failed to fetch user:", error);
@@ -144,6 +149,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     dataSharingConsent: true,
                     consentAsked: true,
                     canInvite: true,
+                    emailNotificationsEnabled: true,
                 });
             } else {
                 localStorage.removeItem("doctor_token");
@@ -230,6 +236,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateEmailNotifications = async (enabled: boolean): Promise<boolean> => {
+        try {
+            await strapiPost("/api/auth/doctor/update-email-notifications", { emailNotificationsEnabled: enabled });
+            setCurrentUser(prev => prev ? { ...prev, emailNotificationsEnabled: enabled } : null);
+            return true;
+        } catch (error) {
+            console.error("Update email notification preference failed:", error);
+            toast.error("Failed to update email notification preference.");
+            return false;
+        }
+    };
+
     const updateProfile = async (data: { phone?: string; hospitalId?: number }): Promise<boolean> => {
         try {
             
@@ -264,7 +282,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <UserContext.Provider value={{ currentUser, isLoading, login, logout, sendOtp, verifyLogin, updateConsent, updateProfile, refreshUser }}>
+        <UserContext.Provider value={{ currentUser, isLoading, login, logout, sendOtp, verifyLogin, updateConsent, updateEmailNotifications, updateProfile, refreshUser }}>
             {children}
         </UserContext.Provider>
     );
