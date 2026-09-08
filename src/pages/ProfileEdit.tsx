@@ -346,10 +346,11 @@ const ProfileEdit = () => {
           <CardContent className="space-y-4">
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
               <p className="text-sm text-gray-700 mb-3">
-                Receive an email whenever a patient is assigned to you or an assignment you made is rejected.
-                This does not affect your login verification code emails — those are always sent.
+                Receive email notifications for patient assignments, treatment follow-ups, report reminders,
+                and other workflow updates.
               </p>
               <p className="text-xs text-gray-500 italic">
+                This does not affect your login verification code emails — those are always sent.
                 You can change this setting at any time.
               </p>
             </div>
@@ -365,10 +366,10 @@ const ProfileEdit = () => {
                 />
                 <label htmlFor="emailNotifications" className="cursor-pointer">
                   <div className="font-semibold text-gray-800">
-                    I want to receive patient notification emails
+                    I want to receive optional email notifications
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Patient assignment and rejection notifications only
+                    Workflow updates only — login verification codes always send regardless
                   </div>
                 </label>
               </div>
