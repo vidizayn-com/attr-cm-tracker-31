@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 import DateInputDdMmYyyy from '@/components/DateInputDdMmYyyy';
-import { getDefaultPatientFormData, defaultClinicalFindings, defaultRedFlags, PatientFormData, calculateAgeFromDob } from '@/lib/patientSchema';
+import { getDefaultPatientFormData, defaultClinicalFindings, defaultRedFlags, PatientFormData, calculateAgeFromDob, calculateCurrentTreatmentMonth, PATIENT_TYPE_OPTIONS } from '@/lib/patientSchema';
 
 export type DoctorOption = {
   documentId: string;
@@ -36,6 +36,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
   const safeCardiologists = Array.isArray(cardiologists) ? cardiologists : [];
 
   const calculatedAge = calculateAgeFromDob(safeData.dateOfBirth);
+  const currentTreatmentMonth = calculateCurrentTreatmentMonth(safeData.treatmentStartDate);
 
 
 
@@ -311,6 +312,71 @@ const PatientForm: React.FC<PatientFormProps> = ({
                   className="rounded-xl"
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 2b. Treatment Follow-Up Section (when showReportDates is enabled) */}
+      {showReportDates && (
+        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+              <span className="text-xl sm:text-2xl">💊</span>
+              <span>Treatment Follow-Up</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                  Patient Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  disabled={disabled}
+                  value={safeData.patientType}
+                  onChange={(e) => updateField('patientType', e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
+                >
+                  <option value="">Select patient type</option>
+                  {PATIENT_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                  Treatment Start Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
+                </label>
+                <DateInputDdMmYyyy
+                  disabled={disabled}
+                  value={safeData.treatmentStartDate}
+                  onChange={(isoVal) => updateField('treatmentStartDate', isoVal)}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+
+            {currentTreatmentMonth !== null && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-xl w-fit">
+                <span className="text-xs font-semibold text-slate-500">Current Treatment Month:</span>
+                <span className="text-sm font-bold text-[#089bab]">Month {currentTreatmentMonth}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                Treatment Details
+                <span className="text-xs font-normal text-slate-400 ml-1">(required before the report can be generated)</span>
+              </label>
+              <Textarea
+                disabled={disabled}
+                value={safeData.treatmentDetails}
+                onChange={(e) => updateField('treatmentDetails', e.target.value)}
+                placeholder="Enter treatment-related information to include in the patient report"
+                className="min-h-24 resize-none rounded-xl"
+                rows={4}
+              />
             </div>
           </CardContent>
         </Card>

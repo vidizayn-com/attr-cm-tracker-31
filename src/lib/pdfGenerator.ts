@@ -14,6 +14,7 @@ export interface PatientPdfData {
   primaryCardiologistName?: string;
   clinicalFindings?: any;
   redFlagSymptoms?: any;
+  treatmentDetails?: string | null;
 }
 
 export function generatePatientDiagnosisPdf(patient: PatientPdfData) {
@@ -167,6 +168,32 @@ export function generatePatientDiagnosisPdf(patient: PatientPdfData) {
     doc.text(titleText, leftMargin + 6, currentY + 5);
 
     currentY += 10;
+  }
+
+  // ── Treatment Details ──
+  const treatmentDetailsText = (patient.treatmentDetails || "").toString().trim();
+  if (treatmentDetailsText) {
+    drawSectionHeader("TREATMENT DETAILS");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const wrappedLines: string[] = doc.splitTextToSize(treatmentDetailsText, contentWidth - 8);
+    const lineHeight = 4.5;
+    const boxHeight = wrappedLines.length * lineHeight + 6;
+
+    checkPageBreak(boxHeight);
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(leftMargin, currentY, contentWidth, boxHeight, 2, 2, "FD");
+
+    doc.setTextColor(30, 41, 59);
+    let textY = currentY + 5;
+    wrappedLines.forEach((line: string) => {
+      doc.text(line, leftMargin + 4, textY);
+      textY += lineHeight;
+    });
+
+    currentY += boxHeight + 10;
   }
 
   const cf = patient.clinicalFindings || {};

@@ -62,6 +62,9 @@ export type PatientFormData = {
   nextAppointment: string;
   lastReportDate: string;
   reportDeadline: string;
+  patientType: string;
+  treatmentStartDate: string;
+  treatmentDetails: string;
   clinicalFindings: ClinicalFindings;
   redFlagSymptoms: RedFlagSymptoms;
 };
@@ -169,6 +172,42 @@ export function calculateAgeFromDob(dobString?: string | null): number | null {
   return age >= 0 ? age : null;
 }
 
+// Stable machine-readable Patient Type values paired with their English display labels.
+export const PATIENT_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "new", label: "New Patient" },
+  { value: "continuing", label: "Continuing Patient" },
+];
+
+// Current Treatment Month = calendar-month difference between today and Treatment
+// Start Date, plus 1 (so the start month itself is Month 1). Not prorated by day —
+// only the calendar month/year components are compared, matching the business rule.
+// Returns null when there is no valid Treatment Start Date, or when it is in the
+// future (no treatment month has started yet).
+export function calculateCurrentTreatmentMonth(treatmentStartDate?: string | null): number | null {
+  if (!treatmentStartDate) return null;
+  const cleanStr = String(treatmentStartDate).trim().split('T')[0];
+  const parts = cleanStr.split('-');
+  if (parts.length !== 3) return null;
+
+  const startYear = parseInt(parts[0], 10);
+  const startMonth = parseInt(parts[1], 10) - 1;
+  const startDay = parseInt(parts[2], 10);
+  if (isNaN(startYear) || isNaN(startMonth) || isNaN(startDay)) return null;
+
+  const start = new Date(startYear, startMonth, startDay);
+  start.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (start.getTime() > today.getTime()) return null;
+
+  const calendarMonthDiff =
+    (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+
+  return calendarMonthDiff + 1;
+}
+
 export function getDefaultPatientFormData(overrides?: Partial<PatientFormData>): PatientFormData {
   return {
     firstName: "",
@@ -188,6 +227,9 @@ export function getDefaultPatientFormData(overrides?: Partial<PatientFormData>):
     nextAppointment: "",
     lastReportDate: "",
     reportDeadline: "",
+    patientType: "",
+    treatmentStartDate: "",
+    treatmentDetails: "",
     clinicalFindings: { ...defaultClinicalFindings },
     redFlagSymptoms: { ...defaultRedFlags },
     ...overrides,
@@ -255,6 +297,12 @@ export function validatePatientFormData(
   if (options?.isReportTracker) {
     const rd = (data.reportDeadline ?? "").trim();
     if (!rd) missingFields.push("Rapor Yenileme Tarihi (Next Renewal Date)");
+
+    const pt = (data.patientType ?? "").trim();
+    if (!pt) missingFields.push("Patient Type");
+
+    const tsd = (data.treatmentStartDate ?? "").trim();
+    if (!tsd) missingFields.push("Treatment Start Date");
   }
 
   if (missingFields.length > 0) {

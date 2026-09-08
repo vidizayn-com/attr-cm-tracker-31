@@ -106,6 +106,10 @@ export type Patient = {
   reportDeadline?: string | null;
   lastReportDate?: string | null;
 
+  patientType?: string | null;
+  treatmentStartDate?: string | null;
+  treatmentDetails?: string | null;
+
   primary_cardiologist?: {
     id: number;
     documentId: string;
@@ -152,6 +156,9 @@ function sanitizePatientPayload(payload: Partial<Patient>) {
   setIfDefined("lastVisit", payload.lastVisit ?? undefined);
   setIfDefined("nextAppointment", payload.nextAppointment ?? undefined);
   setIfDefined("lastReportDate", payload.lastReportDate ?? undefined);
+  setIfDefined("patientType", payload.patientType ?? undefined);
+  setIfDefined("treatmentStartDate", payload.treatmentStartDate ?? undefined);
+  setIfDefined("treatmentDetails", payload.treatmentDetails ?? undefined);
   if (payload.reportDeadline !== undefined) {
     clean["report_deadline"] = payload.reportDeadline;
     clean["reportDeadline"] = payload.reportDeadline;

@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import Layout from '@/components/Layout';
-import { Search, Filter, Calendar, User, FileText, Clock, Loader2, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
+import { Search, Filter, Calendar, User, FileText, Clock, Loader2, AlertTriangle, CheckCircle, Plus, Activity, LayoutGrid, List as ListIcon, ArrowUp, ArrowDown, ArrowUpDown, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { strapiGet } from '@/lib/strapiClient';
 import { toast } from 'sonner';
@@ -11,9 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { createPatient } from '@/lib/patientApi';
 import { useUser } from '@/contexts/UserContext';
 import DateInputDdMmYyyy, { isoToDdMmYyyy } from '@/components/DateInputDdMmYyyy';
+import { addMonths } from 'date-fns';
 
 import PatientForm, { DoctorOption } from '@/components/PatientForm';
-import { getDefaultPatientFormData, validatePatientFormData, PatientFormData, calculateReportPriority } from '@/lib/patientSchema';
+import { getDefaultPatientFormData, validatePatientFormData, PatientFormData, calculateReportPriority, PATIENT_TYPE_OPTIONS } from '@/lib/patientSchema';
+import { REPORT_RENEWAL_PERIOD_MONTHS, getTreatmentFollowUpInfo, formatMilestoneDateIso, TAFAMIDIS_CONTINUATION_REVIEW_MONTH, TAFAMIDIS_CONTINUATION_WARNING } from '@/lib/treatmentSchedule';
+import { generateExcelTableFile } from '@/utils/excelExport';
 
 type PatientData = {
   id: number;
@@ -23,8 +28,40 @@ type PatientData = {
   statu: string;
   lastReportDate: string | null;
   reportDeadline: string | null;
+  createdAt?: string | null;
   primary_cardiologist: { fullName: string } | null;
+  patientType: string | null;
+  treatmentStartDate: string | null;
 };
+
+// Placeholder shown for any List View / Excel export column whose underlying
+// value is missing — reuses this file's own existing empty-state convention
+// (already used for a missing report deadline below) instead of introducing a
+// second one.
+const NOT_SET = 'Not Set';
+
+const PATIENT_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  PATIENT_TYPE_OPTIONS.map((opt) => [opt.value, opt.label])
+);
+
+// View-mode is remembered for the current browser session only (same pattern
+// already used by Layout.tsx's sessionStorage-based reminder flag) — not a new
+// persisted user setting.
+const VIEW_MODE_SESSION_KEY = 'reportTrackerViewMode';
+
+type SortKey =
+  | 'patient'
+  | 'patientType'
+  | 'treatmentStartDate'
+  | 'currentTreatmentMonth'
+  | 'nextTreatmentReminder'
+  | 'treatmentStatus'
+  | 'lastReportDate'
+  | 'nextReportRenewal'
+  | 'reportStatus';
+
+const TREATMENT_STATUS_RANK: Record<string, number> = { Overdue: 0, Due: 1, Upcoming: 2 };
+const REPORT_STATUS_RANK: Record<string, number> = { Overdue: 0, Pending: 1, 'In Progress': 1, Completed: 2 };
 
 const ReportTracker = () => {
   const { currentUser, isLoading: userLoading } = useUser();
@@ -54,8 +91,7 @@ const ReportTracker = () => {
     setForm(prev => {
       const updated = { ...prev, lastReportDate: val };
       if (val) {
-        const d = new Date(val);
-        d.setMonth(d.getMonth() + 6);
+        const d = addMonths(new Date(val), REPORT_RENEWAL_PERIOD_MONTHS);
         updated.reportDeadline = d.toISOString().split('T')[0];
       }
       return updated;
@@ -93,6 +129,10 @@ const ReportTracker = () => {
         reportDeadline: form.reportDeadline || null,
         lastVisit: form.lastReportDate || new Date().toISOString().split('T')[0],
         nextAppointment: form.reportDeadline || null,
+
+        patientType: form.patientType || null,
+        treatmentStartDate: form.treatmentStartDate || null,
+        treatmentDetails: form.treatmentDetails?.trim() || null,
 
         clinicalFindings: form.clinicalFindings,
         redFlagSymptoms: form.redFlagSymptoms,
@@ -183,6 +223,11 @@ const ReportTracker = () => {
         status = "Pending";
       }
 
+      // Treatment follow-up is a separate concept from the report renewal status
+      // above — a patient can be "High Priority" on their report while their
+      // treatment schedule is comfortably "Upcoming", or vice versa.
+      const treatmentInfo = getTreatmentFollowUpInfo(p.treatmentStartDate, p.patientType, p.lastReportDate);
+
       return {
         id: p.documentId,
         patientName: `${p.firstName} ${p.lastName}`,
@@ -192,7 +237,18 @@ const ReportTracker = () => {
         dueDate: p.reportDeadline ? isoToDdMmYyyy(p.reportDeadline) : 'Not Set',
         createdDate: p.lastReportDate ? isoToDdMmYyyy(p.lastReportDate) : (p.createdAt ? isoToDdMmYyyy(p.createdAt.split('T')[0]) : 'None'),
         priority,
-        diffDays
+        diffDays,
+        currentTreatmentMonth: treatmentInfo?.currentTreatmentMonth ?? null,
+        nextTreatmentReminderDate: treatmentInfo ? isoToDdMmYyyy(formatMilestoneDateIso(treatmentInfo.nextTreatmentReminderDate)) : null,
+        treatmentReminderStatus: treatmentInfo?.treatmentReminderStatus ?? null,
+        // Raw values below are only for List View / Excel export (Patient Type,
+        // Treatment Start Date columns, and chronological/numeric sorting) — the
+        // Card View above never reads them, so its output is unchanged.
+        patientType: p.patientType,
+        treatmentStartDateRaw: p.treatmentStartDate,
+        nextTreatmentReminderRaw: treatmentInfo?.nextTreatmentReminderDate ?? null,
+        reportDeadlineRaw: p.reportDeadline,
+        lastReportDateRaw: p.lastReportDate || p.createdAt || null,
       };
     });
   }, [patients]);
@@ -216,6 +272,140 @@ const ReportTracker = () => {
       return true;
     });
   }, [reports, searchTerm, statusFilter]);
+
+  // Display-ready column values shared by the List View table and the Excel
+  // export, so the two can never show different text for the same patient.
+  const formatReportRow = (r: (typeof filteredReports)[number]) => ({
+    id: r.id,
+    patient: r.patientName,
+    patientType: r.patientType ? (PATIENT_TYPE_LABELS[r.patientType] || NOT_SET) : NOT_SET,
+    treatmentStartDate: r.treatmentStartDateRaw ? isoToDdMmYyyy(r.treatmentStartDateRaw) : NOT_SET,
+    currentTreatmentMonth: r.currentTreatmentMonth !== null ? `Month ${r.currentTreatmentMonth}` : NOT_SET,
+    nextTreatmentReminder: r.nextTreatmentReminderDate || NOT_SET,
+    treatmentStatus: r.treatmentReminderStatus || NOT_SET,
+    lastReportDate: r.createdDate,
+    nextReportRenewal: r.dueDate,
+    reportStatus: r.status,
+  });
+
+  const [viewMode, setViewMode] = useState<'card' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'card';
+    return sessionStorage.getItem(VIEW_MODE_SESSION_KEY) === 'list' ? 'list' : 'card';
+  });
+
+  const handleViewModeChange = (value: string) => {
+    if (value !== 'card' && value !== 'list') return;
+    setViewMode(value);
+    try {
+      sessionStorage.setItem(VIEW_MODE_SESSION_KEY, value);
+    } catch {
+      // sessionStorage can be unavailable (e.g. private browsing); the view
+      // switch itself still works, it just won't be remembered.
+    }
+  };
+
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedReports = useMemo(() => {
+    if (!sortKey) return filteredReports;
+
+    const compare = (a: (typeof filteredReports)[number], b: (typeof filteredReports)[number]): number => {
+      switch (sortKey) {
+        case 'patient':
+          return a.patientName.localeCompare(b.patientName);
+        case 'patientType': {
+          const la = a.patientType ? (PATIENT_TYPE_LABELS[a.patientType] || '') : '';
+          const lb = b.patientType ? (PATIENT_TYPE_LABELS[b.patientType] || '') : '';
+          return la.localeCompare(lb);
+        }
+        case 'treatmentStartDate':
+          return (a.treatmentStartDateRaw || '').localeCompare(b.treatmentStartDateRaw || '');
+        case 'currentTreatmentMonth':
+          return (a.currentTreatmentMonth ?? -1) - (b.currentTreatmentMonth ?? -1);
+        case 'nextTreatmentReminder': {
+          const ta = a.nextTreatmentReminderRaw ? a.nextTreatmentReminderRaw.getTime() : -Infinity;
+          const tb = b.nextTreatmentReminderRaw ? b.nextTreatmentReminderRaw.getTime() : -Infinity;
+          return ta - tb;
+        }
+        case 'treatmentStatus': {
+          const ra = a.treatmentReminderStatus ? (TREATMENT_STATUS_RANK[a.treatmentReminderStatus] ?? 99) : 99;
+          const rb = b.treatmentReminderStatus ? (TREATMENT_STATUS_RANK[b.treatmentReminderStatus] ?? 99) : 99;
+          return ra - rb;
+        }
+        case 'lastReportDate':
+          return (a.lastReportDateRaw || '').localeCompare(b.lastReportDateRaw || '');
+        case 'nextReportRenewal':
+          return (a.reportDeadlineRaw || '').localeCompare(b.reportDeadlineRaw || '');
+        case 'reportStatus':
+          return (REPORT_STATUS_RANK[a.status] ?? 99) - (REPORT_STATUS_RANK[b.status] ?? 99);
+        default:
+          return 0;
+      }
+    };
+
+    const sorted = [...filteredReports].sort(compare);
+    return sortDir === 'asc' ? sorted : sorted.reverse();
+  }, [filteredReports, sortKey, sortDir]);
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportToExcel = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      if (!filteredReports.length) {
+        toast.error('No patients to export for the current filters.');
+        return;
+      }
+      const exportRows = filteredReports.map(r => {
+        const row = formatReportRow(r);
+        return {
+          'Patient': row.patient,
+          'Patient Type': row.patientType,
+          'Treatment Start Date': row.treatmentStartDate,
+          'Current Treatment Month': row.currentTreatmentMonth,
+          'Next Treatment Reminder': row.nextTreatmentReminder,
+          'Treatment Status': row.treatmentStatus,
+          'Last Report Date': row.lastReportDate,
+          'Next Report Renewal': row.nextReportRenewal,
+          'Report Status': row.reportStatus,
+        };
+      });
+      await generateExcelTableFile(exportRows, 'ATTR_Navigator_Report_Tracker');
+      toast.success(`Exported ${exportRows.length} patient record(s).`);
+    } catch (e: any) {
+      console.error('Report Tracker export error', e);
+      toast.error(e?.message || 'Failed to generate Excel export');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const SortableHead = ({ sortKeyName, children, className }: { sortKeyName: SortKey; children: React.ReactNode; className?: string }) => (
+    <TableHead
+      className={`cursor-pointer select-none whitespace-nowrap hover:text-slate-900 ${className || ''}`}
+      onClick={() => handleSort(sortKeyName)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {children}
+        {sortKey === sortKeyName ? (
+          sortDir === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />
+        ) : (
+          <ArrowUpDown className="w-3.5 h-3.5 text-slate-300" />
+        )}
+      </span>
+    </TableHead>
+  );
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -350,7 +540,34 @@ const ReportTracker = () => {
           </div>
         </div>
 
-        {/* Reports Grid */}
+        {/* View switch + Excel export */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={handleViewModeChange}
+            className="bg-white/50 border border-gray-200 rounded-xl p-1"
+          >
+            <ToggleGroupItem value="card" aria-label="Card View" className="rounded-lg px-3 py-1.5 gap-2 data-[state=on]:bg-[#089bab] data-[state=on]:text-white">
+              <LayoutGrid className="w-4 h-4" /> Card View
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List View" className="rounded-lg px-3 py-1.5 gap-2 data-[state=on]:bg-[#089bab] data-[state=on]:text-white">
+              <ListIcon className="w-4 h-4" /> List View
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <Button
+            onClick={handleExportToExcel}
+            disabled={exporting || loading}
+            variant="outline"
+            className="rounded-xl border-gray-200 flex items-center gap-2"
+          >
+            {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Export to Excel
+          </Button>
+        </div>
+
+        {/* Reports */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
@@ -360,6 +577,62 @@ const ReportTracker = () => {
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900">No reports found</h3>
             <p className="text-gray-500">No follow up patients match your criteria.</p>
+          </div>
+        ) : viewMode === 'list' ? (
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHead sortKeyName="patient">Patient</SortableHead>
+                  <SortableHead sortKeyName="patientType">Patient Type</SortableHead>
+                  <SortableHead sortKeyName="treatmentStartDate">Treatment Start Date</SortableHead>
+                  <SortableHead sortKeyName="currentTreatmentMonth">Current Treatment Month</SortableHead>
+                  <SortableHead sortKeyName="nextTreatmentReminder">Next Treatment Reminder</SortableHead>
+                  <SortableHead sortKeyName="treatmentStatus">Treatment Status</SortableHead>
+                  <SortableHead sortKeyName="lastReportDate">Last Report Date</SortableHead>
+                  <SortableHead sortKeyName="nextReportRenewal">Next Report Renewal</SortableHead>
+                  <SortableHead sortKeyName="reportStatus">Report Status</SortableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedReports.map((report) => {
+                  const row = formatReportRow(report);
+                  return (
+                    <TableRow
+                      key={row.id}
+                      className="cursor-pointer hover:bg-cyan-50/50"
+                      onClick={() => navigate(`/patients/${row.id}`)}
+                    >
+                      <TableCell className="font-medium text-slate-800 whitespace-nowrap">{row.patient}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.patientType}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.treatmentStartDate}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.currentTreatmentMonth}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.nextTreatmentReminder}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {row.treatmentStatus === NOT_SET ? (
+                          <span className="text-slate-400">{NOT_SET}</span>
+                        ) : (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            row.treatmentStatus === 'Overdue' ? 'bg-red-100 text-red-700' :
+                            row.treatmentStatus === 'Due' ? 'bg-amber-100 text-amber-700' :
+                            'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {row.treatmentStatus}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{row.lastReportDate}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.nextReportRenewal}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${getStatusBadge(row.reportStatus)}`}>
+                          {row.reportStatus}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
@@ -418,12 +691,51 @@ const ReportTracker = () => {
                     <span className="font-medium text-slate-800">{report.createdDate}</span>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-700">
+                  <div className="flex items-center text-sm text-gray-700 border-b border-gray-100 pb-2">
                     <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                     <span className="font-medium min-w-[100px]">Next Due:</span>
                     <span className={report.diffDays < 0 ? "text-red-600 font-semibold" : ""}>{report.dueDate}</span>
                   </div>
-                  
+
+                  {/* Treatment follow-up — a separate concept from the report renewal
+                      status above; only shown once Treatment Start Date is set. */}
+                  {report.currentTreatmentMonth !== null && (
+                    <>
+                      <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
+                        <div className="flex items-center text-slate-500">
+                          <Activity className="w-4 h-4 mr-2" />
+                          <span>Current Treatment Month</span>
+                        </div>
+                        <span className="font-medium text-slate-800 flex items-center gap-2">
+                          Month {report.currentTreatmentMonth}
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            report.treatmentReminderStatus === 'Overdue' ? 'bg-red-100 text-red-700' :
+                            report.treatmentReminderStatus === 'Due' ? 'bg-amber-100 text-amber-700' :
+                            'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {report.treatmentReminderStatus}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-700">
+                        <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="font-medium min-w-[160px]">Next Treatment Reminder:</span>
+                        <span>{report.nextTreatmentReminderDate}</span>
+                      </div>
+
+                      {/* Compact flag for the Month 15 Tafamidis continuation
+                          warning; full criteria text lives on Patient Details to
+                          avoid repeating a medical text block on every card. */}
+                      {report.currentTreatmentMonth === TAFAMIDIS_CONTINUATION_REVIEW_MONTH && (
+                        <div className="flex items-center text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 text-red-500" />
+                          <span>{TAFAMIDIS_CONTINUATION_WARNING.title} — review required</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   <div className="pt-3">
                     <Button 
                       onClick={() => navigate(`/patients/${report.id}`)}

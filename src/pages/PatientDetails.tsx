@@ -18,11 +18,13 @@ import { Badge } from "@/components/ui/badge";
 import { jsPDF } from "jspdf";
 import { generatePatientDiagnosisPdf } from "@/lib/pdfGenerator";
 import { toast } from "sonner";
-import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft, ArrowLeftRight } from "lucide-react";
-import DateInputDdMmYyyy from "@/components/DateInputDdMmYyyy";
+import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft, ArrowLeftRight, AlertTriangle } from "lucide-react";
+import DateInputDdMmYyyy, { isoToDdMmYyyy } from "@/components/DateInputDdMmYyyy";
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
+import { addMonths } from 'date-fns';
 
-import { validatePatientFormData, PatientFormData, defaultClinicalFindings, defaultRedFlags } from "@/lib/patientSchema";
+import { validatePatientFormData, PatientFormData, defaultClinicalFindings, defaultRedFlags, PATIENT_TYPE_OPTIONS, calculateCurrentTreatmentMonth } from "@/lib/patientSchema";
+import { REPORT_RENEWAL_PERIOD_MONTHS, getTreatmentFollowUpInfo, formatMilestoneDateIso, TAFAMIDIS_CONTINUATION_REVIEW_MONTH, TAFAMIDIS_CONTINUATION_WARNING } from "@/lib/treatmentSchedule";
 import { formatPatientSaveError, getResponsibleRoleForField, FormattedErrorResult } from "@/utils/errorUtils";
 
 import CombinedExaminations from "@/components/CombinedExaminations";
@@ -94,49 +96,7 @@ type RedFlagSymptoms = {
   otherValue: string;
 };
 
-const defaultClinicalFindings: ClinicalFindings = {
-  lvh12: false,
-  lvh12Value: "",
-
-  ntProBnp: false,
-  ntProBnpValue: "",
-  bnpValue: "",
-
-  ef40: false,
-  ef40Value: "",
-
-  gfr30: false,
-  gfr30Value: "",
-
-  age65: false,
-  age65Value: "",
-
-  echoEfValue: "",
-  echoIvsValue: "",
-  echoPwValue: "",
-  echoSddValue: "",
-  echoLaValue: "",
-
-  nmBoneScintigraphyGrade: "",
-  geneticsAnomaly: "",
-  hemSerumImmunofixation: "",
-  hemUrineImmunofixation: "",
-  hemFreeLightChain: "",
-};
-
-const defaultRedFlags: RedFlagSymptoms = {
-  ecgHypovoltage: false,
-  pericardialEffusion: false,
-  biatrialDilation: false,
-  thickeningInteratrialSeptum: false,
-  fiveFiveFiveFinding: false,
-  diastolicDysfunction: false,
-  intoleranceHeartFailure: false,
-  spontaneousResolutionHypertension: false,
-  taviAorticStenosis: false,
-  other: false,
-  otherValue: "",
-};
+// defaultClinicalFindings / defaultRedFlags come from the shared import above (identical shape).
 
 const safeText = (v: any) => (v === undefined || v === null ? "" : String(v));
 
@@ -394,6 +354,9 @@ export default function PatientDetails() {
         nextAppointment: (draft as any).nextAppointment ?? "",
         lastReportDate: (draft as any).lastReportDate ?? "",
         reportDeadline: (draft as any).reportDeadline ?? "",
+        patientType: (draft as any).patientType ?? "",
+        treatmentStartDate: (draft as any).treatmentStartDate ?? "",
+        treatmentDetails: (draft as any).treatmentDetails ?? "",
         clinicalFindings: (draft as any).clinicalFindings ?? defaultClinicalFindings,
         redFlagSymptoms: (draft as any).redFlagSymptoms ?? defaultRedFlags,
       };
@@ -439,6 +402,10 @@ export default function PatientDetails() {
 
         reportDeadline: (draft as any).reportDeadline || undefined,
         lastReportDate: (draft as any).lastReportDate || undefined,
+
+        patientType: (draft as any).patientType || undefined,
+        treatmentStartDate: (draft as any).treatmentStartDate || undefined,
+        treatmentDetails: (draft as any).treatmentDetails || undefined,
 
         clinicalFindings: (draft as any).clinicalFindings ?? defaultClinicalFindings,
         redFlagSymptoms: (draft as any).redFlagSymptoms ?? defaultRedFlags,
@@ -613,6 +580,12 @@ export default function PatientDetails() {
       missing.push("Hematoloji (Serbest Hafif Zincir Analizi)");
     }
 
+    // Treatment Details is required before a report can be generated
+    const treatmentDetails = String(p.treatmentDetails ?? "").trim();
+    if (!treatmentDetails) {
+      missing.push("Treatment Details is required before the report can be generated.");
+    }
+
     return missing;
   };
 
@@ -713,14 +686,14 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
         primaryCardiologistName: (targetPatient as any).primary_cardiologist?.fullName || undefined,
         clinicalFindings: (targetPatient as any).clinicalFindings,
         redFlagSymptoms: (targetPatient as any).redFlagSymptoms,
+        treatmentDetails: (targetPatient as any).treatmentDetails,
       });
 
       toast.success("PDF Raporu başarıyla oluşturuldu!");
 
       const today = new Date();
-      const nextDate = new Date();
-      nextDate.setDate(today.getDate() + 90);
-      
+      const nextDate = addMonths(today, REPORT_RENEWAL_PERIOD_MONTHS);
+
       const payload: Partial<StrapiPatient> = {
         lastReportDate: today.toISOString().split('T')[0],
         reportDeadline: nextDate.toISOString().split('T')[0],
@@ -1043,6 +1016,117 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                 </div>
               )}
 
+              {/* Treatment Follow-Up fields - shown for Follow Up patients */}
+              {safeText((draft as any).statu) === "Follow Up" && (
+                <>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Patient Type</div>
+                    <Select
+                      value={safeText((draft as any).patientType) || undefined}
+                      onValueChange={(v) => setDraft({ ...draft, patientType: v } as any)}
+                      disabled={!isEditing}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select patient type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {PATIENT_TYPE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">Treatment Start Date</div>
+                      <DateInputDdMmYyyy
+                        value={safeText((draft as any).treatmentStartDate)}
+                        disabled={!isEditing}
+                        onChange={(isoVal) => setDraft({ ...draft, treatmentStartDate: isoVal || null } as any)}
+                      />
+                    </div>
+                    {calculateCurrentTreatmentMonth((draft as any).treatmentStartDate) !== null && (
+                      <div className="flex items-center gap-2 px-3 py-2 mt-5 bg-cyan-50 border border-cyan-200 rounded-xl h-fit">
+                        <span className="text-xs font-semibold text-slate-500">Current Treatment Month:</span>
+                        <span className="text-sm font-bold text-[#089bab]">
+                          Month {calculateCurrentTreatmentMonth((draft as any).treatmentStartDate)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Month 15 Tafamidis continuation warning — a medical criteria
+                      reminder, distinct from the treatment/report reminder engine
+                      below. Purely derived from Current Treatment Month; nothing
+                      persisted, so it naturally stops once the patient moves past
+                      Month 15 (no dismissal/acknowledgement needed or stored). */}
+                  {calculateCurrentTreatmentMonth((draft as any).treatmentStartDate) === TAFAMIDIS_CONTINUATION_REVIEW_MONTH && (
+                    <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+                      <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" />
+                      <div>
+                        <div className="text-[11px] font-semibold text-red-500 uppercase tracking-wide mb-0.5">
+                          {TAFAMIDIS_CONTINUATION_WARNING.label}
+                        </div>
+                        <div className="text-sm font-bold text-red-700 mb-1">
+                          {TAFAMIDIS_CONTINUATION_WARNING.title}
+                        </div>
+                        <p className="text-xs text-red-700 mb-1">{TAFAMIDIS_CONTINUATION_WARNING.intro}</p>
+                        <ul className="text-xs text-red-700 list-disc list-inside mb-1 space-y-0.5">
+                          {TAFAMIDIS_CONTINUATION_WARNING.criteria.map((c) => (
+                            <li key={c}>{c}</li>
+                          ))}
+                        </ul>
+                        <p className="text-xs font-medium text-red-700">{TAFAMIDIS_CONTINUATION_WARNING.conclusion}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Treatment reminder — a separate concept from the report renewal
+                      date/status shown further below. */}
+                  {(() => {
+                    const followUp = getTreatmentFollowUpInfo(
+                      (draft as any).treatmentStartDate,
+                      (draft as any).patientType,
+                      (draft as any).lastReportDate
+                    );
+                    if (!followUp) return null;
+                    const statusStyles: Record<string, string> = {
+                      Overdue: 'bg-red-100 text-red-700 border-red-200',
+                      Due: 'bg-amber-100 text-amber-700 border-amber-200',
+                      Upcoming: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    };
+                    return (
+                      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="text-xs text-slate-500">
+                          Next Treatment Reminder:{' '}
+                          <span className="font-semibold text-slate-800">
+                            {isoToDdMmYyyy(formatMilestoneDateIso(followUp.nextTreatmentReminderDate))}
+                          </span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusStyles[followUp.treatmentReminderStatus]}`}>
+                          {followUp.treatmentReminderStatus}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">
+                      Treatment Details
+                      <span className="text-xs font-normal text-slate-400 ml-1">(required before the report can be generated)</span>
+                    </div>
+                    <Textarea
+                      value={safeText((draft as any).treatmentDetails)}
+                      disabled={!isEditing}
+                      onChange={(e) => setDraft({ ...draft, treatmentDetails: e.target.value } as any)}
+                      placeholder="Enter treatment-related information to include in the patient report"
+                      className="min-h-24"
+                    />
+                  </div>
+                </>
+              )}
+
               {/* Report Date - shown for Follow_Up patients */}
               {safeText((draft as any).statu) === "Follow Up" && reportDate && (
                 <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl">
@@ -1072,8 +1156,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                         if (newDate) {
                           const d = new Date(newDate);
                           if (!isNaN(d.getTime())) {
-                            d.setMonth(d.getMonth() + 6);
-                            newDeadline = d.toISOString().split('T')[0];
+                            newDeadline = addMonths(d, REPORT_RENEWAL_PERIOD_MONTHS).toISOString().split('T')[0];
                           }
                         }
                         setDraft({ 

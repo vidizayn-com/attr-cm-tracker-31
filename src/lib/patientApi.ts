@@ -25,6 +25,10 @@ type CreatePatientInput = {
   lastVisit?: string | null;
   nextAppointment?: string | null;
 
+  patientType?: string | null;
+  treatmentStartDate?: string | null;
+  treatmentDetails?: string | null;
+
   institution?: number; // institution id
   assignedCardiologistDocId?: string;
   caregiver?: {
@@ -69,6 +73,9 @@ export async function createPatient(input: CreatePatientInput) {
     reportDeadline: input.reportDeadline ?? null,
     lastVisit: input.lastVisit ?? input.lastReportDate ?? new Date().toISOString().split('T')[0],
     nextAppointment: input.nextAppointment ?? input.reportDeadline ?? null,
+    patientType: input.patientType ?? null,
+    treatmentStartDate: input.treatmentStartDate ?? null,
+    treatmentDetails: input.treatmentDetails ?? null,
     assignedCardiologistDocId: input.assignedCardiologistDocId ?? undefined,
   };
 
