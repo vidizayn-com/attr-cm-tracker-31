@@ -3,12 +3,19 @@ import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Link, useSearchParams } from "react-router-dom";
-import { FileSpreadsheet, Loader2, Users, UserCheck, ArrowLeftRight, CheckCircle, AlertTriangle, Clock } from "lucide-react";
+import { FileSpreadsheet, Loader2, Users, UserCheck, ArrowLeftRight, CheckCircle, AlertTriangle, Clock, LayoutGrid, List as ListIcon } from "lucide-react";
 import Layout from "@/components/Layout";
 import { generateExcelTableFile } from "@/utils/excelExport";
 import { strapiGet, strapiPost } from "@/lib/strapiClient";
 import { toast } from "sonner";
+
+// View-mode is remembered for the current browser session only (same
+// sessionStorage pattern already used by Report Tracker's view switch and by
+// Layout.tsx's report-reminder flag) — not a new persisted user setting.
+const VIEW_MODE_SESSION_KEY = "patientListViewMode";
 
 type StrapiPatient = {
   id: number;
@@ -91,6 +98,28 @@ const PatientList = () => {
   const patientFullName = (p: StrapiPatient) => {
     const name = `${safeText(p.firstName)} ${safeText(p.lastName)}`.trim();
     return name || `Patient #${p.id}`;
+  };
+
+  // Shared by the Card and List views so both render the exact same warning
+  // for the exact same patient — only computed once, not reimplemented per view.
+  const getReportDeadlineInfo = (patient: StrapiPatient) => {
+    const status = safeText(patient.statu) || "New";
+    if (status !== 'Follow Up' || !patient.reportDeadline) return null;
+    const deadline = new Date(patient.reportDeadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffMs = deadline.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays > 20) return null;
+    const isOverdue = diffDays < 0;
+    return {
+      deadline,
+      diffDays,
+      isOverdue,
+      text: isOverdue
+        ? `Report overdue by ${Math.abs(diffDays)} day(s)!`
+        : `Report deadline in ${diffDays} day(s) (${deadline.toLocaleDateString('tr-TR')})`,
+    };
   };
 
   const getStatusBadge = (status: string) => {
@@ -321,25 +350,15 @@ const PatientList = () => {
 
           {/* Report deadline warning - only for Follow Up patients */}
           {(() => {
-            if (status !== 'Follow Up' || !patient.reportDeadline) return null;
-            const deadline = new Date(patient.reportDeadline);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const diffMs = deadline.getTime() - today.getTime();
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            if (diffDays > 20) return null;
-            const isOverdue = diffDays < 0;
-            const bgColor = isOverdue ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200';
-            const textColor = isOverdue ? 'text-red-700' : 'text-amber-700';
-            const iconColor = isOverdue ? 'text-red-500' : 'text-amber-500';
+            const info = getReportDeadlineInfo(patient);
+            if (!info) return null;
+            const bgColor = info.isOverdue ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200';
+            const textColor = info.isOverdue ? 'text-red-700' : 'text-amber-700';
+            const iconColor = info.isOverdue ? 'text-red-500' : 'text-amber-500';
             return (
               <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${bgColor} mb-3`}>
                 <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${iconColor}`} />
-                <span className={`text-xs font-medium ${textColor}`}>
-                  {isOverdue
-                    ? `Report overdue by ${Math.abs(diffDays)} day(s)!`
-                    : `Report deadline in ${diffDays} day(s) (${deadline.toLocaleDateString('tr-TR')})`}
-                </span>
+                <span className={`text-xs font-medium ${textColor}`}>{info.text}</span>
               </div>
             );
           })()}
@@ -418,6 +437,133 @@ const PatientList = () => {
           </div>
         </CardContent>
       </Card>
+    );
+  };
+
+  const [viewMode, setViewMode] = useState<'card' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'card';
+    return sessionStorage.getItem(VIEW_MODE_SESSION_KEY) === 'list' ? 'list' : 'card';
+  });
+
+  const handleViewModeChange = (value: string) => {
+    if (value !== 'card' && value !== 'list') return;
+    setViewMode(value);
+    try {
+      sessionStorage.setItem(VIEW_MODE_SESSION_KEY, value);
+    } catch {
+      // sessionStorage can be unavailable (e.g. private browsing); the view
+      // switch itself still works, it just won't be remembered.
+    }
+  };
+
+  // Same per-patient data and actions as renderPatientCard, laid out as a
+  // table row instead of a card.
+  const renderPatientRow = (patient: StrapiPatient, sectionType: 'primary' | 'consulting') => {
+    const status = safeText(patient.statu) || "New";
+    const assignedDisplay = patient.primary_cardiologist ? patient.primary_cardiologist.fullName : "Atanmamış (HATA)";
+    const detailParam = safeText(patient.documentId) || String(patient.id);
+    const isReturning = returningPatient === patient.documentId;
+    const deadlineInfo = getReportDeadlineInfo(patient);
+
+    return (
+      <TableRow key={`${sectionType}-row-${patient.documentId || patient.id}`}>
+        <TableCell className="whitespace-nowrap">
+          <Link to={`/patients/${detailParam}`} className="font-medium text-slate-800 hover:text-cyan-600">
+            {patientFullName(patient)}
+          </Link>
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(status)}`}>{status}</span>
+        </TableCell>
+        <TableCell className="whitespace-nowrap">{calculateAge(patient.dateOfBirth)}</TableCell>
+        <TableCell className="whitespace-nowrap">
+          {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString('tr-TR') : <span className="text-gray-400">-</span>}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          {patient.nextAppointment ? new Date(patient.nextAppointment).toLocaleDateString('tr-TR') : <span className="text-gray-400">-</span>}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          <span className={patient.primary_cardiologist ? "text-cyan-700 font-semibold" : "text-red-500 font-bold"}>{assignedDisplay}</span>
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          {deadlineInfo ? (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${deadlineInfo.isOverdue ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+              <AlertTriangle className="w-3 h-3" />
+              {deadlineInfo.isOverdue ? `Overdue ${Math.abs(deadlineInfo.diffDays)}d` : `${deadlineInfo.diffDays}d left`}
+            </span>
+          ) : (
+            <span className="text-gray-400">-</span>
+          )}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <Link to={`/patients/${detailParam}`}>
+              <Button variant="outline" size="sm" className="rounded-lg">View Profile</Button>
+            </Link>
+            {sectionType === 'consulting' && (
+              patient.assignmentStatus === 'Pending' ? (
+                <>
+                  <Button
+                    onClick={() => handleApprovePatientDirect(patient)}
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    onClick={() => handleRejectPatientDirect(patient)}
+                    variant="destructive"
+                    size="sm"
+                    className="rounded-lg"
+                  >
+                    Reject
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => handleReturnToCardiologist(patient)}
+                  disabled={isReturning}
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-lg"
+                >
+                  {isReturning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowLeftRight className="w-3.5 h-3.5" />}
+                </Button>
+              )
+            )}
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  const renderPatientTable = (patients: StrapiPatient[], sectionType: 'primary' | 'consulting', emptyLabel: string) => {
+    if (patients.length === 0) {
+      return (
+        <div className="bg-white/70 rounded-2xl p-6 text-gray-500 text-center">
+          {emptyLabel}
+        </div>
+      );
+    }
+    return (
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Patient</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Age</TableHead>
+              <TableHead>Last Visit</TableHead>
+              <TableHead>Next Appointment</TableHead>
+              <TableHead>Primary Cardiologist</TableHead>
+              <TableHead>Report Deadline</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {patients.map((patient) => renderPatientRow(patient, sectionType))}
+          </TableBody>
+        </Table>
+      </div>
     );
   };
 
@@ -533,6 +679,25 @@ const PatientList = () => {
           </div>
         )}
 
+        {/* View switch */}
+        {!loading && !error && (
+          <div className="flex justify-start mb-6">
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={handleViewModeChange}
+              className="bg-white/50 border border-gray-200 rounded-xl p-1"
+            >
+              <ToggleGroupItem value="card" aria-label="Card View" className="rounded-lg px-3 py-1.5 gap-2 data-[state=on]:bg-[#089bab] data-[state=on]:text-white">
+                <LayoutGrid className="w-4 h-4" /> Card View
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="List View" className="rounded-lg px-3 py-1.5 gap-2 data-[state=on]:bg-[#089bab] data-[state=on]:text-white">
+                <ListIcon className="w-4 h-4" /> List View
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        )}
+
         {/* Patient Sections */}
         {!loading && !error && (
           <>
@@ -553,7 +718,9 @@ const PatientList = () => {
                   </div>
                 </div>
 
-                {filteredPrimary.length === 0 ? (
+                {viewMode === 'list' ? (
+                  renderPatientTable(filteredPrimary, 'primary', 'No patients found in this section.')
+                ) : filteredPrimary.length === 0 ? (
                   <div className="bg-white/70 rounded-2xl p-6 text-gray-500 text-center">
                     No patients found in this section.
                   </div>
@@ -613,7 +780,13 @@ const PatientList = () => {
                       <Clock className="w-4 h-4 text-amber-500" />
                       Pending Approval ({filteredConsulting.filter(p => p.assignmentStatus === 'Pending').length})
                     </h3>
-                    {filteredConsulting.filter(p => p.assignmentStatus === 'Pending').length === 0 ? (
+                    {viewMode === 'list' ? (
+                      renderPatientTable(
+                        filteredConsulting.filter(p => p.assignmentStatus === 'Pending'),
+                        'consulting',
+                        'No pending patient approvals.'
+                      )
+                    ) : filteredConsulting.filter(p => p.assignmentStatus === 'Pending').length === 0 ? (
                       <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-slate-400 text-sm text-center">
                         No pending patient approvals.
                       </div>
@@ -632,7 +805,13 @@ const PatientList = () => {
                       <CheckCircle className="w-4 h-4 text-emerald-500" />
                       Approved Patients ({filteredConsulting.filter(p => p.assignmentStatus === 'Approved').length})
                     </h3>
-                    {filteredConsulting.filter(p => p.assignmentStatus === 'Approved').length === 0 ? (
+                    {viewMode === 'list' ? (
+                      renderPatientTable(
+                        filteredConsulting.filter(p => p.assignmentStatus === 'Approved'),
+                        'consulting',
+                        'No approved patients in your list.'
+                      )
+                    ) : filteredConsulting.filter(p => p.assignmentStatus === 'Approved').length === 0 ? (
                       <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-slate-400 text-sm text-center">
                         No approved patients in your list.
                       </div>
