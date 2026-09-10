@@ -146,8 +146,8 @@ const Login = () => {
           <div className="text-center mt-6">
             <p className="text-gray-600 text-sm sm:text-base">
               Need assistance? Please contact{' '}
-              <a href="mailto:dika.cardio@gmail.com" className="text-[#089bab] hover:underline font-medium">
-                dika.cardio@gmail.com
+              <a href="mailto:info@attrnavigator.com" className="text-[#089bab] hover:underline font-medium">
+                info@attrnavigator.com
               </a>
             </p>
           </div>
