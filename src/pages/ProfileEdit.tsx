@@ -9,8 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
-import { Shield, ShieldCheck, ShieldX, Loader2, User, Phone, Building2, Save, ArrowLeft, Mail, Bell, BellOff } from 'lucide-react';
-import { strapiGet } from '@/lib/strapiClient';
+import { Shield, ShieldCheck, ShieldX, Loader2, User, Phone, Building2, Save, ArrowLeft, Mail, Bell, BellOff, Send } from 'lucide-react';
+import { strapiGet, strapiPost } from '@/lib/strapiClient';
 
 
 interface Hospital {
@@ -128,6 +128,24 @@ const ProfileEdit = () => {
       toast.success(checked ? "Email notifications enabled." : "Email notifications disabled.");
     }
     setSavingEmailNotif(false);
+  };
+
+  const [sendingDigest, setSendingDigest] = useState(false);
+
+  const handleSendDigestNow = async () => {
+    setSendingDigest(true);
+    try {
+      const result = await strapiPost<{ sent: boolean; message: string }>('/api/auth/doctor/trigger-weekly-digest', {});
+      if (result.sent) {
+        toast.success(result.message);
+      } else {
+        toast.info(result.message);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to send weekly reminder digest");
+    } finally {
+      setSendingDigest(false);
+    }
   };
 
   if (!currentUser) {
@@ -387,6 +405,29 @@ const ProfileEdit = () => {
                 )}
               </div>
             </div>
+
+            {currentUser.role === 'Cardiology' && (
+              <div className="flex items-center justify-between p-4 bg-cyan-50/50 rounded-xl border border-cyan-100">
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Weekly Reminder Digest</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Preview the weekly summary of your Follow Up patients needing a treatment or report
+                    reminder — sent by email every Monday. Sending a preview here does not affect your
+                    regular Monday email.
+                  </div>
+                </div>
+                <Button
+                  onClick={handleSendDigestNow}
+                  disabled={sendingDigest}
+                  variant="outline"
+                  size="sm"
+                  className="ml-4 flex-shrink-0 rounded-lg border-cyan-200"
+                >
+                  {sendingDigest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Send Now
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
