@@ -279,103 +279,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* 2. Optional Report Deadlines Section (when showReportDates is enabled) */}
-      {showReportDates && (
-        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-              <span className="text-xl sm:text-2xl">📅</span>
-              <span>Report Deadlines</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
-                  Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
-                  <FieldTooltip text="The date the most recently filed report covers. Updating this also marks the most recently passed treatment reminder as addressed — there is no separate action to acknowledge a treatment reminder." />
-                </label>
-                <DateInputDdMmYyyy
-                  value={safeData.lastReportDate}
-                  onChange={(isoVal) => {
-                    updateField('lastReportDate', isoVal);
-                    if (onLastReportDateChange) onLastReportDateChange(isoVal);
-                  }}
-                  className="rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
-                  Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
-                  <FieldTooltip text="Automatically set to Last Report Date + 3 calendar months. Drives the report renewal warnings shown on the dashboard and Report Tracker — adjust it manually only if the renewal date is genuinely different." />
-                </label>
-                <DateInputDdMmYyyy
-                  value={safeData.reportDeadline}
-                  onChange={(isoVal) => updateField('reportDeadline', isoVal)}
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 2b. Treatment Follow-Up Section (when showReportDates is enabled) */}
-      {showReportDates && (
-        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-              <span className="text-xl sm:text-2xl">💊</span>
-              <span>Treatment Follow-Up</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
-                  Patient Type <span className="text-red-500">*</span>
-                  <FieldTooltip text="New Patient or Continuing Patient — determines the treatment milestone schedule used to calculate treatment reminders." />
-                </label>
-                <select
-                  disabled={disabled}
-                  value={safeData.patientType}
-                  onChange={(e) => updateField('patientType', e.target.value)}
-                  className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
-                >
-                  <option value="">Select patient type</option>
-                  {PATIENT_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
-                  Treatment Start Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
-                  <FieldTooltip text="The baseline date Current Treatment Month and all treatment reminders are calculated from." />
-                </label>
-                <DateInputDdMmYyyy
-                  disabled={disabled}
-                  value={safeData.treatmentStartDate}
-                  onChange={(isoVal) => updateField('treatmentStartDate', isoVal)}
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
-
-            {currentTreatmentMonth !== null && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-xl w-fit">
-                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-                  Current Treatment Month:
-                  <FieldTooltip text="Calculated automatically from Treatment Start Date. Not editable." />
-                </span>
-                <span className="text-sm font-bold text-[#089bab]">Month {currentTreatmentMonth}</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 3. Clinical Findings */}
+      {/* 2. Clinical Findings */}
       <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
@@ -529,7 +433,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* 4. Echocardiography Findings (Cardiology) */}
+      {/* 3. Echocardiography Findings (Cardiology) */}
       <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
@@ -602,7 +506,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* 5. Additional Specialty Findings */}
+      {/* 4. Additional Specialty Findings */}
       <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
@@ -688,7 +592,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* 6. Red Flag Symptoms */}
+      {/* 5. Red Flag Symptoms */}
       <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
@@ -828,6 +732,104 @@ const PatientForm: React.FC<PatientFormProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* 6. Report Deadlines (when showReportDates is enabled) — placed after
+          all clinical data entry, not before it, so the patient's own data is
+          captured first. */}
+      {showReportDates && (
+        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+              <span className="text-xl sm:text-2xl">📅</span>
+              <span>Report Deadlines</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
+                  Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
+                  <FieldTooltip text="The date the most recently filed report covers. Updating this also marks the most recently passed treatment reminder as addressed — there is no separate action to acknowledge a treatment reminder." />
+                </label>
+                <DateInputDdMmYyyy
+                  value={safeData.lastReportDate}
+                  onChange={(isoVal) => {
+                    updateField('lastReportDate', isoVal);
+                    if (onLastReportDateChange) onLastReportDateChange(isoVal);
+                  }}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
+                  Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
+                  <FieldTooltip text="Automatically set to Last Report Date + 3 calendar months. Drives the report renewal warnings shown on the dashboard and Report Tracker — adjust it manually only if the renewal date is genuinely different." />
+                </label>
+                <DateInputDdMmYyyy
+                  value={safeData.reportDeadline}
+                  onChange={(isoVal) => updateField('reportDeadline', isoVal)}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 6b. Treatment Follow-Up (when showReportDates is enabled) */}
+      {showReportDates && (
+        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+              <span className="text-xl sm:text-2xl">💊</span>
+              <span>Treatment Follow-Up</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
+                  Patient Type <span className="text-red-500">*</span>
+                  <FieldTooltip text="New Patient or Continuing Patient — determines the treatment milestone schedule used to calculate treatment reminders." />
+                </label>
+                <select
+                  disabled={disabled}
+                  value={safeData.patientType}
+                  onChange={(e) => updateField('patientType', e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
+                >
+                  <option value="">Select patient type</option>
+                  {PATIENT_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
+                  Treatment Start Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
+                  <FieldTooltip text="The baseline date Current Treatment Month and all treatment reminders are calculated from." />
+                </label>
+                <DateInputDdMmYyyy
+                  disabled={disabled}
+                  value={safeData.treatmentStartDate}
+                  onChange={(isoVal) => updateField('treatmentStartDate', isoVal)}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+
+            {currentTreatmentMonth !== null && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-xl w-fit">
+                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                  Current Treatment Month:
+                  <FieldTooltip text="Calculated automatically from Treatment Start Date. Not editable." />
+                </span>
+                <span className="text-sm font-bold text-[#089bab]">Month {currentTreatmentMonth}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 7. Treatment Details (when showReportDates is enabled) — placed last:
           a free-text wrap-up filled in after the structured clinical data
