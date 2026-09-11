@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
 import DateInputDdMmYyyy from '@/components/DateInputDdMmYyyy';
+import FieldTooltip from '@/components/FieldTooltip';
 import { getDefaultPatientFormData, defaultClinicalFindings, defaultRedFlags, PatientFormData, calculateAgeFromDob, calculateCurrentTreatmentMonth, PATIENT_TYPE_OPTIONS } from '@/lib/patientSchema';
 
 export type DoctorOption = {
@@ -290,8 +291,9 @@ const PatientForm: React.FC<PatientFormProps> = ({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
                   Last Report Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
+                  <FieldTooltip text="The date the most recently filed report covers. Updating this also marks the most recently passed treatment reminder as addressed — there is no separate action to acknowledge a treatment reminder." />
                 </label>
                 <DateInputDdMmYyyy
                   value={safeData.lastReportDate}
@@ -303,8 +305,9 @@ const PatientForm: React.FC<PatientFormProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
                   Next Renewal Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
+                  <FieldTooltip text="Automatically set to Last Report Date + 3 calendar months. Drives the report renewal warnings shown on the dashboard and Report Tracker — adjust it manually only if the renewal date is genuinely different." />
                 </label>
                 <DateInputDdMmYyyy
                   value={safeData.reportDeadline}
@@ -329,8 +332,9 @@ const PatientForm: React.FC<PatientFormProps> = ({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
                   Patient Type <span className="text-red-500">*</span>
+                  <FieldTooltip text="New Patient or Continuing Patient — determines the treatment milestone schedule used to calculate treatment reminders." />
                 </label>
                 <select
                   disabled={disabled}
@@ -345,8 +349,9 @@ const PatientForm: React.FC<PatientFormProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
                   Treatment Start Date <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span> <span className="text-red-500">*</span>
+                  <FieldTooltip text="The baseline date Current Treatment Month and all treatment reminders are calculated from." />
                 </label>
                 <DateInputDdMmYyyy
                   disabled={disabled}
@@ -359,25 +364,13 @@ const PatientForm: React.FC<PatientFormProps> = ({
 
             {currentTreatmentMonth !== null && (
               <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-xl w-fit">
-                <span className="text-xs font-semibold text-slate-500">Current Treatment Month:</span>
+                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                  Current Treatment Month:
+                  <FieldTooltip text="Calculated automatically from Treatment Start Date. Not editable." />
+                </span>
                 <span className="text-sm font-bold text-[#089bab]">Month {currentTreatmentMonth}</span>
               </div>
             )}
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                Treatment Details
-                <span className="text-xs font-normal text-slate-400 ml-1">(required before the report can be generated)</span>
-              </label>
-              <Textarea
-                disabled={disabled}
-                value={safeData.treatmentDetails}
-                onChange={(e) => updateField('treatmentDetails', e.target.value)}
-                placeholder="Enter treatment-related information to include in the patient report"
-                className="min-h-24 resize-none rounded-xl"
-                rows={4}
-              />
-            </div>
           </CardContent>
         </Card>
       )}
@@ -835,6 +828,37 @@ const PatientForm: React.FC<PatientFormProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* 7. Treatment Details (when showReportDates is enabled) — placed last:
+          a free-text wrap-up filled in after the structured clinical data
+          above, not in the middle of it. */}
+      {showReportDates && (
+        <Card className="bg-white/90 backdrop-blur-sm rounded-3xl border-none shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+              <span className="text-xl sm:text-2xl">💊</span>
+              <span>Treatment Details</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <label className="flex items-center gap-1.5 text-gray-700 font-semibold mb-2 text-sm">
+                Treatment Details
+                <span className="text-xs font-normal text-slate-400">(required before the report can be generated)</span>
+                <FieldTooltip text="Free-text notes about the patient's treatment, included in the generated PDF report." />
+              </label>
+              <Textarea
+                disabled={disabled}
+                value={safeData.treatmentDetails}
+                onChange={(e) => updateField('treatmentDetails', e.target.value)}
+                placeholder="Enter treatment-related information to include in the patient report"
+                className="min-h-24 resize-none rounded-xl"
+                rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

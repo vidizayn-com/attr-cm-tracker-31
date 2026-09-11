@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Copy, TrendingUp, Building2, ClipboardList, UserPlus, FileBarChart, Pencil, Save, ArrowLeft, ArrowLeftRight, AlertTriangle } from "lucide-react";
 import DateInputDdMmYyyy, { isoToDdMmYyyy } from "@/components/DateInputDdMmYyyy";
 import DateOfBirthSelect from '@/components/DateOfBirthSelect';
+import FieldTooltip from '@/components/FieldTooltip';
 import { addMonths } from 'date-fns';
 
 import { validatePatientFormData, PatientFormData, defaultClinicalFindings, defaultRedFlags, PATIENT_TYPE_OPTIONS, calculateCurrentTreatmentMonth } from "@/lib/patientSchema";
@@ -1020,7 +1021,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               {safeText((draft as any).statu) === "Follow Up" && (
                 <>
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Patient Type</div>
+                    <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5">
+                      Patient Type
+                      <FieldTooltip text="New Patient or Continuing Patient — determines the treatment milestone schedule used to calculate treatment reminders." />
+                    </div>
                     <Select
                       value={safeText((draft as any).patientType) || undefined}
                       onValueChange={(v) => setDraft({ ...draft, patientType: v } as any)}
@@ -1039,7 +1043,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <div className="text-xs text-slate-500 mb-1">Treatment Start Date</div>
+                      <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5">
+                        Treatment Start Date
+                        <FieldTooltip text="The baseline date Current Treatment Month and all treatment reminders are calculated from." />
+                      </div>
                       <DateInputDdMmYyyy
                         value={safeText((draft as any).treatmentStartDate)}
                         disabled={!isEditing}
@@ -1048,7 +1055,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                     </div>
                     {calculateCurrentTreatmentMonth((draft as any).treatmentStartDate) !== null && (
                       <div className="flex items-center gap-2 px-3 py-2 mt-5 bg-cyan-50 border border-cyan-200 rounded-xl h-fit">
-                        <span className="text-xs font-semibold text-slate-500">Current Treatment Month:</span>
+                        <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                          Current Treatment Month:
+                          <FieldTooltip text="Calculated automatically from Treatment Start Date. Not editable." />
+                        </span>
                         <span className="text-sm font-bold text-[#089bab]">
                           Month {calculateCurrentTreatmentMonth((draft as any).treatmentStartDate)}
                         </span>
@@ -1098,11 +1108,14 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                     };
                     return (
                       <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
-                        <div className="text-xs text-slate-500">
-                          Next Treatment Reminder:{' '}
-                          <span className="font-semibold text-slate-800">
-                            {isoToDdMmYyyy(formatMilestoneDateIso(followUp.nextTreatmentReminderDate))}
+                        <div className="text-xs text-slate-500 flex items-center gap-1.5">
+                          <span>
+                            Next Treatment Reminder:{' '}
+                            <span className="font-semibold text-slate-800">
+                              {isoToDdMmYyyy(formatMilestoneDateIso(followUp.nextTreatmentReminderDate))}
+                            </span>
                           </span>
+                          <FieldTooltip text="The next treatment milestone based on Patient Type and Treatment Start Date. There is no separate action to acknowledge it — it's automatically marked as handled once Last Report Date (below) reaches or passes this date, and the schedule moves on to the following milestone." />
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusStyles[followUp.treatmentReminderStatus]}`}>
                           {followUp.treatmentReminderStatus}
@@ -1112,9 +1125,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                   })()}
 
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">
+                    <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5">
                       Treatment Details
-                      <span className="text-xs font-normal text-slate-400 ml-1">(required before the report can be generated)</span>
+                      <span className="text-xs font-normal text-slate-400">(required before the report can be generated)</span>
+                      <FieldTooltip text="Free-text notes about the patient's treatment, included in the generated PDF report." />
                     </div>
                     <Textarea
                       value={safeText((draft as any).treatmentDetails)}
@@ -1147,7 +1161,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
               {safeText((draft as any).statu) === "Follow Up" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Last Report Date</div>
+                    <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5">
+                      Last Report Date
+                      <FieldTooltip text="The date the most recently filed report covers. Updating this also marks the most recently passed treatment reminder as addressed and automatically recalculates Report Deadline (Last Report Date + 3 calendar months)." />
+                    </div>
                     <DateInputDdMmYyyy
                       value={safeText((draft as any).lastReportDate)}
                       disabled={!isEditing}
@@ -1168,7 +1185,10 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                     />
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Report Deadline</div>
+                    <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5">
+                      Report Deadline
+                      <FieldTooltip text="Automatically set to Last Report Date + 3 calendar months. Drives the report renewal warnings shown on the dashboard and Report Tracker — adjust it manually only if the renewal date is genuinely different." />
+                    </div>
                     <DateInputDdMmYyyy
                       value={safeText((draft as any).reportDeadline)}
                       disabled={!isEditing}
