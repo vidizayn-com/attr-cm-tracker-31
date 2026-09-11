@@ -1106,20 +1106,47 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                       Due: 'bg-amber-100 text-amber-700 border-amber-200',
                       Upcoming: 'bg-emerald-100 text-emerald-700 border-emerald-200',
                     };
+                    const isOverdue = followUp.treatmentReminderStatus === 'Overdue';
                     return (
-                      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
-                        <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                          <span>
-                            Next Treatment Reminder:{' '}
-                            <span className="font-semibold text-slate-800">
-                              {isoToDdMmYyyy(formatMilestoneDateIso(followUp.nextTreatmentReminderDate))}
+                      <div className="space-y-2">
+                        {/* Overdue refers to a PAST milestone (previousTreatmentReminderDate),
+                            never to nextTreatmentReminderDate below — showing the Overdue badge
+                            next to a future date with no further context was confusing, so the
+                            overdue milestone now gets its own explicit row when it applies. */}
+                        {isOverdue && followUp.previousTreatmentReminderDate && (
+                          <div className="flex items-center justify-between gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl">
+                            <div className="text-xs text-red-700 flex items-center gap-1.5">
+                              <span>
+                                Treatment reminder overdue since{' '}
+                                <span className="font-semibold">
+                                  {isoToDdMmYyyy(formatMilestoneDateIso(followUp.previousTreatmentReminderDate))}
+                                </span>
+                              </span>
+                              <FieldTooltip text="This past treatment milestone has not been covered by a report yet. There is no separate action to acknowledge it — it's automatically marked as handled once Last Report Date (below) reaches or passes this date." />
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusStyles.Overdue}`}>
+                              Overdue
                             </span>
-                          </span>
-                          <FieldTooltip text="The next treatment milestone based on Patient Type and Treatment Start Date. There is no separate action to acknowledge it — it's automatically marked as handled once Last Report Date (below) reaches or passes this date, and the schedule moves on to the following milestone." />
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                          <div className="text-xs text-slate-500 flex items-center gap-1.5">
+                            <span>
+                              {isOverdue ? 'Next Treatment Reminder (after the above is addressed):' : 'Next Treatment Reminder:'}{' '}
+                              <span className="font-semibold text-slate-800">
+                                {isoToDdMmYyyy(formatMilestoneDateIso(followUp.nextTreatmentReminderDate))}
+                              </span>
+                            </span>
+                            {!isOverdue && (
+                              <FieldTooltip text="The next treatment milestone based on Patient Type and Treatment Start Date. There is no separate action to acknowledge it — it's automatically marked as handled once Last Report Date (below) reaches or passes this date, and the schedule moves on to the following milestone." />
+                            )}
+                          </div>
+                          {!isOverdue && (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusStyles[followUp.treatmentReminderStatus]}`}>
+                              {followUp.treatmentReminderStatus}
+                            </span>
+                          )}
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusStyles[followUp.treatmentReminderStatus]}`}>
-                          {followUp.treatmentReminderStatus}
-                        </span>
                       </div>
                     );
                   })()}

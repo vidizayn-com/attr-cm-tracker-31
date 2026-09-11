@@ -240,6 +240,13 @@ const ReportTracker = () => {
         diffDays,
         currentTreatmentMonth: treatmentInfo?.currentTreatmentMonth ?? null,
         nextTreatmentReminderDate: treatmentInfo ? isoToDdMmYyyy(formatMilestoneDateIso(treatmentInfo.nextTreatmentReminderDate)) : null,
+        // Overdue refers to this PAST milestone, never to nextTreatmentReminderDate
+        // above — only used when treatmentReminderStatus === 'Overdue', so the card
+        // can show which date is actually overdue instead of just a bare badge next
+        // to a future date.
+        previousTreatmentReminderDate: treatmentInfo?.previousTreatmentReminderDate
+          ? isoToDdMmYyyy(formatMilestoneDateIso(treatmentInfo.previousTreatmentReminderDate))
+          : null,
         treatmentReminderStatus: treatmentInfo?.treatmentReminderStatus ?? null,
         // Raw values below are only for List View / Excel export (Patient Type,
         // Treatment Start Date columns, and chronological/numeric sorting) — the
@@ -718,9 +725,22 @@ const ReportTracker = () => {
                         </span>
                       </div>
 
+                      {/* Overdue refers to this PAST milestone, never to
+                          nextTreatmentReminderDate below — shown explicitly so
+                          the Overdue badge above isn't read as applying to the
+                          future date in the row underneath. */}
+                      {report.treatmentReminderStatus === 'Overdue' && report.previousTreatmentReminderDate && (
+                        <div className="flex items-center text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5">
+                          <Clock className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 text-red-500" />
+                          <span>Overdue since <span className="font-semibold">{report.previousTreatmentReminderDate}</span></span>
+                        </div>
+                      )}
+
                       <div className="flex items-center text-sm text-gray-700">
                         <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                        <span className="font-medium min-w-[160px]">Next Treatment Reminder:</span>
+                        <span className="font-medium min-w-[160px]">
+                          {report.treatmentReminderStatus === 'Overdue' ? 'Next Reminder (once addressed):' : 'Next Treatment Reminder:'}
+                        </span>
                         <span>{report.nextTreatmentReminderDate}</span>
                       </div>
 

@@ -4,8 +4,18 @@ import Layout from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2 } from 'lucide-react';
-import { strapiGet } from '@/lib/strapiClient';
+import { Search, Loader2, FileText } from 'lucide-react';
+import { strapiGet, STRAPI_URL } from '@/lib/strapiClient';
+
+// Resource `url` values are either an absolute external link (PubMed etc.,
+// used as-is) or a relative path to a PDF the backend itself serves (e.g.
+// "/uploads/x.pdf") — the backend doesn't reliably know its own public URL,
+// so relative paths are resolved here against the same STRAPI_URL already
+// used for every other API call.
+function resolveResourceUrl(url: string): string {
+  if (!url || url === '#') return url;
+  return url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
+}
 
 interface Article {
   id: string;
@@ -234,9 +244,13 @@ const Resources = () => {
                       <CardTitle className="text-base sm:text-lg leading-tight">
                         {article.title}
                       </CardTitle>
-                      <CardDescription className="text-xs sm:text-sm text-gray-600">
-                        {article.journal} • {article.authors.join(', ')}
-                      </CardDescription>
+                      {(article.journal || article.authors.length > 0) && (
+                        <CardDescription className="text-xs sm:text-sm text-gray-600">
+                          {[article.journal, article.authors.length > 0 ? article.authors.join(', ') : null]
+                            .filter(Boolean)
+                            .join(' • ')}
+                        </CardDescription>
+                      )}
                     </CardHeader>
                     <CardContent className="pt-0">
                       <p className="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed">
@@ -250,13 +264,19 @@ const Resources = () => {
                         ))}
                       </div>
                       {article.url && article.url !== "#" ? (
-                        <a 
-                          href={article.url}
+                        <a
+                          href={resolveResourceUrl(article.url)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium inline-block"
+                          className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium inline-flex items-center gap-1"
                         >
-                          Read Article →
+                          {article.url.startsWith('/') ? (
+                            <>
+                              <FileText className="w-3.5 h-3.5" /> Open PDF →
+                            </>
+                          ) : (
+                            'Read Article →'
+                          )}
                         </a>
                       ) : (
                         <span className="text-gray-400 text-xs sm:text-sm font-medium">
