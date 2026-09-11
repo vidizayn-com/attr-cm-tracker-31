@@ -52,6 +52,9 @@ export type PatientFormData = {
   contactNumber: string;
   email: string;
   address: string;
+  clinicalStatus: string;
+  kvkkConsentStatus: string;
+  kvkkConsentAt: string;
   primaryCardiologistDocId: string;
   statu: string;
   allowCaregiver: boolean;
@@ -217,6 +220,9 @@ export function getDefaultPatientFormData(overrides?: Partial<PatientFormData>):
     contactNumber: "",
     email: "",
     address: "",
+    clinicalStatus: "",
+    kvkkConsentStatus: "pending",
+    kvkkConsentAt: "",
     primaryCardiologistDocId: "",
     statu: "New",
     allowCaregiver: false,

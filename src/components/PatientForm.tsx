@@ -197,6 +197,62 @@ const PatientForm: React.FC<PatientFormProps> = ({
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+              Address
+            </label>
+            <Input
+              disabled={disabled}
+              value={safeData.address}
+              onChange={(e) => updateField('address', e.target.value)}
+              placeholder="Enter address"
+              className="h-10 sm:h-auto rounded-xl"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+              Clinical Status
+            </label>
+            <Textarea
+              disabled={disabled}
+              value={safeData.clinicalStatus}
+              onChange={(e) => updateField('clinicalStatus', e.target.value)}
+              placeholder="Enter clinical status notes"
+              className="rounded-xl resize-none"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+                KVKK Consent Status
+              </label>
+              <select
+                disabled={disabled}
+                value={safeData.kvkkConsentStatus}
+                onChange={(e) => updateField('kvkkConsentStatus', e.target.value)}
+                className="w-full h-10 px-3 border border-gray-300 rounded-xl text-sm sm:text-base bg-white"
+              >
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+                KVKK Consent At <span className="text-xs font-normal text-slate-400">(dd/mm/yyyy)</span>
+              </label>
+              <DateInputDdMmYyyy
+                disabled={disabled}
+                value={safeData.kvkkConsentAt}
+                onChange={(isoVal) => updateField('kvkkConsentAt', isoVal)}
+                className="rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
               Primary Cardiologist <span className="text-red-500">*</span>
             </label>
             <select

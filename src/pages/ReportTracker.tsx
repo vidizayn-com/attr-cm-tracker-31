@@ -122,6 +122,9 @@ const ReportTracker = () => {
         phone: form.contactNumber.trim(),
         email: form.email?.trim() || undefined,
         address: form.address?.trim() || undefined,
+        clinicalStatus: form.clinicalStatus?.trim() || undefined,
+        kvkkConsentStatus: form.kvkkConsentStatus || undefined,
+        kvkkConsentAt: form.kvkkConsentAt || undefined,
         allowCaregiver: form.allowCaregiver,
         statu: "Follow Up",
 

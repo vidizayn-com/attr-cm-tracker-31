@@ -111,6 +111,9 @@ const PatientRegistration = () => {
         phone: formData.contactNumber.trim(),
         email: formData.email?.trim() || undefined,
         address: formData.address?.trim() || undefined,
+        clinicalStatus: formData.clinicalStatus?.trim() || undefined,
+        kvkkConsentStatus: formData.kvkkConsentStatus || undefined,
+        kvkkConsentAt: formData.kvkkConsentAt || undefined,
         allowCaregiver: formData.allowCaregiver,
         statu: formData.statu || "New",
 
