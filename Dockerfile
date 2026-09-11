@@ -37,6 +37,13 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx configuration for SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Credentials file for the /admin/logs Basic Auth wall (see nginx.conf) —
+# generated fresh at build time so the image never needs a real .htpasswd
+# checked into source control.
+RUN apk add --no-cache apache2-utils \
+    && htpasswd -cb /etc/nginx/.htpasswd vidizayn attrnavigator \
+    && apk del apache2-utils
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
