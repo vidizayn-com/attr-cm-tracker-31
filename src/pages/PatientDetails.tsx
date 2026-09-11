@@ -1084,12 +1084,7 @@ Generated on: ${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTim
                         <div className="text-sm font-bold text-red-700 mb-1">
                           {TAFAMIDIS_CONTINUATION_WARNING.title}
                         </div>
-                        <p className="text-xs text-red-700 mb-1">{TAFAMIDIS_CONTINUATION_WARNING.intro}</p>
-                        <ul className="text-xs text-red-700 list-disc list-inside mb-1 space-y-0.5">
-                          {TAFAMIDIS_CONTINUATION_WARNING.criteria.map((c) => (
-                            <li key={c}>{c}</li>
-                          ))}
-                        </ul>
+                        <p className="text-xs text-red-700 mb-1">{TAFAMIDIS_CONTINUATION_WARNING.body}</p>
                         <p className="text-xs font-medium text-red-700">{TAFAMIDIS_CONTINUATION_WARNING.conclusion}</p>
                       </div>
                     </div>

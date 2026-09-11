@@ -753,7 +753,7 @@ const ReportTracker = () => {
                       {report.currentTreatmentMonth === TAFAMIDIS_CONTINUATION_REVIEW_MONTH && (
                         <div className="flex items-center text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5">
                           <AlertTriangle className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 text-red-500" />
-                          <span>{TAFAMIDIS_CONTINUATION_WARNING.title} — review required</span>
+                          <span>{TAFAMIDIS_CONTINUATION_WARNING.title} — değerlendirme gerekli</span>
                         </div>
                       )}
                     </>

@@ -166,15 +166,14 @@ export function getTreatmentReminderStatus(
 // every surface renders the exact same, unparaphrased medical text.
 export const TAFAMIDIS_CONTINUATION_REVIEW_MONTH = 15;
 
+// Turkish per explicit request — this specific clinical-criteria text is
+// meant to match an exact protocol wording, unlike the rest of the app's
+// UI text (English by default).
 export const TAFAMIDIS_CONTINUATION_WARNING = {
-  label: 'Month 15 Treatment Review',
-  title: 'Tafamidis Treatment Continuation Criteria',
-  intro: 'At the end of Month 15, treatment may be continued provided that:',
-  criteria: [
-    'the patient has not been hospitalized for heart failure during the previous 6 months, AND',
-    'the patient has not had an emergency visit requiring IV diuretics during the previous 6 months.',
-  ],
-  conclusion: 'If these criteria are not met, treatment should be discontinued.',
+  label: '15. Ay Tedavi Değerlendirmesi',
+  title: 'Tafamidis tedavisi tedaviye devam kriterleri',
+  body: '15. ayın sonunda: son 6 ayda kalp yetersizliği nedeniyle hastaneye yatış olmaması VE son 6 ayda IV diüretik gerektiren acil başvurusu olmaması şartıyla tedaviye devam edilebilir.',
+  conclusion: 'Kriterler karşılanmazsa tedavi sonlandırılır.',
 } as const;
 
 // Single entry point combining all derived treatment follow-up values for a
