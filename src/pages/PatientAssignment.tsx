@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
-import { strapiGet, strapiPost, STRAPI_URL } from '@/lib/strapiClient';
+import { strapiGet, strapiPost } from '@/lib/strapiClient';
 import {
   Loader2,
   Building2,
@@ -123,11 +123,11 @@ const PatientAssignment = () => {
     if (!patientDocumentId) return;
     (async () => {
       try {
-        // Do NOT send custom JWT to Strapi standard API – it causes 401
-        const res = await fetch(
-          `${STRAPI_URL}/api/patients/${patientDocumentId}?fields[0]=firstName&fields[1]=lastName`
+        // strapiGet attaches the doctor JWT — the patient routes reject anonymous callers
+        type PatientName = { firstName?: string; lastName?: string; first_name?: string; last_name?: string };
+        const json = await strapiGet<PatientName & { data?: PatientName }>(
+          `/api/patients/${patientDocumentId}?fields[0]=firstName&fields[1]=lastName`
         );
-        const json = await res.json();
         const patient = json?.data || json;
         const first = patient?.firstName || patient?.first_name || '';
         const last = patient?.lastName || patient?.last_name || '';
