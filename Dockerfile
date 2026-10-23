@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM public.ecr.aws/docker/library/node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:22.23.4-alpine AS builder
 
 # Timezone Configuration
 ENV TZ=Europe/Istanbul
